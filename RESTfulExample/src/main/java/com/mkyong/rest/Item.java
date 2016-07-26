@@ -12,6 +12,10 @@ public class Item {
 	
 	public String categoryName;
 	
+	public String itemName;
+	
+	public String itemDescription;
+	
 	public Integer quantity;
 	
 	public Double price;
@@ -31,7 +35,7 @@ public class Item {
 	public Item(){}
 	
 	public Item(String cuisineName,	String categoryName, Integer quantity, Double price, String day,
-			String meal, String timsSlot,String paymentType) {
+			String meal, String timsSlot,String paymentType, String itemName,String itemDescription) {
 		super();
 		this.cuisineName = cuisineName;
 		this.categoryName = categoryName;
@@ -41,6 +45,8 @@ public class Item {
 		this.meal = meal;
 		this.timsSlot = timsSlot;
 		this.paymentType = paymentType;
+		this.itemName = itemName;
+		this.itemDescription = itemDescription;
 	}
 	
 	@Override

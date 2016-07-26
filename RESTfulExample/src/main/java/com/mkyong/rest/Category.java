@@ -267,17 +267,30 @@ public class Category {
 	public JSONObject signUp(@FormParam("name")String name,
 			@FormParam("email")String email,
 			@FormParam("contactnumber")String contactNumber,
-			//@FormParam("city")String city,
+			@FormParam("refcode")String referalCode,
 			@FormParam("password")String password) throws JSONException{
 		System.out.println("Sign up webservice is called...");
-		System.out.println("name--"+name+" email-"+email+"  number-"+contactNumber+" password-"+password);
+		System.out.println("name--"+name+" email-"+email+"  number-"+contactNumber+" password-"+password+
+				"Referel code: "+referalCode);
 		JSONObject object ; 
 		
-		object = DBConnection.signUp(name, email, contactNumber,  password);
+		object = DBConnection.signUp(name, email, contactNumber,  password, referalCode);
 		//object = DBConnection.signUp(name,  contactNumber, password);
 		System.out.println("Sign up status::"+object);
 		
 		return object;
+	}
+	
+	@POST
+	@Path("/getbalance")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject getBalance(@FormParam("mobileno")String mobileNo)throws Exception{
+		System.out.println("getbalance web service is called with mob no * * * *"+mobileNo);
+		JSONObject jsonObject;
+		jsonObject = DBConnection.getBalance(mobileNo);
+		System.out.println("getbalance ended ***");
+		return jsonObject;
+		
 	}
 	
 	@POST
@@ -614,6 +627,7 @@ public class Category {
 		//	@FormParam("flatNumber")String flatNumber,
 		//	@FormParam("streetName")String streetName,
 		//	@FormParam("landmark")String landmark,
+			@FormParam("payAmount")String payAmount,
 			@FormParam("mobileno")String contactNumber,
 			@FormParam("name")String guestName,
 			@FormParam("usermailId")String mailid,
@@ -638,7 +652,7 @@ public class Category {
 		System.out.println("deliveryday-->"+deliveryDay);
 		System.out.println("City -->"+city);
 		System.out.println("usermailId-->"+mailid);
-		//System.out.println("Landmark-->"+landmark);  
+		System.out.println("payAmount-->"+payAmount);  
 		System.out.println("mobileno-->"+contactNumber);
 		//System.out.println("streetName -->"+streetName);
 		//System.out.println("flatNumber -->"+flatNumber);
@@ -658,12 +672,13 @@ public class Category {
 			OrderItems items = new OrderItems();
 	    	String[] order = str.split("\\$");
 	    	for(int i=0;i<order.length;i++){
-	    		if(order.length==4){
+	    		if(order.length==5){
 	    			items.cuisineId = Integer.valueOf(order[0]);
 	    	    	items.categoryId = Integer.valueOf(order[1]);
-	    	    	items.quantity = Integer.valueOf(order[2]);
+	    	    	items.itemCode = order[2];
 	    	    	items.price = Double.valueOf(order[3]);
-	    	
+	    	    	items.quantity = Integer.valueOf(order[4]);
+	    	   
 	    		}else if(order.length==8){
 	    			sub = true;
 	    			items.cuisineId = Integer.valueOf(order[0]);
@@ -762,11 +777,10 @@ public class Category {
 			deliveryZone,deliveryAddress,instruction);*/
 			orderPlaced = DBConnection.placeOrder(mailid, contactNumber, guestName,
 					 city, location,pincode, getLocationId(location, city),mealtype,timeslot, orderItemList,
-					deliveryZone,deliveryAddress,instruction,deliveryDay);
+					deliveryZone,deliveryAddress,instruction,deliveryDay,payAmount);
+			return orderPlaced;
 		}
 	 	
-		System.out.println("Place Order status::"+orderPlaced);
-		return orderPlaced;
 	}
 	
 	
@@ -1073,21 +1087,47 @@ public class Category {
 	 * @return
 	 * @throws Exception
 	 */
-	@POST
+	/*@POST
 	@Path("/fetchcuisine")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchcuisinelist(@FormParam("city")String city,
-			@FormParam("location")String location) throws Exception{
+			@FormParam("location")String location) throws Exception{*/
+	/*@POST
+	@Path("/fetchcuisine")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchcuisinelist() throws Exception{
 		
 		System.out.println("fetchcuisine webservice is called * * * * * * *");
 		
 		JSONObject jobjCusine ;
 		
-		jobjCusine = DBConnection.fetchCuisineList(city,location);
+		jobjCusine = DBConnection.fetchCuisineList();
 		
-		System.out.println("JSONObject in fetchCuisine webservice->"+jobjCusine);
+		//System.out.println("JSONObject in fetchCuisine webservice->"+jobjCusine);
 		System.out.println("End of fetchCuisine webservice * * * * * * * * * * * * *");
 		return jobjCusine;
+	}*/
+	
+	@POST
+	@Path("/fetchcuisine")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchCuisineList(@FormParam("pincode")String pincode) throws Exception{
+		System.out.println("fetchcuisine webservice is called with pincode * * *>> "+pincode+"* * * *");
+		
+		JSONObject jsonObject = new JSONObject();
+		System.out.println(pincode.trim().length());
+		if(pincode!=null && pincode.trim().length()>0){
+			System.out.println("Pincode given!");
+			jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode);
+
+			System.out.println("fetchcuisine ended here * * * * * ");
+			return jsonObject;
+		}else{
+			System.out.println("No Pincode found!");
+			System.out.println("fetchcuisine ended with null here * * * * * ");
+			return jsonObject.put("cuisinelist", new JSONArray());
+		}
+		
 	}
 	
 	/**
@@ -1115,10 +1155,11 @@ public class Category {
 	}
 	
 	
-	@POST
+	/*@POST
 	@Path("/fetchallcategory")
 	@Produces(MediaType.APPLICATION_JSON)
-	public JSONObject fetchAllCategories(@FormParam("city")String city,
+	public JSONObject fetchAllCategories(
+			@FormParam("city")String city,
 			@FormParam("location")String location,@FormParam("pincode")String pincode) throws JSONException{
 		
 		System.out.println("fetchallcategory web service is called * * * pincode-"+pincode);
@@ -1129,7 +1170,33 @@ public class Category {
 		
 		System.out.println("End of fetchallcategory webservice * * * * * * * * *");
 		return fetchAllCategory;
-	}
+	}*/
+	
+	/*@POST
+	@Path("/fetchallcategory")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchAllCategories(@FormParam("categoryid")String categoryId,
+			@FormParam("pincode")String pincode) throws JSONException{
+		
+		System.out.println("fetchallcategory web service is called * * * pincode-"+pincode);
+		System.out.println("category ID ->"+categoryId);
+		JSONObject fetchAllCategory = new JSONObject();
+		if(categoryId != null){
+			if(pincode!=null || pincode.trim().length()>0){
+				fetchAllCategory = DBConnection.fetchItemsWrtCategory(Integer.parseInt(categoryId), pincode);
+			}else{
+				fetchAllCategory.put("message", "No value for pincode!");
+				fetchAllCategory.put("Categories", new JSONArray());
+			}
+		}else{
+			fetchAllCategory.put("message", "No value for categoryid!");
+			fetchAllCategory.put("Categories", new JSONArray());
+		}
+		
+		
+		System.out.println("End of fetchallcategory webservice * * * * * * * * *");
+		return fetchAllCategory;
+	}*/
 	
 	public static String[] getLatLongPositions(String address) throws Exception
 	  {

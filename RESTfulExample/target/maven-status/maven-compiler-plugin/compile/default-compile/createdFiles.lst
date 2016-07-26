@@ -1,4 +1,6 @@
 com\mkyong\rest\Category.class
+utility\Duplicate.class
+pojo\Item.class
 com\mkyong\rest\PropertyFile.class
 com\mkyong\rest\DBConnection$1.class
 com\mkyong\rest\Kitchen.class
@@ -6,10 +8,12 @@ com\mkyong\rest\TimeCalculation.class
 com\mkyong\TestJson.class
 com\mkyong\rest\Login.class
 com\mkyong\Categories.class
+pojo\User.class
 com\mkyong\rest\JSONService.class
 com\mkyong\rest\KitchenDetailsBean.class
 com\mkyong\rest\DateFormattor.class
 com\mkyong\rest\StrongAES.class
+utility\Utility.class
 com\mkyong\rest\StartTripBean.class
 com\mkyong\rest\SubscriptionBean.class
 com\mkyong\rest\Myservice.class
@@ -18,6 +22,7 @@ com\mkyong\Track.class
 com\mkyong\rest\OrderItems.class
 com\mkyong\rest\AddressBean.class
 com\mkyong\rest\Order.class
+pojo\KitchenStock.class
 com\mkyong\rest\TimeFormattor.class
 com\mkyong\rest\SMTPAuthenticator.class
 com\mkyong\rest\Customer.class
@@ -27,3 +32,4 @@ com\mkyong\rest\DBConnection.class
 com\mkyong\rest\Test.class
 com\mkyong\rest\Constants.class
 com\mkyong\rest\Driver.class
+utility\Utility$1.class

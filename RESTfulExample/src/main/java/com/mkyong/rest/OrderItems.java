@@ -2,11 +2,13 @@ package com.mkyong.rest;
 
 import java.sql.Date;
 
-public class OrderItems {
+public class OrderItems implements Comparable<OrderItems>{
 	
 	public Integer cuisineId;
 	
 	public Integer categoryId;
+	
+	public String itemCode;
 	
 	public Integer quantity;
 	
@@ -22,6 +24,27 @@ public class OrderItems {
 	
 	public String timsSlot;
 
+	public OrderItems() {
+		super();
+	}
+
+	public OrderItems(Integer cuisineId, Integer categoryId, String itemCode,
+			Integer quantity, Double price) {
+		super();
+		this.cuisineId = cuisineId;
+		this.categoryId = categoryId;
+		this.itemCode = itemCode;
+		this.quantity = quantity;
+		this.price = price;
+	}
+
+	@Override
+	public int compareTo(OrderItems another) {
+		// TODO Auto-generated method stub
+		return this.cuisineId - another.cuisineId;
+	}
+	
+	
 	public Integer getCuisineId() {
 		return cuisineId;
 	}
@@ -93,7 +116,13 @@ public class OrderItems {
 	public void setTimsSlot(String timsSlot) {
 		this.timsSlot = timsSlot;
 	}
-	
-	
+
+	public String getItemCode() {
+		return itemCode;
+	}
+
+	public void setItemCode(String itemCode) {
+		this.itemCode = itemCode;
+	}
 }
   

@@ -25,9 +25,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.mail.Authenticator;
 import javax.mail.Message;
@@ -64,6 +66,10 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.w3c.dom.Document;
+
+import pojo.KitchenStock;
+import pojo.User;
+import utility.Duplicate;
 
 import com.google.android.gcm.server.Message.Builder;
 import com.google.android.gcm.server.MulticastResult;
@@ -939,25 +945,76 @@ public class DBConnection {
    /* public  static JSONObject signUp(String name, String email, 
     		String contactNumber,String city ,String password) throws JSONException{*/
     public  static JSONObject signUp(String name, String email,
-    		String contactNumber,String password) throws JSONException{
+    		String contactNumber,String password,String referalCode) throws JSONException{
     	JSONObject jsonObject = new JSONObject();
     	Boolean insertStatus = false;
+    	String myReferalCode = null;
+    	boolean isRefCodeExists = false,isNewUserCreated=false;
+    	
     //	if(!(getContactsFromDB().contains(contactNumber)) ){
-    		try {
+    	if(referalCode.trim().length()>0 ){
+    		System.out.println("Referral code given::"+referalCode);
+    		//When referral code given by user
+    		isRefCodeExists = isRefCodeExists(referalCode);
+    		if(isRefCodeExists){
+    			System.out.println("Referral code exists...");
+    			//If given referral code exists for somebody
+    			User referalUser = new User(name, password, email, contactNumber, referalCode);
+    			//just try to insert data in db for new user
+    			isNewUserCreated = doSignUpFor(referalUser);
+    			if(isNewUserCreated){
+    				System.out.println("New user created...and now update balance. . .");
+    				insertStatus = updateBalanceForReferredUserFrom(referalCode.trim());
+    				if(insertStatus){
+    					System.out.println("Referred user balance updated...");
+    					myReferalCode = generateReferalCode(name);
+    					System.out.println("New users code ::"+myReferalCode);
+    					updateMyCode(myReferalCode, contactNumber);
+    					jsonObject.put("status", true);
+            			jsonObject.put("message", "Thank you for registration!");
+    				}else{
+    					jsonObject.put("status", true);
+            			jsonObject.put("message", "User created but user balance updation failed!");
+    				}
+    			}else{
+        			jsonObject.put("status", false);
+        			jsonObject.put("message", "User already exists");
+        		}
+    		}else{
+    			jsonObject.put("status", false);
+    			jsonObject.put("message", "Referral code is Invalid");
+    		}
+    	}else{
+    		System.out.println("Referral code not given::"+referalCode);
+    		//when referral code not given by user, just try to insert data in db for new user
+    		User newUser = new User(name, password, email, contactNumber);
+    		isNewUserCreated = doSignUpFor(newUser);
+    		if(isNewUserCreated){
+    			insertStatus = true;
+    			myReferalCode = generateReferalCode(name);
+				updateMyCode(myReferalCode, contactNumber);
+    			jsonObject.put("status", true);
+    			jsonObject.put("message", "Thank you for registration!");
+    		}else{
+    			jsonObject.put("status", false);
+    			jsonObject.put("message", "User already exists");
+    		}
+    	}
+    		/*try {
     			Connection connection = DBConnection.createConnection();
     			SQL:{
     					PreparedStatement preparedStatement = null;
-    					/*String sql = "INSERT INTO fapp_accounts(username,email,mobile_no,password) "
-    							   + " VALUES(?,?, ?,?)";*/
+    					String sql = "INSERT INTO fapp_accounts(username,email,mobile_no,password) "
+    							   + " VALUES(?,?, ?,?)";
     					String sql = "INSERT INTO fapp_accounts(username,email,mobile_no,password) "
  							   + " VALUES(?, ?, ?,?)";
     					try {
     						preparedStatement = connection.prepareStatement(sql);
-    						/*preparedStatement.setString(1, name);
+    						preparedStatement.setString(1, name);
     						preparedStatement.setString(2, email);
     						preparedStatement.setString(3, contactNumber); 
     						//preparedStatement.setString(4, city);
-    						preparedStatement.setString(4, password);    */		
+    						preparedStatement.setString(4, password);    		
     						preparedStatement.setString(1, name);
     						if(email!=null){
     							preparedStatement.setString(2, email);
@@ -970,6 +1027,7 @@ public class DBConnection {
     						int count =  preparedStatement.executeUpdate();
     						if(count>0){
     							insertStatus = true;
+    							
     							System.out.println("Mobile no. "+contactNumber+" is registerd with us successfully!");
     						}
     					} catch (Exception e) {
@@ -984,13 +1042,152 @@ public class DBConnection {
     			}
     		} catch (Exception e) {
     			// TODO: handle exception
-    		}
+    		}*/
     	/*}else{
     		insertStatus = false;
     		System.out.println("Mobile no. "+contactNumber+" is already registerd!");
     	}*/
-    	jsonObject.put("status", insertStatus);
+    		/*if(insertStatus){
+    			myReferalCode = generateReferalCode(name);
+    			if(myReferalCode!=null){
+    				if(updateMyCode(myReferalCode, contactNumber)){
+        				System.out.println("Your code is :: "+myReferalCode);
+        			}else{
+        				System.out.println("Updation failed in code generation falied. . ");
+        			}
+    			}else{
+    				System.out.println("Referaal code generation falied. . ");
+    			}
+    		}
+    	jsonObject.put("status", insertStatus);*/
     	return jsonObject;
+    }
+    
+    private static boolean doSignUpFor(User user){
+    	boolean signedUp = false;
+    	try {
+			Connection connection = DBConnection.createConnection();
+			SQL:{
+					PreparedStatement preparedStatement = null;
+					String sql = "INSERT INTO fapp_accounts(username,email,mobile_no,password,ref_code) "
+							   + " VALUES(?, ?, ?,?,?)";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+					
+						preparedStatement.setString(1, user.getUserName());
+						if(user.getEmailId()!=null){
+							preparedStatement.setString(2, user.getEmailId());
+						}else{
+							preparedStatement.setNull(2, Types.NULL);
+						}
+						preparedStatement.setString(3, user.getContactNumber()); 
+						preparedStatement.setString(4, user.getPassword());    
+						
+						if(user.getReferalCode()!=null){
+							preparedStatement.setString(5, user.getReferalCode());
+						}else{
+							preparedStatement.setNull(5, Types.NULL);
+						}
+						
+						int count =  preparedStatement.executeUpdate();
+						if(count>0){
+							signedUp = true;
+							
+							System.out.println("Mobile no. "+user.getContactNumber()+" is registerd with us successfully!");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						System.out.println("ERROR in doSignUp() DUE TO: "+e);
+						signedUp = false;
+					}finally{
+						if(connection!=null){
+							connection.close();
+						}
+					}
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return signedUp;
+    }
+    
+    private static boolean updateBalanceForReferredUserFrom(String referralCode){
+    	boolean balanceUpdated = false;
+    	String userMobile = null;
+    	
+    	try {
+    		Connection connection = DBConnection.createConnection();
+			SQL1:{
+    			System.out.println("Balance updating called..");
+    			 PreparedStatement preparedStatement = null;
+    			 String sql = "UPDATE fapp_accounts SET my_balance = my_balance + 50.0 where my_code = ?";
+    			 try {
+					preparedStatement = connection.prepareStatement(sql);
+					//preparedStatement.setDouble(1, 50);
+					preparedStatement.setString(1, referralCode);
+					System.out.println(preparedStatement);
+					int count = preparedStatement.executeUpdate();
+					if(count>0){
+						balanceUpdated = true;
+					}
+				} catch (Exception e) {
+					System.out.println("Balance updation failed in updateBalance() due to: "+e);
+					connection.rollback();
+				}finally{
+					if(preparedStatement!=null){
+						preparedStatement.close();
+					}if(connection!=null){
+						connection.close();
+					}
+				}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return balanceUpdated;
+    }
+    
+    public static JSONObject getBalance(String mobileNo){
+    	JSONObject balanceObject = new JSONObject();
+    	try {
+			SQL:{
+    				Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement = null;
+    				ResultSet resultSet = null;
+    				String sql = "SELECT my_balance,my_code from fapp_accounts where mobile_no = ? ";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, mobileNo);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							String myCode = resultSet.getString("my_code");
+							Double myBalance = resultSet.getDouble("my_balance");
+							if(myCode!=null){
+								balanceObject.put("mycode", myCode);
+							}else{
+								balanceObject.put("mycode", " ");
+							}
+							if(myBalance!=null){
+								balanceObject.put("mybalance", myBalance);
+							}else{
+								balanceObject.put("mybalance", myBalance);
+							}
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						System.out.println("Getting balance failed due to: "+e);
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}if(connection!=null){
+							connection.close();
+						}
+					}	
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return balanceObject;
     }
     
     private static Boolean isValidPassword(String oldPassword,  String mobNo){
@@ -1642,11 +1839,14 @@ public class DBConnection {
 				/*String cuisineSql="select cuisine_id, category_id , qty, total_price " 
 								  +" from fapp_order_item_details "
 								  +" where order_id = "
-								  + "(SELECT order_id FROM fapp_orders WHERE order_no = ?)";*/
-				String cuisineSql="select cuisine_id, category_id , qty, category_price " 
+								  + "(SELECT order_id FROM fapp_orders WHERE order_no = ?)";
+				String cuisineSql="select cuisine_id, category_id , qty, category_price, item_code,"
+						  +" (select item_name from food_items where item_code = foid.item_code) AS item_name, "
+						  +" (select item_description from food_items where item_code = foid.item_code)AS item_description " 
 						  +" from fapp_order_item_details "
 						  +" where order_id = "
-						  + "(SELECT order_id FROM fapp_orders WHERE order_no = ?)";
+						  +" (SELECT order_id FROM fapp_orders WHERE order_no = ?)";*/
+				String cuisineSql = "select * from vw_order_item_details_list where order_no = ?";
 				try {
 						preparedStatement = connection.prepareStatement(cuisineSql);
 						/*preparedStatement.setInt(1, orderid);*/
@@ -1658,12 +1858,14 @@ public class DBConnection {
 							itemobject.put("type", " ");
 							itemobject.put("timeslot", " ");
 							itemobject.put("cuisineid", resultSet.getInt("cuisine_id"));
-							itemobject.put("cuisinename", getCuisineName(itemobject.getInt("cuisineid")));
+							itemobject.put("cuisinename", resultSet.getString("cuisin_name"));
 							itemobject.put("categoryid", resultSet.getInt("category_id"));
-							itemobject.put("categoryname", getCategoryName(itemobject.getInt("categoryid")));
+							itemobject.put("categoryname", resultSet.getString("category_name"));
+							itemobject.put("itemname", resultSet.getString("item_name"));
+							itemobject.put("itemdescription", resultSet.getString("item_description"));
 							itemobject.put("quantity", resultSet.getInt("qty"));
-							/*itemobject.put("price", resultSet.getDouble("total_price"));*/
-							itemobject.put("price", resultSet.getDouble("category_price"));
+							itemobject.put("price", resultSet.getDouble("total_price"));
+								//itemobject.put("price", resultSet.getDouble("category_price"));
 							itemsDetailArray.put(itemobject);
 						}
 					
@@ -1673,10 +1875,8 @@ public class DBConnection {
 					if(connection!=null){
 						connection.close();
 					}
-				}	
-				
+				}			
 			}
-		
 		} catch (Exception e) {
 		
 		}
@@ -2673,9 +2873,15 @@ public class DBConnection {
     public static JSONObject placeOrder(String userMailId,  String contactNumber, String guestName,
     		String cityName, String location, String pincode , 
     		Integer locationId,String mealType, String timeSlot, ArrayList<OrderItems> orderItemList,
-    		String deliveryZone,String deliveryAddress,String instruction,String deliveryDay) throws Exception{
+    		String deliveryZone,String deliveryAddress,String instruction,String deliveryDay,String payAmount) throws Exception{
     	
-    	boolean isGuestUser = false;java.util.Date delivery_Date = new java.util.Date();
+    	boolean isGuestUser = false;
+    	java.util.Date delivery_Date = new java.util.Date();
+    	int orderId = 0;
+    	Boolean userDetailsInserted = false;
+    	Boolean itemDetailsInserted = false;
+    	Boolean kitchenAssigned = false;
+    	
     	if(deliveryDay!=null){
     		 delivery_Date = getDeliveryDate(deliveryDay);
     	}	
@@ -2690,29 +2896,30 @@ public class DBConnection {
     	String orderBy = null ;
     	if(isGuestUser){
     		orderBy = guestName;
-    		System.out.println("Order by guest->"+orderBy);
-    		
+    		System.out.println("Order by guest->"+orderBy);	
     	}else{
     		orderBy = getUserName(contactNumber);
     		System.out.println("Order by registered->"+orderBy);
     		userMailId = getUserMailId(contactNumber);
     		System.out.println("Mail id of registered user->"+userMailId);
     	}
-    	//String latlong[] = new String[2];
-    	//latlong = getLatLongPositions(deliveryAddress+","+pincode+","+deliveryZone+","+cityName);
-    	//System.out.println("Lat long of user->"+latlong[0]+"   "+latlong[1]);
+    	Double finalPrice = Double.valueOf(payAmount);
+		System.out.println("payAmount :: "+payAmount+" finalPrice :: "+finalPrice);
+    	ArrayList<Integer> dealingKitchenIds = new ArrayList<Integer>();
     	
-    	List<Integer> dealingKitchenIds = new ArrayList<Integer>();
+    	dealingKitchenIds = Duplicate.getKitchenId(orderItemList, pincode);
     	
-    	ArrayList<KitchenDetailsBean> kitchenDetailsBeanList =  new ArrayList<KitchenDetailsBean>();
+    	//List<Integer> dealingKitchenIds = new ArrayList<Integer>();
+    
+    	/*ArrayList<KitchenDetailsBean> kitchenDetailsBeanList =  new ArrayList<KitchenDetailsBean>();
     	
-    	kitchenDetailsBeanList = getKitchenDetails(pincode);
+    	kitchenDetailsBeanList = getKitchenDetails(pincode);*/
     	
     	/*for(KitchenDetailsBean bean :  kitchenDetailsBeanList){
     		System.out.println("kitchen cuisine:"+bean.getKitchenId()+" kitchen cuisine:"+bean.getCuisineId()+" kitchen category:"+bean.getCategoryId());
     	}*/
     	
-    	int listSize = kitchenDetailsBeanList.size();
+    	/*int listSize = kitchenDetailsBeanList.size();
     	System.out.println("order list size--"+orderItemList.size());
     	for(int i=0; i< orderItemList.size() ; i++){
     		for(int j=0 ; j< listSize ;j++){	
@@ -2722,7 +2929,7 @@ public class DBConnection {
     				dealingKitchenIds.add(kitchenDetailsBeanList.get(j).getKitchenId());
     			}
     		}
-    	}
+    	}*/
     	
     	/*for(int i=0 ; i < orderItemList.size() && i < dealingKitchenIds.size(); i++){
     		System.out.println("\n******* "+i+" item starts here*******************");
@@ -2733,23 +2940,18 @@ public class DBConnection {
     		System.out.println("kitchen Id:"+dealingKitchenIds.get(i));
     		System.out.println("******** "+i+" item end ***************");
     	}*/
-    	
-    	
-    	System.out.println("Selected kitchen ids * * * * * "+dealingKitchenIds);
+    	/*System.out.println("Selected kitchen ids * * * * * "+dealingKitchenIds);
     	System.out.println("order list size::"+orderItemList.size());
     	System.out.println("kitchen id list size:"+dealingKitchenIds.size());
-    	//getKitchenDetails(39);
-    	Integer id = 0;
-    	int orderId = 0;
-    	Boolean userDetailsInserted = false;
-    	Boolean itemDetailsInserted = false;
-    	Boolean kitchenAssigned = false;
+    	
+    	
     	ArrayList<Integer> selectedKitchenIds = fetchKitchenIDwithUserItems(orderItemList,pincode);
     	if(selectedKitchenIds.size()>0){
     		System.out.println("Selected kitchens are:="+selectedKitchenIds);
     	}else{
     		System.out.println("Not selected!");
-    	}
+    	}*/
+    	System.out.println("Order list size:: "+orderItemList.size()+" Dealing kitchdens :"+dealingKitchenIds.size());
     	/************** If kitchen found in given delivery pincode ******************/
     	if(dealingKitchenIds.size()!=0){
     		
@@ -2758,11 +2960,12 @@ public class DBConnection {
         		//***SQL BLOCK STARTS HERE***//*
         		SQL:{
         				PreparedStatement preparedStatement= null;
+        				//connection.setAutoCommit(false);
         				/*String sql = "INSERT INTO fapp_orders(user_mail_id, order_by, contact_number,order_no,meal_type,time_slot)"
         							+" VALUES (?, ?, ?, ?,?,?)";*/
         				String sql = "INSERT INTO fapp_orders(user_mail_id , contact_number, order_no, meal_type, time_slot,order_by,"
-        						+ "delivery_date)"
-    							+" VALUES (?,?, ?,?,?,?,?)";
+        						+ "delivery_date,final_price)"
+    							+" VALUES (?,?, ?,?,?,?,?,?)";
         				try {
     	    					preparedStatement = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
     	    					preparedStatement.setString(1, userMailId);
@@ -2786,8 +2989,14 @@ public class DBConnection {
     	        					preparedStatement.setNull(7, Types.NULL);
     	        				}
     	        				
+    	        				if(finalPrice != null){
+    	        					preparedStatement.setDouble(8, finalPrice);
+    	        				}else{
+    	        					preparedStatement.setNull(8, Types.NULL);
+    	        				}
     	        				//preparedStatement.setDate(7, current_tim);
     	        				preparedStatement.execute();
+    	        				//connection.commit();
     							ResultSet resultSet = preparedStatement.getGeneratedKeys();
     							if(resultSet.next()){
     							    orderId = resultSet.getInt(1);
@@ -2802,7 +3011,8 @@ public class DBConnection {
     									itemDetailsInserted = saveItemsWithKitchen(orderId, orderItemList, dealingKitchenIds);
     								}
     								if(itemDetailsInserted){
-    									kitchenAssigned = orderAssignToKitchen(orderId,  "REGULAR");//44
+    									//kitchenAssigned = orderAssignToKitchen(orderId,  "REGULAR");//44
+    									kitchenAssigned = assignOrderToKitchen(dealingKitchenIds, "REGULAR", orderId);//44
     								}
     								
     								/*userDetailsInserted = saveUserDetils(orderId, contactName, cityName, location, landmark, 
@@ -2818,11 +3028,17 @@ public class DBConnection {
     						    	}*/
     								
     							}
-    	        				
+    	        				if( !(userDetailsInserted && itemDetailsInserted && kitchenAssigned) ){
+    	        					
+    	        					connection.rollback();
+    	        				}
     					}  catch (Exception e) {
+    						connection.rollback();
+    						System.out.println("Error due to: "+e.getMessage());
     						e.printStackTrace();
     					} finally{
     						if(connection!=null){
+    							///connection.setAutoCommit(true);
     							connection.close();
     						}
     					}	
@@ -2838,12 +3054,26 @@ public class DBConnection {
         		isOrderPlaced.put("success", "regular_success");
         	}*/
     		if(kitchenAssigned && orderId!=0){
-    			updateStock(orderItemList, dealingKitchenIds);
+    			//updateStock(orderItemList, dealingKitchenIds);
+    			ArrayList<KitchenStock> kitchenQtyList = new ArrayList<KitchenStock>();
+    			for(int i=0 ; i < orderItemList.size() && i < dealingKitchenIds.size(); i++){
+    	    		kitchenQtyList.add(new KitchenStock(dealingKitchenIds.get(i) , orderItemList.get(i).quantity ));
+    	    	}
+    			ArrayList<KitchenStock> updationKitchenStockList = new ArrayList<KitchenStock>();
+    			
+    			updationKitchenStockList = utility.Utility.getKitchenStockList(kitchenQtyList);
+    			System.out.println("Upadtion kitchen stock list size : "+updationKitchenStockList.size());
+    			//updateNewStock(updationKitchenStockList);
+    			
+    			isOrderPlaced.put("status", true);
+    			isOrderPlaced.put("message", "Your order placed successfully!");
     			isOrderPlaced.put("success", getRecentlyPlacedRegularOrderDetails(orderId));
     			//return isOrderPlaced;
     		}else{
     			System.out.println("####### Regular order failed!! ###########");
-    			isOrderPlaced.put("success", new JSONObject());
+    			isOrderPlaced.put("status", false);
+        		isOrderPlaced.put("message", "Internal problem occured!");
+    			//isOrderPlaced.put("success", new JSONObject());
     			//return isOrderPlaced;
     		}
         	
@@ -2856,7 +3086,9 @@ public class DBConnection {
     		System.out.println("No kitchen found in given Delivery pincode::: "+pincode);
     		System.out.println("####### Kitchen assignment failed!! Regular order failed!! ###########");
     		//isOrderPlaced.put("success", "regular_success");
-    		isOrderPlaced.put("success", new JSONObject());
+    		isOrderPlaced.put("status", false);
+    		isOrderPlaced.put("message", "No Kitchen Found!");
+    		//isOrderPlaced.put("success", new JSONObject());
     		
     		//return isOrderPlaced;	
     	}
@@ -2933,6 +3165,11 @@ public class DBConnection {
 							orders.put("pincode", resultSet.getString("pincode"));
 							orders.put("orderid",orderID);
 							orders.put("orderno", resultSet.getString("order_no"));
+							if(resultSet.getString("final_price") != null){
+								orders.put("payAmount", resultSet.getString("final_price"));
+							}else{
+								orders.put("payAmount", " ");
+							}
 							if( resultSet.getString("meal_type")!=null){
 								orders.put("mealtype", resultSet.getString("meal_type"));
 							}else{
@@ -2989,6 +3226,46 @@ public class DBConnection {
     	return orders;
     }
     
+    private static boolean updateNewStock(ArrayList<KitchenStock> kitchenStockList){
+    	boolean stockUpdated = false;
+    	int updatecount = 0;
+    	try {		
+			SQLStockIDList:{
+    					Connection connection = DBConnection.createConnection();
+    					PreparedStatement preparedStatement = null;
+    					String sql = "UPDATE fapp_kitchen_items set stock = (stock - ?) where kitchen_id = ?";
+    					try {
+							preparedStatement = connection.prepareStatement(sql);
+							for(int i=0 ; i<kitchenStockList.size() ; i++){
+								preparedStatement.setInt(1, kitchenStockList.get(i).stock);
+								preparedStatement.setInt(2, kitchenStockList.get(i).kitchenId);
+								preparedStatement.addBatch();
+							}
+							int[] updateCount = preparedStatement.executeBatch();
+							updatecount = updateCount.length;
+							for(Integer count : updateCount){
+								stockUpdated = true;
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+							connection.rollback();
+						}finally{
+							if(preparedStatement!=null){
+								preparedStatement.close();
+							}
+							if(connection!=null){
+								connection.close();
+							}
+						}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	System.out.println("Stock updated "+updatecount+" row sucessfully!");
+    	return stockUpdated;
+    }
+    
+    
     private static boolean updateStock(ArrayList<OrderItems> orderItemList , List<Integer> dealingKitchenIdList){
     	boolean stockUpdated = false;
     	int updatecount = 0;
@@ -3001,14 +3278,15 @@ public class DBConnection {
 								+" where kitchen_cuisine_id =  ?"
 								+" and kitchen_category_id = ?"
 								+" and kitchen_id = ?";
+    					//String sql = "UPDATE fapp_kitchen_items set stock = (stock - ?) where kitchen_id = ?";
     					try {
 							preparedStatement = connection.prepareStatement(sql);
 							for(int i=0 ; i<orderItemList.size() ; i++){
 								//for(int j=0 ; j<dealingKitchenIdList.size() ; j++ ){
-									preparedStatement.setInt(1, orderItemList.get(i).quantity);
-									preparedStatement.setInt(2, orderItemList.get(i).cuisineId);
-									preparedStatement.setInt(3, orderItemList.get(i).categoryId);
-									preparedStatement.setInt(4, dealingKitchenIdList.get(i));
+									//preparedStatement.setInt(1, orderItemList.get(i).quantity);
+									//preparedStatement.setInt(2, orderItemList.get(i).cuisineId);
+									//preparedStatement.setInt(3, orderItemList.get(i).categoryId);
+									preparedStatement.setInt(2, dealingKitchenIdList.get(i));
 									System.out.println(preparedStatement);
 									updatecount = preparedStatement.executeUpdate();
 									if(updatecount>0){
@@ -3743,6 +4021,7 @@ public class DBConnection {
     	
     	try {
     		Connection connection = DBConnection.createConnection();
+    		//connection.setAutoCommit(false);
     		//String latLongs[] = getLatLongPositions(flatNo+" "+streetName+" "+landmark+" "+location+" "+city+" "+pincode);
           //   System.out.println("---Customer's Latitude: "+latLongs[0]+" ----and Longitude: "+latLongs[1]);
         	//Double deliveryLatitude = Double.parseDouble(latLongs[0]);
@@ -3856,9 +4135,11 @@ public class DBConnection {
 						}
 						
 				}  catch (Exception e) {
+					connection.rollback();
 					e.printStackTrace();
 				} finally{
 					if(connection!=null){
+					//	connection.setAutoCommit(true);
 						connection.close();
 					}
 				}	
@@ -3969,15 +4250,19 @@ public class DBConnection {
     }
     
     
-    private static Boolean saveItemsWithKitchen(Integer orderId , ArrayList<OrderItems> orderItemList , List<Integer> kitchenIdList){
+   /* private static Boolean saveItemsWithKitchen(Integer orderId , ArrayList<OrderItems> orderItemList ,
+    		List<Integer> kitchenIdList){*/
+    private static Boolean saveItemsWithKitchen(Integer orderId , ArrayList<OrderItems> orderItemList ,
+    		ArrayList<Integer> kitchenIdList){
     	Boolean inserted = false;
     	try {
 			Connection connection = DBConnection.createConnection();
+		//	connection.setAutoCommit(false);
 			PreparedStatement preparedStatement = null;
 			SQL:{
 				String sql = "INSERT INTO fapp_order_item_details( "
-			            +" order_id, category_id, qty,category_price, total_price, cuisine_id,kitchen_id,sub_order_no) "
-			            +" VALUES ( ?, ?, ?, ?, ?, ?, ? ,?)";
+			            +" order_id, category_id, qty,category_price, total_price, cuisine_id,kitchen_id,sub_order_no,item_code) "
+			            +" VALUES ( ?, ?, ?, ?, ?, ?, ? ,?,?)";
 				try {
 						preparedStatement = connection.prepareStatement(sql);
 						for(int i=0 ; i < orderItemList.size() && i < kitchenIdList.size(); i++){
@@ -3989,20 +4274,23 @@ public class DBConnection {
 				    		preparedStatement.setInt(6, orderItemList.get(i).cuisineId);
 				    		preparedStatement.setInt(7, kitchenIdList.get(i));
 				    		preparedStatement.setString(8, orderId.toString()+"/"+(i+1) );
+				    		preparedStatement.setString(9, orderItemList.get(i).itemCode);
 				    		preparedStatement.addBatch();
 				    	}
 						int [] count = preparedStatement.executeBatch();
-				    	   
+				    	 //  connection.commit();
 				    	   for(Integer integer : count){
 				    		   inserted = true;
 				    	   }
 				} catch (Exception e) {
+					connection.rollback();
 					e.printStackTrace();
 				}finally{
 					if(preparedStatement!=null){
 						preparedStatement.close();
 					}
 					if(connection!=null){
+						//connection.setAutoCommit(true);
 						connection.close();
 					}
 				}
@@ -4020,6 +4308,73 @@ public class DBConnection {
     	return inserted;
     }
     
+    public static boolean assignOrderToKitchen(ArrayList<Integer> dealingKitchenIds, String orderType , Integer orderId){
+    	Boolean kitchenAssigned = false;
+    	Set<Integer> kitchenIdList = new HashSet<Integer>();
+		kitchenIdList.addAll(dealingKitchenIds);
+    	try {
+			SQL:{
+    			Connection connection = DBConnection.createConnection();
+				PreparedStatement preparedStatement= null;
+				String sql = "INSERT INTO fapp_order_tracking"
+						    +"(order_id, kitchen_id, logistics_id)"
+						    +" VALUES (?, ?, ? );";
+				
+				String sqlsub = "INSERT INTO fapp_order_tracking"
+					    +"(subscription_id, kitchen_id, logistics_id)"
+					    +" VALUES (?, ?, ? );";
+				try {
+					if(orderType.equalsIgnoreCase("REGULAR")){
+						preparedStatement = connection.prepareStatement(sql);
+					}else{
+						preparedStatement = connection.prepareStatement(sqlsub);
+					}
+					
+					for(Integer kitchenid : kitchenIdList){
+						preparedStatement.setInt(1, orderId);
+						preparedStatement.setInt(2, kitchenid);
+						preparedStatement.setInt(3, 20);
+						preparedStatement.addBatch();
+					}
+					int [] count = preparedStatement.executeBatch();
+			    	if(count.length==kitchenIdList.size()){
+			    		   kitchenAssigned = true;  
+			    		   for(Integer id : kitchenIdList){
+			    			   //message to kitchen
+			    			   if(orderType.equalsIgnoreCase("REGULAR")){
+			    				  System.out.println("Right now messege is closed for temp. .");
+			    				   // sendMessageToMobile(getKitchenMobile(id), getOrderNo(orderId,"REGULAR"), getOrderTime(getOrderNo(orderId,"REGULAR"),orderType), 1);	  
+			    			   }else{
+			    				   sendMessageToMobile(getKitchenMobile(id), getOrderNo(orderId,"SUB"), getOrderTime(getOrderNo(orderId,"SUB"),orderType), 1);		
+			    			   }
+			    			   // sendMessage(getDeviceRegIdKitchen(id),getOrderNo(orderId),1);
+			    		   }
+			    		   
+			    	   }
+					/*preparedStatement.setInt(1, orderId);
+					preparedStatement.setInt(2, kitchenId);
+					int count = preparedStatement.executeUpdate();
+					if(count > 0){
+						kitchenAssigned = true;	
+					}*/
+				} catch (Exception e) {
+					e.printStackTrace();
+					connection.rollback();
+				} finally{
+					if(preparedStatement!=null){
+						preparedStatement.close();
+					}
+					if(connection!=null){
+					//	connection.setAutoCommit(true);
+						connection.close();
+					}
+				}	
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return kitchenAssigned;
+    }
    
 	public static Integer getNextNearestKitchenId(Integer rejectionKitchenId){
     	Integer kitchenId = 0;
@@ -4094,7 +4449,7 @@ public class DBConnection {
     	List<Integer> kitchenIdList =  new ArrayList<Integer>();
     	try {
     		Connection connection = DBConnection.createConnection();
-    		
+    		//connection.setAutoCommit(false);
     		
     		SQL_FIND_KITCHEN_ID_LIST:{
 	    			PreparedStatement preparedStatement = null;
@@ -4126,11 +4481,13 @@ public class DBConnection {
 						}
 	    				
 						resultSet = preparedStatement.executeQuery();
+					
 						while (resultSet.next()) {
 							kitchenIdList.add(resultSet.getInt("kitchen_id"));
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
+						
 						}finally{
 							if(preparedStatement!=null){
 								preparedStatement.close();
@@ -4165,14 +4522,15 @@ public class DBConnection {
 							preparedStatement.addBatch();
 						}
 						int [] count = preparedStatement.executeBatch();
-				    	   
+				    	//   connection.commit();
 				    	   if(count.length==kitchenIdList.size()){
 				    		   kitchenAssigned = true;
 				    		   
 				    		   for(Integer id : kitchenIdList){
 				    			   //message to kitchen
 				    			   if(orderType.equalsIgnoreCase("REGULAR")){
-				    				   sendMessageToMobile(getKitchenMobile(id), getOrderNo(orderId,"REGULAR"), getOrderTime(getOrderNo(orderId,"REGULAR"),orderType), 1);	  
+				    				  System.out.println("Right now messege is closed for temp. .");
+				    				   // sendMessageToMobile(getKitchenMobile(id), getOrderNo(orderId,"REGULAR"), getOrderTime(getOrderNo(orderId,"REGULAR"),orderType), 1);	  
 				    			   }else{
 				    				   sendMessageToMobile(getKitchenMobile(id), getOrderNo(orderId,"SUB"), getOrderTime(getOrderNo(orderId,"SUB"),orderType), 1);		
 				    			   }
@@ -4188,9 +4546,14 @@ public class DBConnection {
     					}*/
 					} catch (Exception e) {
 						e.printStackTrace();
+						connection.rollback();
 					} finally{
 						if(preparedStatement!=null){
 							preparedStatement.close();
+						}
+						if(connection!=null){
+						//	connection.setAutoCommit(true);
+							connection.close();
 						}
 					}	
     		}
@@ -4559,7 +4922,7 @@ public class DBConnection {
 	    		SQL:{//Make boy status busy by 3
 	    			PreparedStatement  preparedStatement = null;
 	    			String sql = "UPDATE fapp_delivery_boy set delivery_boy_status_id = 3 "
-	    					+ " where driver_boy_user_id = ? ";
+	    					+ " where delivery_boy_user_id = ? ";
 	    			try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, boyUserId);
@@ -5457,51 +5820,47 @@ public class DBConnection {
     	return cuisineList;
     }*/
     
-    /**
-     * A WEB SERVICE FOR fetching all cuisine list
-     * @return
-     * @throws JSONException
-     */
-    public static JSONObject fetchCuisineList(String city, String location) throws JSONException{
+    public static JSONObject fetchAllCuisineWithItemData(String pincode) throws Exception{
     	Connection connection = null;
     	PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
-    	
-    	JSONObject cuisineList = new JSONObject();
+		JSONObject cuisineList = new JSONObject();
     	JSONArray cuisinesarrayList = new JSONArray();
+    	JSONObject allcuisine = new JSONObject();
+    	
     	try {
 			SQL:{
-    		connection = DBConnection.createConnection();
-	    		String sql =" select distinct fkd.cuisin_id,"
-	    				   	+" fc.cuisin_name,fc.cuisine_image"
-		    				+" from fapp_kitchen_details fkd "
-		    				+" join sa_area sa "
-		    				+" on sa.area_id = fkd.area_id "
-		    				+" join "
-		    				+" fapp_cuisins fc "
-		    				+" on fkd.cuisin_id = fc.cuisin_id "
-		    				+"  where fkd.area_id =  "
-		    				+" (select area_id from sa_area where area_name ILIKE ? and city_id = "
-		    				+" (select city_id from sa_city where city_name ILIKE ?))";
+	    		connection = DBConnection.createConnection();
+	    		
+	        	allcuisine.put("cuisineid", 0);
+	        	allcuisine.put("cuisineimage", "i.imgur.com/DwZ7bO1.jpg");
+	        	allcuisine.put("cuisinename", "All");
+	        	allcuisine.put("categorylist", fetchCategoriesOfAllCuisineWithPincode(pincode,connection));
+	        	cuisinesarrayList.put(allcuisine);
+	        	
+	        	String sql = "SELECT cuisin_id,cuisin_name,cuisine_image FROM fapp_cuisins "
+    				+ " WHERE is_active = 'Y' order by cuisin_id  ";
 	    		try {
 					preparedStatement = connection.prepareStatement(sql);
-					preparedStatement.setString(1, location);
-					preparedStatement.setString(2, city);
+					
 					resultSet = preparedStatement.executeQuery();
 					while (resultSet.next()) {
 						JSONObject tempCuisine = new JSONObject();
+						
 						tempCuisine.put("cuisineid", resultSet.getInt("cuisin_id"));
 						String tempImage  = resultSet.getString("cuisine_image");
 						String cuisineImage;
 						if(tempImage.contains("C:\\apache-tomcat-7.0.62/webapps/")){
 							cuisineImage = tempImage.replace("C:\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+						}else if(tempImage.startsWith("http://")){
+							cuisineImage = tempImage.replace("http://", "");
 						}else{
 							cuisineImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
 						}
-						//String categoryImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
-						//jobject.put("categoryimage", resultSet.getString("category_image"));
 						tempCuisine.put("cuisineimage", cuisineImage);
 						tempCuisine.put("cuisinename", resultSet.getString("cuisin_name"));
+						tempCuisine.put("categorylist", fetchCategoriesOfCuisineWithPincode(tempCuisine.getInt("cuisineid"),pincode,connection));
+						//tempCuisine.put("categorylist", fetchCategoriesOfCuisine(tempCuisine.getInt("cuisineid")));
 						cuisinesarrayList.put(tempCuisine);
 					}
 				}  catch (Exception e) {
@@ -5515,9 +5874,283 @@ public class DBConnection {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+    	
+    	System.out.println("Cuisine List size: "+cuisinesarrayList.length());
     	cuisineList.put("cuisinelist", cuisinesarrayList);
     	return cuisineList;
     }
+    
+    
+    /**
+     * A WEB SERVICE FOR fetching all cuisine list
+     * @return
+     * @throws JSONException
+     */
+   /* public static JSONObject fetchCuisineList(String city, String location) throws JSONException{*/
+    public static JSONObject fetchCuisineList() throws JSONException{
+    	Connection connection = null;
+    	PreparedStatement preparedStatement = null;
+		ResultSet resultSet = null;
+    	
+    	JSONObject cuisineList = new JSONObject();
+    	JSONArray cuisinesarrayList = new JSONArray();
+    	JSONObject allcuisine = new JSONObject();
+    	allcuisine.put("cuisineid", 0);
+    	allcuisine.put("cuisineimage", "i.imgur.com/DwZ7bO1.jpg");
+    	allcuisine.put("cuisinename", "All");
+    	allcuisine.put("categorylist", fetchCategoriesOfAllCuisine());
+    	cuisinesarrayList.put(allcuisine);
+    	try {
+			SQL:{
+    		connection = DBConnection.createConnection();
+	    		/*String sql =" select distinct fkd.cuisin_id,"
+	    				   	+" fc.cuisin_name,fc.cuisine_image"
+		    				+" from fapp_kitchen_details fkd "
+		    				+" join sa_area sa "
+		    				+" on sa.area_id = fkd.area_id "
+		    				+" join "
+		    				+" fapp_cuisins fc "
+		    				+" on fkd.cuisin_id = fc.cuisin_id "
+		    				+"  where fkd.area_id =  "
+		    				+" (select area_id from sa_area where area_name ILIKE ? and city_id = "
+		    				+" (select city_id from sa_city where city_name ILIKE ?))";*/
+    		String sql = "SELECT cuisin_id,cuisin_name,cuisine_image FROM fapp_cuisins "
+    				+ " WHERE is_active = 'Y' order by cuisin_id  ";
+	    		try {
+					preparedStatement = connection.prepareStatement(sql);
+					
+					resultSet = preparedStatement.executeQuery();
+					while (resultSet.next()) {
+						JSONObject tempCuisine = new JSONObject();
+						
+						tempCuisine.put("cuisineid", resultSet.getInt("cuisin_id"));
+						String tempImage  = resultSet.getString("cuisine_image");
+						String cuisineImage;
+						if(tempImage.contains("C:\\apache-tomcat-7.0.62/webapps/")){
+							cuisineImage = tempImage.replace("C:\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+						}else if(tempImage.startsWith("http://")){
+							cuisineImage = tempImage.replace("http://", "");
+						}else{
+							cuisineImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+						}
+						
+						//String categoryImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+						//jobject.put("categoryimage", resultSet.getString("category_image"));
+						tempCuisine.put("cuisineimage", cuisineImage);
+						tempCuisine.put("cuisinename", resultSet.getString("cuisin_name"));
+						tempCuisine.put("categorylist", fetchCategoriesOfCuisine(tempCuisine.getInt("cuisineid")));
+						cuisinesarrayList.put(tempCuisine);
+					}
+				}  catch (Exception e) {
+					e.printStackTrace();
+				} finally{
+					if(connection!=null){
+						connection.close();
+					}
+				}	
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	
+    	
+    	System.out.println("Cuisine List size: "+cuisinesarrayList.length());
+    	cuisineList.put("cuisinelist", cuisinesarrayList);
+    	return cuisineList;
+    }
+    
+    public static JSONArray fetchCategoriesOfCuisineWithPincode(int CuisineID, String pincode, Connection connection){
+    	JSONArray categoryJSONArray = new JSONArray();
+    	try {
+			SQL:{
+    				//Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement = null;
+    				ResultSet resultSet = null;
+    				String sql = "select category_id,category_name from food_category "
+    						+ " where category_price IS NULL AND cuisine_id = ?";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setInt(1, CuisineID);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							JSONObject categoryObject = new JSONObject();
+							String categoryId = resultSet.getString("category_id");
+							categoryObject.put("categoryid", categoryId);
+							categoryObject.put("categoryname", resultSet.getString("category_name"));
+							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode, connection));
+							categoryJSONArray.put(categoryObject);
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						/*if(connection!=null){
+							connection.close();
+						}*/
+					}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	System.out.println("Category size::"+categoryJSONArray.length());
+    	return categoryJSONArray;
+    }
+    
+    
+    public static JSONArray fetchCategoriesOfCuisine(int CuisineID){
+    	JSONArray categoryJSONArray = new JSONArray();
+    	try {
+			SQL:{
+    				Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement = null;
+    				ResultSet resultSet = null;
+    				String sql = "select category_id,category_name from food_category "
+    						+ " where category_price IS NULL AND cuisine_id = ?";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setInt(1, CuisineID);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							JSONObject categoryObject = new JSONObject();
+							String categoryId = resultSet.getString("category_id");
+							categoryObject.put("categoryid", categoryId);
+							categoryObject.put("categoryname", resultSet.getString("category_name"));
+							categoryJSONArray.put(categoryObject);
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return categoryJSONArray;
+    }
+    
+    public static JSONArray fetchCategoriesOfAllCuisineWithPincode(String pincode,Connection connection){
+    	JSONArray categoryJSONArray = new JSONArray();
+    	try {
+			SQL:{
+    				//Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement = null;
+    				ResultSet resultSet = null;
+    				String sql = "select category_id,category_name from food_category "
+    						+ " where category_price IS NULL order by category_id";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							JSONObject categoryObject = new JSONObject();
+							String categoryId = resultSet.getString("category_id");
+							categoryObject.put("categoryid", categoryId);
+							categoryObject.put("categoryname", resultSet.getString("category_name"));
+							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode ,connection));
+							categoryJSONArray.put(categoryObject);
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						/*if(connection!=null){
+							connection.close();
+						}*/
+					}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	System.out.println("All category size: "+categoryJSONArray.length());
+    	return categoryJSONArray;
+    }
+    
+    public static JSONArray fetchCategoriesOfAllCuisine(){
+    	JSONArray categoryJSONArray = new JSONArray();
+    	try {
+			SQL:{
+    				Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement = null;
+    				ResultSet resultSet = null;
+    				String sql = "select category_id,category_name from food_category "
+    						+ " where category_price IS NULL order by category_id";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							JSONObject categoryObject = new JSONObject();
+							categoryObject.put("categoryid", resultSet.getString("category_id"));
+							categoryObject.put("categoryname", resultSet.getString("category_name"));
+							categoryJSONArray.put(categoryObject);
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return categoryJSONArray;
+    }
+    
+    /*public static JSONArray fetchCategoriesOfAllCuisineWithPincode(String pincode){
+    	JSONArray categoryJSONArray = new JSONArray();
+    	try {
+			SQL:{
+    				Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement = null;
+    				ResultSet resultSet = null;
+    				String sql = "select category_id,category_name from food_category "
+    						+ " where category_price IS NULL order by category_id";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							JSONObject categoryObject = new JSONObject();
+							String categoryId = resultSet.getString("category_id");
+							categoryObject.put("categoryid", categoryId);
+							categoryObject.put("categoryname", resultSet.getString("category_name"));
+							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode));
+							categoryJSONArray.put(categoryObject);
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return categoryJSONArray;
+    }*/
+    
     
     public static Integer getNearestKitchenId(Double destlat, Double destlong){
     	Integer kitchenId = 0;
@@ -6038,7 +6671,8 @@ public class DBConnection {
     				Connection connection = DBConnection.createConnection();
     				PreparedStatement preparedStatement = null;
     				ResultSet resultSet = null;
-    				String sql = "select zip_code,locality_name from sa_zipcode where area_id = ? and is_delete = 'N' and is_active='Y'";
+    				String sql = "select zip_code,locality_name from sa_zipcode "
+    						+ "where area_id = ? and is_delete = 'N' and is_active='Y'";
     				try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setInt(1, areaId);
@@ -6272,9 +6906,12 @@ public class DBConnection {
 								String categoryImage;
 								if(tempImage.contains("C:\\apache-tomcat-7.0.62/webapps/")){
 									 categoryImage = tempImage.replace("C:\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+								}else if(tempImage.startsWith("http://")){
+									categoryImage = tempImage.replace("http://", "");
 								}else{
 									 categoryImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
 								}
+								
 								jobject.put("categoryimage", categoryImage);
 						    	jobject.put("categoryname",resultSet.getString("category_name"));
 						    	jobject.put("stock", resultSet.getString("category_stock"));
@@ -6315,7 +6952,165 @@ public class DBConnection {
 		
 	}
 	
-   
+	public static JSONArray fetchItemsWrtCategory(int categoryId,String pincode,Connection connection) throws JSONException{
+		//JSONObject fetchAllCategory = new JSONObject();
+		JSONArray jArray = new JSONArray();
+			try {
+				SQL:{
+						//Connection connection = DBConnection.createConnection();
+						PreparedStatement preparedStatement = null;
+						ResultSet resultSet = null;
+						/*String sql ="SELECT * FROM vw_category_from_kitchen_details WHERE area_id = "
+								   +" (select area_id from sa_area where area_name ILIKE ? and city_id = "
+			    				   +" (select city_id from sa_city where city_name ILIKE ?))";*/
+						String sql ="SELECT distinct kitchen_cuisine_id,category_id,item_name,item_code,"
+									+" item_price,item_description,item_image "
+									+" FROM vw_category_item_details_from_kitchen "
+									+" WHERE category_id=? and serving_zipcodes LIKE ? order by item_code"	;	
+						try {
+							preparedStatement = connection.prepareStatement(sql);
+							preparedStatement.setInt(1, categoryId);
+							preparedStatement.setString(2, "%"+pincode+"%");
+							int serialNo = 0;
+							resultSet = preparedStatement.executeQuery();
+							while (resultSet.next()) {
+								JSONObject jobject =  new JSONObject();
+								jobject.put("serial", serialNo);
+								jobject.put("itemcode", resultSet.getString("item_code"));
+								jobject.put("cuisineid", resultSet.getString("kitchen_cuisine_id"));
+								jobject.put("categoryid",resultSet.getString("category_id"));
+								jobject.put("categorydescription", resultSet.getString("item_description") );
+								String tempImage  = resultSet.getString("item_image");
+								String categoryImage;
+								if(tempImage.contains("C:\\apache-tomcat-7.0.62/webapps/")){
+									 categoryImage = tempImage.replace("C:\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+								}else if(tempImage.startsWith("http://")){
+									categoryImage = tempImage.replace("http://", "");
+								}else{
+									 categoryImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+								}
+								
+								jobject.put("categoryimage", categoryImage);
+						    	jobject.put("categoryname",resultSet.getString("item_name"));
+						    	String stock = getItemStock(pincode, jobject.getString("itemcode"), connection);
+						    	jobject.put("stock", stock);
+						    	jobject.put("lunchstock", stock);
+						    	jobject.put("dinnerstock", stock);
+						    	jobject.put("mealtype", getLunchOrDinner(pincode, jobject.getString("itemcode"),connection));
+						    	jobject.put("categoryprice", resultSet.getDouble("item_price"));
+						    	jArray.put(jobject);
+						    	serialNo++;
+							}
+							
+						} catch (Exception e) {
+							e.printStackTrace();
+						}finally{
+							if(preparedStatement!=null){
+								preparedStatement.close();
+							}
+							/*if(connection!=null){
+								connection.close();
+							}*/
+						}
+			}
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+			
+			//System.out.println("Category size: "+jArray.length());
+			//fetchAllCategory.put("Categories", jArray);
+	    	return jArray;
+	}
+	
+	
+	/*public static Integer getItemStock(Integer itemId, Integer kitchenId){*/
+	public static String getItemStock(String pincode, String itemCode,Connection connection ){
+    	Integer stock =0;
+    	try {
+			SQL:{
+    				//Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement = null;
+    				ResultSet resultSet = null;
+    				/*String sql = "select stock from fapp_kitchen_items where "
+								+" kitchen_id = ? and item_id = ?";*/
+    				String sql = "select sum(stock)AS stock "
+								+" from fapp_kitchen_items fki "
+								+" join fapp_kitchen fk "
+								+" on fki.kitchen_id = fk.kitchen_id "
+								+" and serving_zipcodes like ? "
+								+" where fki.item_code= ? ";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						
+						preparedStatement.setString(1, "%"+pincode+"%");
+						preparedStatement.setString(2, itemCode);
+						resultSet = preparedStatement.executeQuery();
+						if (resultSet.next()) {
+							stock = resultSet.getInt("stock");
+						}
+					} catch (Exception e) {
+						System.out.println("ERROR DUE TO:"+e.getMessage());
+					}finally{
+						/*if(connection!=null){
+							connection.close();
+						}*/
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+					}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return stock.toString();
+    }
+  
+	
+	public static String getLunchOrDinner( String pincode , String itemCode , Connection connection){
+		Set<String> lunchOrDinnerSet = new HashSet<String>();
+		try {
+			SQL:{
+					//Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql = "select fk.dinner_available " 
+								+" from fapp_kitchen_items fki "
+								+" join fapp_kitchen fk "
+								+" on fki.kitchen_id = fk.kitchen_id "
+								+" and serving_zipcodes like ?"
+								+" where fki.item_code=?";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, "%"+pincode+"%");
+						preparedStatement.setString(2, itemCode);
+						
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							lunchOrDinnerSet.add(resultSet.getString(1));
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}finally{
+						/*if(connection!=null){
+							connection.close();
+						}*/
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+					}
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		if(lunchOrDinnerSet.contains("Y") && lunchOrDinnerSet.contains("N"))
+			return "Both";
+		else if(lunchOrDinnerSet.contains("Y"))
+			return "Dinner";
+		else
+			return "Lunch";
+		//return lunchOrDinnerSet;
+	}
+	
     public static JSONObject fetchCategoryList(String city, String location, Integer cuisineId) throws Exception {
     	
 		JSONArray jArray = new JSONArray();
@@ -6485,6 +7280,46 @@ public class DBConnection {
 		return categoryDescription;
     }
 	
+    public static String getItemDescription(int categoryid){
+    	String categoryDescription = "";
+    	ArrayList<String> catDesList = new ArrayList<String>();
+    	StringBuilder categoryBuilder = new StringBuilder();
+    	try {
+			SQL:{
+    				Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement = null;
+    				ResultSet resultSet = null;
+    				//String sql = "select item_name from food_items where category_id = ?";
+    				String sql = "select item_id,item_description,item_code,item_price from food_items where category_id =?";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setInt(1, categoryid);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+					//		catDesList.add(resultSet.getString("item_name"));
+							catDesList.add( toCamelCase(resultSet.getString("item_description")));
+						}
+					} catch (Exception e) {
+						System.out.println("ERROR DUE TO:"+e.getMessage());
+					}finally{
+						if(connection!=null){
+							connection.close();
+						}
+					}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	
+    	String temp = catDesList.toString();
+		String fb = temp.replace("[", "");
+		String bb = fb.replace("]", "");
+		categoryBuilder.append(bb);
+		categoryDescription = categoryBuilder.toString();
+		
+		return categoryDescription;
+    }
+    
     public static Integer getStock(Integer kitchenId, Integer cuisineId, Integer categoryId){
     	Integer stock =0;
     	try {
@@ -6750,7 +7585,128 @@ public class DBConnection {
     	return jsonObject;
     }
     
+    /**
+   	 * Generate Promo code
+   	 * @param deviceregId
+   	 * @throws IOException
+   	 */
+    public static String generateReferalCode(String userName){
+   		String referalCode = "";
+   		Integer serialuserid=0;
+   		Connection connection = null; 
+   		try {
+   			 connection = DBConnection.createConnection();
+   			SQL:{
+   					PreparedStatement preparedStatement = null;
+   					ResultSet resultSet = null;
+   					String sql = "SELECT MAX(login_id) FROM fapp_accounts";
+   					try {
+   						preparedStatement = connection.prepareStatement(sql);
+   						resultSet = preparedStatement.executeQuery();
+   						if(resultSet.next()){
+   							serialuserid = resultSet.getInt(1);
+   						}
+   					} catch (Exception e) {
+   						// TODO: handle exception
+   					}finally{
+   						if(connection!=null){
+   							connection.close();
+   						}
+   					}
+   			}
+   		} catch (Exception e) {
+   			// TODO: handle exception
+   		}
+   		
+   		if(userName.length()==2){
+			userName = userName + "E";
+			referalCode = userName.substring(0,3);
+			referalCode = referalCode+String.format("%06d", serialuserid);
+		}else if(userName.length()==1){
+			userName = userName + "EE";
+			referalCode = userName.substring(0,3);
+			referalCode = referalCode+String.format("%06d", serialuserid);
+		}else{
+			referalCode = userName.substring(0,3);
+			referalCode = referalCode+String.format("%06d", serialuserid);
+		}
+   	    System.out.println("After calculation from Db referal no is::"+referalCode.toUpperCase());
+   		return referalCode.toUpperCase();
+   	}
+    
+    public static boolean updateMyCode(String myCode,String mobileNo){
+    	boolean updateStatus = false;
+    	System.out.println("My code : "+myCode+" Mobile No: "+mobileNo);
+    	try {
+			SQL:{
+    				Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement = null;
+    				String sql ="UPDATE fapp_accounts set my_code = ? where mobile_no=?";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, myCode.toUpperCase());
+						preparedStatement.setString(2, mobileNo);
+						int count=preparedStatement.executeUpdate();
+						if(count>0){
+							updateStatus = true;
+							System.out.println("New users code "+myCode+" is updated...");
+						}
+					} catch (Exception e) {
+						System.out.println("Updation failed in update mycode!"+e.getMessage());
+						
+					}finally{
+						if (preparedStatement!=null) {
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return updateStatus;
+    }
    
+    
+    public static boolean isRefCodeExists(String referalCode){
+    	boolean isExists = false;
+    	int count = 0;
+    	try {
+			SQL:{
+    				Connection connection = DBConnection.createConnection();
+    				PreparedStatement preparedStatement =  null;
+    				ResultSet resultSet = null;
+    				String sql = "SELECT COUNT(my_code)AS ref_code from fapp_accounts where my_code = ?";
+    				try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, referalCode);
+						resultSet = preparedStatement.executeQuery();
+						if(resultSet.next()){
+							count = resultSet.getInt("ref_code");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						System.out.println("Count failed in isRefCodeExists "+e.getMessage());
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+    				
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	if(count>0){
+    		isExists = true;
+    	}
+    	return isExists;
+    }
     /**
 	 * Generate order number
 	 * @param deviceregId
@@ -6799,7 +7755,7 @@ public class DBConnection {
 			newMonth = String.valueOf(month);
 		}
 	    orderNumber = "REG/"+newDay+"/"+newMonth+"/"+String.format("%06d", serialorderid+1);
-	    System.out.println("Data send to DB::"+orderNumber);
+	    System.out.println("After calculation from Db order no is::"+orderNumber);
 		return orderNumber;
 	}
     
@@ -7280,6 +8236,15 @@ public class DBConnection {
     		}else{
     			System.out.println("NO BOY FOUND FROM EAZELYF!");
     			System.out.println("----GO FOR QUICK DROP!------");
+    			ArrayList<Kitchen> kitchenList = getPickUpList(orderNo);
+				Customer customer = getUserDetails(orderNo);
+				Collections.sort(kitchenList);
+				Order order = getOrderDetails(orderNo);
+				
+				String emailBody = getBody(order, orderNo, kitchenList, customer);
+				///change this email id to quickdrop's email id
+				String receiverMailId = "somnathdutta048@gmail.com";
+				mailSender(receiverMailId, "Order Delivery Details", emailBody);
     			receivedJsonObject.put("status", true);
     			receivedJsonObject.put("boyId", "QUICKBOYID-1");
 		    	receivedJsonObject.put("boyName", "QUICK BOY");
@@ -7598,7 +8563,8 @@ public class DBConnection {
 			itemList = getKitchenItem(kitchen.kitchenId , orderNo);
 			for(Item item : itemList){
 				orderMail += "\n ITEM FROM KITCHEN: CUISIN NAME = "+item.cuisineName+"\t CATEGORY NAME = "+item.categoryName+
-						"\t QUANTITY ="+item.quantity+"\t PRICE = "+item.price;
+						"\t QUANTITY ="+item.quantity+"\t PRICE = "+item.price +
+						"\n ITEM NAME = "+item.itemName+"\t DESCRIPTION = "+item.itemDescription;
 			}
 		}
 		orderMail += "\n\nDROP DETAILS: \n CUSTOMER NAME ="+customer.userName+"\n ADDRESS = "+customer.userAddress+"\n CONTACT="+
@@ -7694,6 +8660,8 @@ public class DBConnection {
 							item.quantity = resultSet.getInt("qty");
 							item.price = resultSet.getDouble("total_price");
 							item.paymentType = "COD";//need to changed
+							item.itemName = resultSet.getString("item_name");
+							item.itemDescription = resultSet.getString("item_description");
 							itemList.add(item);
 						}
 					} catch (Exception e) {
@@ -7717,7 +8685,8 @@ public class DBConnection {
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
 					Connection connection = DBConnection.createConnection();
-					String sql = "select meal_type,time_slot,order_date::date AS ordered_date,order_date::timestamp as order_date from fapp_orders where order_no = ?";
+					String sql = "select meal_type,time_slot,order_date::date AS ordered_date,"
+							+ "order_date::timestamp as order_date from fapp_orders where order_no = ?";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, orderNo);
