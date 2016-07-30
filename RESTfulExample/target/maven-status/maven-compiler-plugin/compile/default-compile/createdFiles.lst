@@ -7,6 +7,7 @@ com\mkyong\rest\Kitchen.class
 com\mkyong\rest\TimeCalculation.class
 com\mkyong\TestJson.class
 com\mkyong\rest\Login.class
+utility\Reasearch.class
 com\mkyong\Categories.class
 pojo\User.class
 com\mkyong\rest\JSONService.class

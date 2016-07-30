@@ -3061,9 +3061,9 @@ public class DBConnection {
     	    	}
     			ArrayList<KitchenStock> updationKitchenStockList = new ArrayList<KitchenStock>();
     			
-    			updationKitchenStockList = utility.Utility.getKitchenStockList(kitchenQtyList);
+    			updationKitchenStockList = utility.Utility.findTotalItemsForStockUpdation(kitchenQtyList);
     			System.out.println("Upadtion kitchen stock list size : "+updationKitchenStockList.size());
-    			//updateNewStock(updationKitchenStockList);
+    			updateNewStock(updationKitchenStockList);
     			
     			isOrderPlaced.put("status", true);
     			isOrderPlaced.put("message", "Your order placed successfully!");
@@ -4961,6 +4961,7 @@ public class DBConnection {
     public static JSONObject deliverOrder(String boyUserId, String orderNo, String kitchenId)throws Exception{
     	JSONObject deliverJsonObj = new JSONObject();
     	if(orderDeliveredFromPickUpToDrop(boyUserId, orderNo, kitchenId)){//One flag "delivered" is upadted with current time wrt to orderid
+    		 makeOrderCompleted(orderNo);
     		deliverJsonObj.put("status", true);
     		if(isAllOrdersDelivered(boyUserId)){// check whether the no of total order and delivered order are same or not
     			makeDriverIdle(boyUserId);//one flag boy status is change from busy to idle 
@@ -5098,6 +5099,43 @@ public class DBConnection {
 			// TODO: handle exception
 		}
     }
+    
+    public static void makeOrderCompleted(String orderNo){
+    	boolean updated= false;
+    	if(isAllKitchenDelivered(orderNo)){
+    		try {
+    			SQL3:{
+        		Connection connection = DBConnection.createConnection();
+        		PreparedStatement preparedStatement = null;
+        		String sql = "UPDATE fapp_orders SET order_status_id=7,delivery_date_time=current_timestamp,"
+        				+ " is_message_send='Y' WHERE order_no = ?";
+        		try {
+        			preparedStatement = connection.prepareStatement(sql);
+        			preparedStatement.setString(1, orderNo);
+        			int count = preparedStatement.executeUpdate();
+        			if(count>0){
+        				updated = true;
+        				sendMessageToMobile(getCustomerMobile(orderNo, "REGULAR"), 
+        						orderNo, "orderTime" , 7);
+        			}
+        		} catch (Exception e) {
+        			e.printStackTrace();
+        		}finally{
+        			if(connection!=null){
+        				connection.close();
+        			}
+        		}
+			} 
+    		}catch (Exception e) {
+				// TODO: handle exception
+			}
+    	}
+    	if(updated){
+    		System.out.println("Order status changed to completed. . .");
+    	}
+    	//return updated;
+    }
+    
     
     public static JSONObject getOrders(String deliveryBoyUserId, String password)throws JSONException{
     	JSONObject orderId =  new JSONObject();
