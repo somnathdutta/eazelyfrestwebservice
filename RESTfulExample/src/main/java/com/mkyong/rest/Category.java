@@ -4,12 +4,10 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.DateFormat;
@@ -17,9 +15,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
-import javax.jws.Oneway;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -28,7 +24,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -36,21 +31,32 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import com.mkyong.rest.OrderItems; 
-
-import org.apache.http.Header;
-import org.apache.http.HeaderIterator;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.StatusLine;
-import org.apache.http.impl.DefaultHttpResponseFactory;
-import org.apache.http.message.BasicHttpResponse;
-import org.apache.http.params.HttpParams;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.w3c.dom.Document;
+
+import pojo.MealTypePojo;
+import pojo.Prepack;
+import pojo.TimeSlot;
+import pojo.User;
+import utility.NumberCheck;
+import dao.AddressDAO;
+import dao.AllItemsDAO;
+import dao.BikerDAO;
+import dao.BookDriver;
+import dao.ForgotPassword;
+import dao.ItemDAO;
+import dao.KitchenNotifyOrderDAO;
+import dao.KitchenReceiveOrderDAO;
+import dao.LoginDAO;
+import dao.PickJiDAO;
+import dao.PincodeDAO;
+import dao.PlaceSubscriptionOrderDAO;
+import dao.StartMyTripDAO;
+import dao.SubmitFeedBackDAO;
+import dao.TimeSlotFinder;
+import dao.UserDetailsDao;
 
 /*@Path("/json/category")*/
 @Path("/category")
@@ -130,8 +136,9 @@ public class Category {
 		
 		System.out.println("shareRegId webservice is called... emailid--"+emailid);
 		
-		JSONObject jsonObject ;
-		jsonObject = DBConnection.shareRegId(regid, emailid);
+		JSONObject jsonObject = new JSONObject() ;
+		jsonObject.put("status", "inserted");
+		//jsonObject = DBConnection.shareRegId(regid, emailid);
 		return jsonObject;
 	}
 	
@@ -152,15 +159,22 @@ public class Category {
 			@FormParam("user")String user,
 			@FormParam("deliveryzone")String deliveryZone,
 			@FormParam("deliveryaddress")String deliveryAddress,
-			@FormParam("instruction")String instruction) throws JSONException{
+			@FormParam("instruction")String instruction
+			/*@FormParam("email")String email*/) throws JSONException{
 		
 		System.out.println("saveaddress webservice is called * * * * * * *with address type-->"+addressType+" and phone no--->"+phNumber+" user-->"+user);
-		System.out.println("Mailid->"+mailId+" city->"+city+" location->"+location+" pincode->"+pincode);
+		System.out.println("Mailid->"+mailId+" name->"+name+" location->"+location+" pincode->"+pincode);
+		//System.out.println("email-->"+email);
 		System.out.println("user length-->"+user.length());
 		JSONObject saveAddress ; 
-		
+		/*if(email != null ){
+			AddressDAO.updateMyEmailID(email, user);
+		}*/
+		if(mailId!=null){
+			AddressDAO.updateMyEmailID(mailId, user);
+		}
 		saveAddress = DBConnection.saveAddress(addressType, mailId, flatNo, streetName, landMark, city, location, 
-				pincode,name,phNumber,user,deliveryZone,deliveryAddress,instruction);
+				pincode,user,deliveryZone.trim(),deliveryAddress.trim(),instruction.trim());
 		
 		System.out.println("saveaddress webservice json response::"+saveAddress);
 		
@@ -191,7 +205,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchalladdresstype(@FormParam("mobileno")String mobNo) throws JSONException{
 		System.out.println("fetchalladdresstype web service called*****with mob no->"+mobNo);
-		JSONObject fetchalladdresstypeObject  ;
+		JSONObject fetchalladdresstypeObject = new JSONObject() ;
 		/*if(mobNo.length()!=0){
 			fetchalladdresstypeObject = DBConnection.fetchalladdresstype(mobNo);
 			
@@ -201,7 +215,17 @@ public class Category {
 			fetchalladdresstypeObject.put("addresstypelist", " ");
 			return fetchalladdresstypeObject;
 		}*/
-		fetchalladdresstypeObject = DBConnection.fetchalladdresstype(mobNo);
+		/*fetchalladdresstypeObject = DBConnection.fetchalladdresstype(mobNo);*/
+		if(AddressDAO.isAddressExists(mobNo)){
+			
+			fetchalladdresstypeObject = AddressDAO.fetchalladdresstype(mobNo);
+		}else{
+			fetchalladdresstypeObject.put("status", "204");
+    		fetchalladdresstypeObject.put("message", "No address found!");
+        	fetchalladdresstypeObject.put("addresstypelist", new JSONArray());
+        	return fetchalladdresstypeObject;
+		}
+		
 		System.out.println("fetchalladdresstype web service end *****");
 		return fetchalladdresstypeObject;
 		
@@ -235,9 +259,13 @@ public class Category {
 	public JSONObject login(@FormParam("mobileNumber")String mobNo,
 			@FormParam("password")String password ) throws JSONException{
 		System.out.println("login webservice is called * * * * * * * * with mobile no-->"+mobNo+" and password-->"+password);
-		JSONObject object ; 
+		JSONObject object = null ; 
 		
-		object = DBConnection.checklogin(mobNo, password);
+		if( !NumberCheck.isNumeric(mobNo)){
+			object = LoginDAO.checkKitchenlogin(mobNo, password);
+		}
+		
+		//object = DBConnection.checklogin(mobNo, password);
 		
 		System.out.println("login webservice json response status::"+object);
 		
@@ -248,12 +276,13 @@ public class Category {
 	@POST
 	@Path("/userlogin")
 	@Produces(MediaType.APPLICATION_JSON)
-	public JSONObject userLogin(@FormParam("mobileNumber")String mobNo,
+	public JSONObject userLogin(@FormParam("mobileNumber")String mobileNo,
 			@FormParam("password")String password ) throws JSONException{
-		System.out.println("User login webservice is called * * * * * * * * with mobile no-->"+mobNo+" and password-->"+password);
+		System.out.println("User login webservice is called * * * * * * * * with mobile no-->"+mobileNo+" and password-->"+password);
 		JSONObject object ; 
 		
-		object = DBConnection.checkUserlogin(mobNo, password);
+		/*object = DBConnection.checkUserlogin(mobNo, password);*/
+		object = LoginDAO.checkUserlogin(mobileNo, password);
 		
 		System.out.println("User login webservice json response status::"+object);
 		
@@ -298,9 +327,12 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject forgotPassword(@FormParam("email")String email) throws Exception{
 		System.out.println("forgotPassword webservice is called...with mail id-->"+email);
-		JSONObject object ; 
-		//object = DBConnection.getPassword(email);
-		object = DBConnection.forgotPassword(email);
+		JSONObject object = new JSONObject() ; 
+		if(ForgotPassword.emailExists(email)){
+			object = DBConnection.forgotPassword(email);
+		}else{
+			object.put("status", false);
+		}
 		System.out.println("forgotPassword status::"+object);
 		return object;
 	}
@@ -349,6 +381,20 @@ public class Category {
 		return jorders;
 	}
 	
+	@POST
+	@Path("/reached")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject reachedKitchen(@FormParam("boyid") String boyUserId, @FormParam("orderno")String orderNo,
+			@FormParam("kitchenId")String kitchenId) throws Exception{
+		System.out.println("*******************************************************************");
+		System.out.println("Biker boy "+boyUserId+" REACHED webservice is called for "+orderNo+" From "+kitchenId);
+		System.out.println("*******************************************************************");
+		JSONObject jorders = new JSONObject();
+		
+		jorders = BikerDAO.reachedKitchen(boyUserId, orderNo, kitchenId);
+		System.out.println(jorders);
+		return jorders;
+	}
 	
 	@POST
 	@Path("/pickuporder")
@@ -414,25 +460,81 @@ public class Category {
 		return jorders;
 	}
 	
+	
+	@POST
+	@Path("/startmytrip")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject startMyTrip(@FormParam("orderdetails")String orderDetails,
+			@FormParam("gpsaddress")String gpsAddress,
+			@FormParam("latitude")String latitude,
+			@FormParam("longitude")String longitude) throws Exception{
+		System.out.println("START MY TRIP CALLING * * * * * * * * *with address-"+gpsAddress+" "
+				+ "Lat->"+latitude+" Long->"+longitude);
+		System.out.println("orderdetails->"+orderDetails);
+		
+		ArrayList<StartTripBean> tripItemList = new  ArrayList<StartTripBean>();
+		
+		if(! orderDetails.equals("[]")){
+			if(orderDetails.startsWith("[")){
+		    	orderDetails = orderDetails.replace("[", "");
+		    }
+		    if(orderDetails.endsWith("]")){
+		    	orderDetails = orderDetails.replace("]", "");
+		    }
+		    String[] mystrarr = orderDetails.split(",");
+		    for(String str : mystrarr){
+		    	String[] mystrnewarr = str.split("\\$");
+		    	StartTripBean startTripBean = new  StartTripBean();
+		    	startTripBean.orderNo = mystrnewarr[0];
+		    	startTripBean.boyUserId = mystrnewarr[1];
+		    	tripItemList.add(startTripBean);
+		    }	
+		}else{
+			System.out.println("Blank order list!");
+		}
+		
+	    JSONObject jorders = new JSONObject();
+	    if(orderDetails == null || latitude == null || longitude == null || gpsAddress==null || tripItemList.size()==0){
+	    	jorders.put("status", "400");
+	    	jorders.put("message", "Orderdetails = "+orderDetails+" Latitude = "+latitude+" Longitude = "+longitude+" Gpsaddress = "+gpsAddress);
+	    	System.out.println("START MY TRIP END ^ ^ ^ ^ ^ ^ "+jorders);
+	    	return jorders;
+	    }else if(tripItemList.size()>0){
+	    	jorders = StartMyTripDAO.startMyTripForOrders(tripItemList, gpsAddress, latitude, longitude);
+			System.out.println("START MY TRIP END ^ ^ ^ ^ ^ ^ "+jorders);
+			return jorders;
+	    }else{
+	    	jorders.put("status", "400");
+	    	jorders.put("message", "No order list");
+	    	System.out.println("START MY TRIP END ^ ^ ^ ^ ^ ^ "+jorders);
+			return jorders;
+	    }
+		
+	}
+	
+	
 	@GET
 	@Path("/map")
 	@Produces(MediaType.TEXT_HTML)
 	public String map(@QueryParam("id")String subcriptionNo) throws Exception{
 		System.out.println("Map called . . . . ");
-		String[] latlng = new String[3];
-		latlng = DBConnection.trackMyOrder(subcriptionNo);
-		String[] homeltlng = new String[2];
-		homeltlng = DBConnection.getLatLongPositions( DBConnection.getAddressOfUser(subcriptionNo) );
+		String[] boylatlng = new String[3];
+		boylatlng = DBConnection.trackMyOrder(subcriptionNo);
+		
 		String userAddress = DBConnection.getAddressOfUser(subcriptionNo);
+		String[] homeltlng = new String[2];
+		homeltlng = DBConnection.getLatLongPositions( userAddress );
+		
+		
 		String DbDetails[] =  new String[2];;
 			DbDetails =	DBConnection.getDriverNameNum(subcriptionNo);
 		
 		JSONArray markers =  new JSONArray();
 			JSONObject markersource = new JSONObject();
 			markersource.put("title", "Food Source");
-			markersource.put("lat", latlng[0]);
-			markersource.put("lng",latlng[1]);
-			markersource.put("description", latlng[2]);
+			markersource.put("lat", boylatlng[0]);
+			markersource.put("lng",boylatlng[1]);
+			markersource.put("description", boylatlng[2]);
 			
 			JSONObject markerdestination =  new JSONObject();
 			markerdestination.put("title", "Delivery destination");
@@ -528,7 +630,7 @@ public class Category {
 	public JSONObject kitchenorders(@FormParam("kitchenid")String kitchenid) throws JSONException{
 		System.out.println(" kitchenorders web service is called...");
 		JSONObject kitchenorders = DBConnection.getKitchenOrders(kitchenid);
-		System.out.println("kitchenorders web service is end here:"+kitchenorders.length());
+		System.out.println("kitchenorders web service is end here:");
 		return kitchenorders;
 	}
 	
@@ -539,7 +641,8 @@ public class Category {
 			@FormParam("orderno")String orderno) throws Exception{
 		System.out.println("Kitchen's receiveorder webservice is called * * * * * *Kitchen Name:"+kitchenName+" Order No-->"+orderno);
 		JSONObject receiveOrderObject ;
-		receiveOrderObject = DBConnection.receiveOrderFromKitchen(orderno, kitchenName);// need to be changed
+		//receiveOrderObject = DBConnection.receiveOrderFromKitchen(orderno, kitchenName);// need to be changed
+		receiveOrderObject = KitchenReceiveOrderDAO.receiveOrderFromKitchen(orderno, kitchenName);// need to be changed
 		System.out.println("Kitchen's receiveorder webservice ends here * * * * * * "+receiveOrderObject.length());
 		return receiveOrderObject;
 	}
@@ -551,7 +654,8 @@ public class Category {
 			@FormParam("orderno")String orderno,@FormParam("boyId")String boyId) throws JSONException{
 		System.out.println("Notify logistics web service is called*  * * * *"+kitchenName+" "+orderno+" "+boyId);
 		JSONObject notifyObject ;
-		notifyObject = DBConnection.notifyLogistics(orderno, kitchenName, boyId);// need to be changed
+		notifyObject = KitchenNotifyOrderDAO.notifyLogistics(orderno, kitchenName, boyId);
+		//notifyObject = DBConnection.notifyLogistics(orderno, kitchenName, boyId);// need to be changed
 		System.out.println("Notify logistics web service JSON Object - - "+notifyObject);
 		return notifyObject;
 	}
@@ -565,6 +669,34 @@ public class Category {
 		JSONObject notifyObject ;
 		notifyObject = DBConnection.notifyLogistics1(orderno, kitchenName);// need to be changed
 		System.out.println("Notify logistics web service JSON Object - - "+notifyObject);
+		return notifyObject;
+	}
+	
+	/****************************
+	 * **********************
+	 * @param kitchenName
+	 * @param orderno
+	 * @return
+	 * @throws Exception *********************
+	 ***************************/
+	@POST
+	@Path("/notifyPickJi")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject notifyPickJi(@FormParam("user")String kitchenName,
+			@FormParam("orderno")String orderno) throws Exception{
+		System.out.println("Notify logistics web service is called*  * * * *");
+		JSONObject notifyObject ;
+		notifyObject = PickJiDAO.placeOrderToPickJi(orderno, kitchenName);// need to be changed
+		System.out.println("Notify logistics web service JSON Object - - "+notifyObject);
+		JSONObject pickJiJson = new JSONObject();
+		pickJiJson = notifyObject;
+		String responseCode = pickJiJson.getString("responseCode");
+		if(responseCode.equals("200")){
+			pickJiJson.put("kitchenName", kitchenName);
+			pickJiJson.put("orderNo", orderno);
+			pickJiJson.put("pickJiOrderID", notifyObject.getString("orderID"));
+			BookDriver.savePickjiOrderId(pickJiJson);
+		}
 		return notifyObject;
 	}
 	
@@ -622,12 +754,9 @@ public class Category {
 	@Path("/placeOrder")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject placeOrder(
-			//@FormParam("contactName")String contactName,
-		//	@FormParam("contactNumber")String contactNumber,
-		//	@FormParam("flatNumber")String flatNumber,
-		//	@FormParam("streetName")String streetName,
-		//	@FormParam("landmark")String landmark,
+			@FormParam("usertype")String userType,
 			@FormParam("payAmount")String payAmount,
+			@FormParam("credit")boolean credit,
 			@FormParam("mobileno")String contactNumber,
 			@FormParam("name")String guestName,
 			@FormParam("usermailId")String mailid,
@@ -639,26 +768,30 @@ public class Category {
 			@FormParam("subscriptiontype") String subscriptiontype,
 			@FormParam("day")String day,
 			@FormParam("locationId")Integer locationId,
+			@FormParam("payType")String payType,
 			@FormParam("timeslot")String timeslot,
-			@FormParam("mealtype")String mealtype,
+			@FormParam("mealtype")String mealType,
 			@FormParam("deliveryzone")String deliveryZone,
 			@FormParam("deliveryaddress")String deliveryAddress,
 			@FormParam("instruction")String instruction,
-			@FormParam("deliverydate")String deliveryDay
+			@FormParam("deliverydate")String deliveryDay,
+			@FormParam("slotdetails[]")List<String> timeSlotDetails
 			) throws Exception{
 		
 		System.out.println("placeOrder webservice is called * * * * * * * * *");
+		System.out.println("Usertype - >"+userType);
 		System.out.println("Name ->"+guestName);
 		System.out.println("deliveryday-->"+deliveryDay);
 		System.out.println("City -->"+city);
 		System.out.println("usermailId-->"+mailid);
 		System.out.println("payAmount-->"+payAmount);  
 		System.out.println("mobileno-->"+contactNumber);
-		//System.out.println("streetName -->"+streetName);
-		//System.out.println("flatNumber -->"+flatNumber);
+		System.out.println("credit -->"+credit);
+		System.out.println("payType -->"+payType);
 		System.out.println("fooddetails[]-->"+orderDetails.toString());
+		System.out.println("slotdetails[]-->"+timeSlotDetails.toString());
 		System.out.println("deliverypincode -->"+pincode);
-		System.out.println("Meal type-->"+mealtype);
+		System.out.println("Meal type-->"+mealType);
 		System.out.println("timeslot-->"+timeslot);
 		System.out.println("deliery zone-->"+deliveryZone);
 		System.out.println("delivery address-->"+deliveryAddress);
@@ -666,7 +799,7 @@ public class Category {
 		
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
 		JSONObject orderPlaced = new JSONObject();
-		Boolean sub = false;
+		Boolean sub = false;int totalNoOfQuantity = 0;
 		for(String str : orderDetails){
 	    	
 			OrderItems items = new OrderItems();
@@ -678,23 +811,34 @@ public class Category {
 	    	    	items.itemCode = order[2];
 	    	    	items.price = Double.valueOf(order[3]);
 	    	    	items.quantity = Integer.valueOf(order[4]);
-	    	   
-	    		}else if(order.length==8){
+	    	    	items.packing = "Meal Tray";
+	    	    	
+	    		}else if(order.length==6){
+	    			items.cuisineId = Integer.valueOf(order[0]);
+	    	    	items.categoryId = Integer.valueOf(order[1]);
+	    	    	items.itemCode = order[2];
+	    	    	items.price = Double.valueOf(order[3]);
+	    	    	items.quantity = Integer.valueOf(order[4]);
+	    	    	items.packing = order[5].toUpperCase();
+	    	    	
+	    		}
+	    		else if(order.length==7){
 	    			sub = true;
 	    			items.cuisineId = Integer.valueOf(order[0]);
 	    	    	items.categoryId = Integer.valueOf(order[1]);
-	    	    	items.quantity = Integer.valueOf(order[2]);
+	    	    	items.itemCode = order[2];
 	    	    	items.price = Double.valueOf(order[3]);
-	    	    	items.day = order[4];
-	    	    	items.meal = order[5];
-	    	    	String stDateUserString = order[6].trim();
+	    	    	items.quantity = Integer.valueOf(order[4]);
+	    	    	items.day = order[5];
+	    	    	items.meal = order[6];
+	    	    	/*String stDateUserString = order[6].trim();
 	    	    	String enDateUserString = order[7].trim();
 	    	    	DateFormat format1 = new SimpleDateFormat("MM-dd-yyyy");
 	    	    	java.util.Date stdate = null;
 	    	    	java.util.Date endate = null;
 	    	    	try {
-						/*stdate = sdf1.parse(stDateUserString);
-						endate = sdf1.parse(enDateUserString);*/
+						stdate = sdf1.parse(stDateUserString);
+						endate = sdf1.parse(enDateUserString);
 	    	    		stdate = format1.parse(stDateUserString);
 						endate = format1.parse(enDateUserString);
 					} catch (ParseException e) {
@@ -702,7 +846,7 @@ public class Category {
 						e.printStackTrace();
 					}
 					items.startDate = new java.sql.Date(stdate.getTime());
-	    	    	items.endDate = new java.sql.Date(endate.getTime());
+	    	    	items.endDate = new java.sql.Date(endate.getTime());*/
 	    	    	/*SimpleDateFormat sdf1 = new SimpleDateFormat("dd-MM-yyyy");
 	    	    	java.util.Date stdate = null;
 	    	    	java.util.Date endate = null;
@@ -750,9 +894,62 @@ public class Category {
 	    	
 	    	}
 	    	orderItemList.add(items);
-	    	
 	    }
-	  System.out.println("sub-"+sub);
+		
+		/**
+		 * Find time slot id,boy id and kitchen id 
+		 */
+		ArrayList<TimeSlot> timeSlotList = new ArrayList<TimeSlot>();
+		//List<String> timeSlotDetails = new ArrayList<String>();
+		//timeSlotDetails.add("45$DLV0013$1");
+		for(OrderItems items : orderItemList){
+			totalNoOfQuantity += items.quantity;
+		}
+		
+		for(String str : timeSlotDetails){
+	    	TimeSlot slotPojo = new TimeSlot();
+			String[] slot = str.split("\\$");
+	    	for(int i=0;i<slot.length;i++){
+	    		if(slot.length==3){
+	    			slotPojo.kitchenID = Integer.valueOf(slot[0]);
+	    			slotPojo.bikerUserId = slot[1];
+	    			slotPojo.slotId = Integer.valueOf(slot[2]);
+	    		}
+	    	}
+	    	timeSlotList.add(slotPojo);
+	    }
+		
+		ArrayList<TimeSlot> dealingTimeSlots = new ArrayList<TimeSlot>();
+		ArrayList<Integer> kids= new ArrayList<Integer>();
+		MealTypePojo mealTypePojo = new MealTypePojo();
+		
+		for(TimeSlot slot : timeSlotList){
+			if( !kids.contains(slot.kitchenID) ){
+				kids.add(slot.kitchenID);
+				dealingTimeSlots.add(slot);
+				mealTypePojo.setBoyUSerId(slot.getBikerUserId());
+				mealTypePojo.setSlotId(slot.slotId);
+			}
+			//System.out.println(slot.kitchenID+" "+slot.bikerUserId+" "+slot.slotId);
+		}
+		
+		System.out.println("Total no of quantites:: "+	totalNoOfQuantity );
+		
+		
+		if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
+			mealTypePojo.setLunchToday(true);
+			mealTypePojo.setQuantity(totalNoOfQuantity);
+		}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY") ){
+			mealTypePojo.setDinnerToday(true);
+			mealTypePojo.setQuantity(totalNoOfQuantity);
+		}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW") ){
+			mealTypePojo.setLunchTomorrow(true);
+			mealTypePojo.setQuantity(totalNoOfQuantity);
+		}else{
+			mealTypePojo.setDinnerTomorrow(true);
+			mealTypePojo.setQuantity(totalNoOfQuantity);
+		}
+	  System.out.println("It is subscription order: -"+sub);
 		/*if(orderType.equalsIgnoreCase("SUBSCRIPTION")){*/
 		if(sub){
 			//place subscription order
@@ -775,14 +972,88 @@ public class Category {
 			contactNumber, city, location, flatNumber,streetName,pincode,landmark , 
 			getLocationId(location, city),mealtype,timeslot, orderItemList,
 			deliveryZone,deliveryAddress,instruction);*/
-			orderPlaced = DBConnection.placeOrder(mailid, contactNumber, guestName,
-					 city, location,pincode, getLocationId(location, city),mealtype,timeslot, orderItemList,
-					deliveryZone,deliveryAddress,instruction,deliveryDay,payAmount);
+			orderPlaced = DBConnection.placeOrder(userType, mailid, contactNumber, guestName,
+					 city, location,pincode, getLocationId(location, city),mealType,timeslot, orderItemList,
+					deliveryZone,deliveryAddress,instruction,deliveryDay,payAmount,credit, payType , totalNoOfQuantity, 
+					mealTypePojo , dealingTimeSlots );
 			return orderPlaced;
 		}
 	 	
 	}
 	
+	
+	
+	@POST
+	@Path("/findSlot")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject findSlot(
+			@FormParam("mobileno")String contactNumber,
+			@FormParam("name")String guestName,
+			@FormParam("deliverypincode")String pincode,
+			@FormParam("fooddetails[]")List<String> orderDetails,
+			@FormParam("mealtype")String mealtype,
+			@FormParam("deliveryaddress")String deliveryAddress,
+			@FormParam("deliverydate")String deliveryDay
+			) throws Exception{
+		System.out.println("******************************************************");
+		System.out.println("** FINDSLOT webservice is called** ** ** ** ");
+		System.out.println("*******************************************************");
+		System.out.println("deliveryday-->"+deliveryDay);
+		System.out.println("mobileno-->"+contactNumber);
+		System.out.println("fooddetails[]-->"+orderDetails.toString());
+		System.out.println("deliverypincode -->"+pincode);
+		System.out.println("Meal type-->"+mealtype);
+		//System.out.println("delivery address-->"+deliveryAddress);
+		
+		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
+		JSONObject timeSlot = new JSONObject();
+		MealTypePojo mealType = new MealTypePojo();
+		
+		for(String str : orderDetails){	
+			OrderItems items = new OrderItems();
+	    	String[] order = str.split("\\$");
+	    	for(int i=0;i<order.length;i++){
+	    		if(order.length==6){
+	    			items.cuisineId = Integer.valueOf(order[0]);
+	    	    	items.categoryId = Integer.valueOf(order[1]);
+	    	    	items.itemCode = order[2].trim();
+	    	    	String[] itemDetails = ItemDAO.getItemDetails(items.itemCode);
+	    	    	items.cuisinName = itemDetails[0];
+	    	    	items.categoryName = itemDetails[1];
+	    	    	items.itemName = itemDetails[2];
+	    	    	items.price = Double.valueOf(order[3]);
+	    	    	items.quantity = Integer.valueOf(order[4]);
+	    	    	items.packing = order[5].trim().toUpperCase();
+	    		}
+	    	}
+	    	orderItemList.add(items);
+	    }
+		
+		int totalQuantity = 0;
+		for(OrderItems items :  orderItemList){
+			totalQuantity += items.quantity;
+		}
+		
+		//System.out.println("Total order quantity:: "+ totalQuantity);
+		if(mealtype.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
+			mealType.setLunchToday(true);
+		}else if(mealtype.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY") ){
+			mealType.setDinnerToday(true);
+		}else if(mealtype.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW") ){
+			mealType.setLunchTomorrow(true);
+		}else{
+			mealType.setDinnerTomorrow(true);
+		}
+		
+		timeSlot = TimeSlotFinder.getFreeSlots(contactNumber, deliveryAddress, orderItemList,
+				mealtype, deliveryDay, pincode, mealType);
+		//System.out.println(timeSlot);
+		System.out.println(timeSlot);
+		System.out.println("******************************************************");
+		System.out.println("** ** ** **FINDSLOT webservice is ended here** ** ** ** ");
+		System.out.println("*******************************************************");
+		return timeSlot;
+	}
 	
 	
 	@POST
@@ -829,6 +1100,175 @@ public class Category {
 		return jsonObject;
 		
 	}
+	
+	
+	@POST
+	@Path("/subscriptionPacks")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject subscriptionPack() throws JSONException{
+		System.out.println("* * * * * * * subscriptionPacks web service called! * * * * * * * ");
+		JSONObject jsonObject = null;
+		jsonObject = DBConnection.loadsubscriptionPacks();
+		return jsonObject;
+	}
+	
+	/**
+	 * Place order for subscription
+	 * @param user
+	 * @param packType
+	 * @param mealType
+	 * @param packPrice
+	 * @param paymentName
+	 * @param fooddetails[]
+	 * @param lunchMobileno
+	 * @param lunchName
+	 * @param lunchUserMailId
+	 * @param lunchTimeSlot
+	 * @param lunchDeliveryZone
+	 * @param lunchDeliveryAddress
+	 * @param lunchInstruction
+	 * @param lunchDeliveryPincode
+	 * @param dinnerMobileno
+	 * @param dinnerName
+	 * @param dinnerUserMailId
+	 * @param dinnerTimeSlot
+	 * @param dinnerDeliveryZone
+	 * @param dinnerDeliveryAddress
+	 * @param dinnerInstruction
+	 * @param dinnerDeliveryPincode
+	 * @param sameMobileno
+	 * @param sameName
+	 * @param sameUserMailId
+	 * @param sameTimeSlot
+	 * @param sameDeliveryZone
+	 * @param sameDeliveryAddress
+	 * @param sameInstruction
+	 * @param sameDeliveryPincode
+	 * @return
+	 * @throws Exception
+	 */
+	@POST
+	@Path("/placeSubscriptionOrder")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject placeSubscriptionOrder(
+			@FormParam("user")String user,
+			@FormParam("packDay")String packDay,
+			@FormParam("packType")String packType,
+			@FormParam("mealType")String mealType,
+			@FormParam("packPrice")String packPrice,
+			@FormParam("paymentName")String paymentName,
+			@FormParam("isMultiAddress")String isMultiAddress,
+			@FormParam("fooddetails[]")List<String> orderDetails,
+			
+			@FormParam("lunchMobileno")String lunchContactNumber,
+			@FormParam("lunchName")String lunchName,
+			@FormParam("lunchUserMailId")String lunchMailid,
+			@FormParam("lunchTimeSlot")String lunchTimeSlot,
+			@FormParam("lunchDeliveryZone")String lunchDeliveryZone,
+			@FormParam("lunchDeliveryAddress")String lunchDeliveryAddress,
+			@FormParam("lunchInstruction")String lunchInstruction,
+			@FormParam("lunchDeliveryPincode")String lunchPincode,
+			@FormParam("lunchAddressType")String lunchAddressType,
+			
+			@FormParam("dinnerMobileno")String dinnerContactNumber,
+			@FormParam("dinnerName")String dinnerName,
+			@FormParam("dinnerUserMailId")String dinnerMailid,
+			@FormParam("dinnerTimeSlot")String dinnerTimeSlot,
+			@FormParam("dinnerDeliveryZone")String dinnerDeliveryZone,
+			@FormParam("dinnerDeliveryAddress")String dinnerDeliveryAddress,
+			@FormParam("dinnerInstruction")String dinnerInstruction,
+			@FormParam("dinnerDeliveryPincode")String dinnerPincode,
+			@FormParam("dinnerAddressType")String dinnerAddressType,
+			
+			@FormParam("sameMobileno")String sameContactNumber,
+			@FormParam("sameName")String sameName,
+			@FormParam("sameUserMailId")String sameMailid,
+			@FormParam("sameTimeSlot")String sameTimeSlot,
+			@FormParam("sameDeliveryZone")String sameDeliveryZone,
+			@FormParam("sameDeliveryAddress")String sameDeliveryAddress,
+			@FormParam("sameInstruction")String sameInstruction,
+			@FormParam("sameDeliveryPincode")String samePincode,
+			@FormParam("sameAddressType")String sameAddressType
+			
+			) throws Exception{
+		
+		System.out.println("placeSubscriptionOrder webservice is called * * * * * * * * *for user "+user);
+		System.out.println("packType-->"+packType+"packday-->"+packDay+" packPrice-->"+packPrice+" mealType -- >"+mealType
+				+"paymentName - >"+paymentName +" isMultiAddress -- >"+isMultiAddress);  
+		System.out.println("fooddetails[]-->"+orderDetails.toString());
+		
+		/*System.out.println("*** *** Lunch details *** ***");
+		System.out.println("lunchName ->"+lunchName+" lunchmobileno--> "+lunchContactNumber+" lunchusermailId-->"+lunchMailid);
+		System.out.println("lunchdeliverypincode -->"+lunchPincode);
+		System.out.println("lunch TimeSlot-->"+lunchTimeSlot+" lunch deliery zone-->"+lunchDeliveryZone+" lunch delivery address-->"+lunchDeliveryAddress
+				+" lunch instruction-->"+lunchInstruction);
+		
+		System.out.println("*** *** Dinner details *** ***");
+		System.out.println("dinnerName ->"+dinnerName+" dinnermobileno--> "+dinnerContactNumber+" dinnerusermailId-->"+dinnerMailid);
+		System.out.println("dinner deliverypincode -->"+dinnerPincode);
+		System.out.println("dinner TimeSlot-->"+dinnerTimeSlot+" dinner deliery zone-->"+dinnerDeliveryZone+" dinner delivery address-->"+dinnerDeliveryAddress
+				+" dinner instruction-->"+dinnerInstruction);
+		
+		System.out.println("*** *** Same details *** ***");
+		System.out.println("SameName ->"+sameName+" Samemobileno--> "+sameContactNumber+" Same usermailId-->"+sameMailid);
+		System.out.println("Same deliverypincode -->"+samePincode);
+		System.out.println("Same TimeSlot-->"+sameTimeSlot+" Same deliery zone-->"+sameDeliveryZone+" Same delivery address-->"+sameDeliveryAddress
+				+" Same instruction-->"+sameInstruction);*/
+		
+		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
+		JSONObject orderPlaced = new JSONObject();
+		Boolean sub = false;
+		
+		for(String str : orderDetails){	
+			OrderItems items = new OrderItems();
+	    	String[] order = str.split("\\$");
+	    	for(int i=0;i<order.length;i++){
+	    		if(order.length==7){
+	    			items.cuisineId = Integer.valueOf(order[0]);
+	    	    	items.categoryId = Integer.valueOf(order[1]);
+	    	    	items.itemCode = order[2];
+	    	    	items.price = Double.valueOf(order[3]);
+	    	    	items.quantity = Integer.valueOf(order[4]);
+	    	    	items.day = order[5].toUpperCase();
+	    	    	items.meal = order[6];
+	    		}
+	    	}
+	    	orderItemList.add(items);
+		}
+	   System.out.println("Final item list size:: "+orderItemList.size());
+		Prepack prepack = null;	
+		boolean isMultiAddresses = false;
+		if(isMultiAddress.equalsIgnoreCase("true")){
+			isMultiAddresses = true;
+		}else{
+			isMultiAddresses = false;
+		}
+		if(!isMultiAddresses){
+			//Same 
+	    	System.out.println("*** *** same address given *** *** ");
+	    	System.out.println("Address type in single : "+sameAddressType);
+	    	prepack = new Prepack(user.trim(),paymentName.trim(),packType.trim(),packDay.trim(), mealType.trim(), Double.valueOf(packPrice), 
+	    			sameContactNumber.trim(), sameName.trim(), sameMailid.trim(), sameTimeSlot.trim(),
+	    			sameDeliveryZone.trim(), sameDeliveryAddress.trim(), sameInstruction.trim(), samePincode.trim(), sameAddressType.trim());
+		}else{
+			//Both lunch and dinner
+	    	System.out.println("*** *** Both lunch and dinner address given *** *** ");
+	    	System.out.println("Address type in multiple: dinnerAddressType: "+dinnerAddressType+" lunchAddressType: "+lunchAddressType);
+	    	prepack = new Prepack(user.trim(),paymentName.trim(),packType.trim(), packDay.trim(),mealType.trim(), Double.valueOf(packPrice), 
+	    			lunchContactNumber.trim(), lunchName.trim(), lunchMailid.trim(), lunchTimeSlot.trim(), 
+	    			lunchDeliveryZone.trim(), lunchDeliveryAddress.trim(), lunchInstruction.trim(), lunchPincode.trim(), lunchAddressType.trim(),
+	    			dinnerContactNumber.trim(), dinnerName.trim(),dinnerMailid.trim(), dinnerTimeSlot.trim(),
+	    			dinnerDeliveryZone.trim(), dinnerDeliveryAddress.trim(), dinnerInstruction.trim(), dinnerPincode.trim(), dinnerAddressType.trim());
+		}
+	   
+		User registeredUser = UserDetailsDao.getUserDetails(user, null); //Get user details
+    	orderPlaced = PlaceSubscriptionOrderDAO.checkOut(registeredUser, prepack, orderItemList,isMultiAddresses);
+    	//System.out.println(orderPlaced);
+		return orderPlaced; 
+		
+	}
+	
+	
 	
 	@POST
 	@Path("/subscriptionDetails")
@@ -950,17 +1390,18 @@ public class Category {
 		return feedbackobject;
 	}
 	
-	@POST
+	
+	/*@POST
 	@Path("/submitfeedback")
 	@Produces(MediaType.APPLICATION_JSON)
-	/*public JSONObject submitfeedback(@FormParam("foodquality")String foodQuality,@FormParam("deliveryquality") String deliveryQuality,
-			@FormParam("overallrating")String overallRating,@FormParam("usermailid") String userMailId  )throws Exception{*/
-	/*public JSONObject submitfeedback(@FormParam("taste")String taste,@FormParam("ingredients")String ingredients,
+	public JSONObject submitfeedback(@FormParam("foodquality")String foodQuality,@FormParam("deliveryquality") String deliveryQuality,
+			@FormParam("overallrating")String overallRating,@FormParam("usermailid") String userMailId  )throws Exception{
+	public JSONObject submitfeedback(@FormParam("taste")String taste,@FormParam("ingredients")String ingredients,
 			@FormParam("hygiene")String hygiene,@FormParam("spillage")String spillage,@FormParam("packing")String packing,
 			@FormParam("delayed")String delayed,@FormParam("deliveryboy")String deliveryboy,
 			@FormParam("cold")String coldFood,@FormParam("longprocess") String longprocess,
 			@FormParam("userfriendly")String userfriendly,@FormParam("overallrating") String overallRating,
-			@FormParam("foodcomment")String foodComment, @FormParam("usermailid") String userMailId  )throws Exception{*/
+			@FormParam("foodcomment")String foodComment, @FormParam("usermailid") String userMailId  )throws Exception{
 	public JSONObject submitfeedback(@FormParam("overallrating") String overallRating,@FormParam("taste")String taste,
 			@FormParam("hotness")String hotness,@FormParam("portion")String portion,@FormParam("packing")String packaging,
 			@FormParam("timelydelivered")String timely, @FormParam("usermailid") String userMailId,
@@ -973,6 +1414,37 @@ public class Category {
 		
 		submitfeedbackobject = DBConnection.submitfeedback(taste,portion,hotness,packaging,timely,overallRating,comment,userMailId);
 		System.out.println("Submit feedback--"+submitfeedbackobject);
+		return submitfeedbackobject;
+		
+	}*/
+	
+	/**
+	 * FOR SUBMIT FEEDBACK
+	 * @param menu
+	 * @param taste
+	 * @param quantity
+	 * @param packing
+	 * @param timelyDelivered
+	 * @param userMailId
+	 * @param comment
+	 * @return
+	 * @throws JSONException
+	 */
+	@POST
+	@Path("/submitfeedback")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject submitfeedback(@FormParam("menu") String menu,@FormParam("taste")String taste,
+			@FormParam("quantity")String quantity,@FormParam("packing")String packing,
+			@FormParam("timelydelivered")String timelyDelivered, @FormParam("usermailid") String userMailId,
+			@FormParam("foodcomment")String comment) throws JSONException{
+		
+		System.out.println("submitfeedback webservice is called * * * * *");
+		System.out.println("taste-"+taste+" packing-"+packing+" timelydelivered-"+timelyDelivered+
+				" quantity-"+quantity+" menu-"+menu+" comment-"+comment+" mail-"+userMailId);
+		JSONObject submitfeedbackobject = new JSONObject();
+		
+		submitfeedbackobject = SubmitFeedBackDAO.submitFeedback(menu, taste, quantity, packing, timelyDelivered, comment, userMailId);
+		System.out.println("Submit feedback ends with *****"+submitfeedbackobject);
 		return submitfeedbackobject;
 		
 	}
@@ -1111,23 +1583,30 @@ public class Category {
 	@POST
 	@Path("/fetchcuisine")
 	@Produces(MediaType.APPLICATION_JSON)
-	public JSONObject fetchCuisineList(@FormParam("pincode")String pincode) throws Exception{
-		System.out.println("fetchcuisine webservice is called with pincode * * *>> "+pincode+"* * * *");
+	public JSONObject fetchCuisineList(@FormParam("pincode")String pincode,
+			@FormParam("deliveryday")String deliveryDay) throws Exception{
+		System.out.println("fetchcuisine webservice is called with pincode * * *>> "+pincode+" and day->*"+deliveryDay);
 		
 		JSONObject jsonObject = new JSONObject();
-		System.out.println(pincode.trim().length());
+		//System.out.println(pincode.trim().length());
 		if(pincode!=null && pincode.trim().length()>0){
-			System.out.println("Pincode given!");
-			jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode);
-
+			//System.out.println("Pincode given!");
+			if(PincodeDAO.isPincodeAvailable(pincode)){
+				jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode, deliveryDay);
+			}else{
+				jsonObject.put("status", "204");
+				jsonObject.put("message", "Currently we are not serving in this zip code!");
+				jsonObject.put("cuisinelist", new JSONArray());
+			}
 			System.out.println("fetchcuisine ended here * * * * * ");
 			return jsonObject;
 		}else{
 			System.out.println("No Pincode found!");
 			System.out.println("fetchcuisine ended with null here * * * * * ");
+			jsonObject.put("status", "204");
+			jsonObject.put("message", "Currently we are not serving in this zip code!");
 			return jsonObject.put("cuisinelist", new JSONArray());
 		}
-		
 	}
 	
 	/**
@@ -1152,6 +1631,15 @@ public class Category {
 		System.out.println("Fetch category JSONObject -->"+jobjCat);
 		System.out.println("End of fetchCategory webservice * * * * * * * * * * * * *");
 		return jobjCat;
+	}
+	
+	@POST
+	@Path("/fetchAllItems")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchAllItems() throws JSONException{
+		JSONObject item = null;
+		item = AllItemsDAO.fetchAllItems();
+		return item;
 	}
 	
 	

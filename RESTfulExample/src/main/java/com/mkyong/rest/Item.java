@@ -57,7 +57,10 @@ public class Item {
 				+" PaymentType = "+paymentType;
 	}
 	
-	
+	public String toDisplay() {
+		// TODO Auto-generated method stub
+		return categoryName+" "+itemName+" "+quantity+" "+price;
+	}
 	
 	
 }

@@ -15,6 +15,7 @@ public class DateFormattor {
 			} catch (ParseException e) {
 			    e.printStackTrace();
 			}
+			System.out.println("Order placed on : "+reformattedDate);
 			return reformattedDate;
 	}
 }

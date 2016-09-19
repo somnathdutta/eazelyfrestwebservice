@@ -8,7 +8,7 @@ public class OrderItems implements Comparable<OrderItems>{
 	
 	public Integer categoryId;
 	
-	public String itemCode;
+	public String itemCode, itemName, cuisinName, categoryName, packing, itemDescription;
 	
 	public Integer quantity;
 	
@@ -23,6 +23,8 @@ public class OrderItems implements Comparable<OrderItems>{
 	public Date endDate;
 	
 	public String timsSlot;
+	
+	public int kitchenId; 
 
 	public OrderItems() {
 		super();
@@ -44,6 +46,11 @@ public class OrderItems implements Comparable<OrderItems>{
 		return this.cuisineId - another.cuisineId;
 	}
 	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "("+cuisineId+","+itemCode+")";
+	}
 	
 	public Integer getCuisineId() {
 		return cuisineId;
@@ -123,6 +130,54 @@ public class OrderItems implements Comparable<OrderItems>{
 
 	public void setItemCode(String itemCode) {
 		this.itemCode = itemCode;
+	}
+
+	public String getItemName() {
+		return itemName;
+	}
+
+	public void setItemName(String itemName) {
+		this.itemName = itemName;
+	}
+
+	public String getCuisinName() {
+		return cuisinName;
+	}
+
+	public void setCuisinName(String cuisinName) {
+		this.cuisinName = cuisinName;
+	}
+
+	public String getCategoryName() {
+		return categoryName;
+	}
+
+	public void setCategoryName(String categoryName) {
+		this.categoryName = categoryName;
+	}
+
+	public String getPacking() {
+		return packing;
+	}
+
+	public void setPacking(String packing) {
+		this.packing = packing;
+	}
+
+	public String getItemDescription() {
+		return itemDescription;
+	}
+
+	public void setItemDescription(String itemDescription) {
+		this.itemDescription = itemDescription;
+	}
+
+	public int getKitchenId() {
+		return kitchenId;
+	}
+
+	public void setKitchenId(int kitchenId) {
+		this.kitchenId = kitchenId;
 	}
 }
   
