@@ -49,7 +49,7 @@ public class OrderItems implements Comparable<OrderItems>{
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "("+cuisineId+","+itemCode+")";
+		return "(itemcode:"+itemCode+" cui: "+cuisineId+" kitchn:"+kitchenId+" qty: "+quantity+")";
 	}
 	
 	public Integer getCuisineId() {

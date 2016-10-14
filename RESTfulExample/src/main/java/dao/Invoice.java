@@ -154,7 +154,7 @@ public class Invoice {
          body.append("<tr>" + "<td></td><td></td><td></td><td></td><td>" + "Grand Total is:-  "
                  + "</td><td>" + gTotal + " "
                  + "</td></tr>");
-         body.append("</table><br><p align=\"center\"><b>We look forward to seeing you again soon.Team EazeLyf</b> </p>"
+         body.append("</table><br><p align=\"center\"><b>We look forward to serve you again soon.Team EazeLyf</b> </p>"
          		+ "<br><p align=\"center\"><font face=\"verdana\">For all other queries and to browse our top FAQs, please <a href=\"www.eazelyf.com\">click here</a></p> </table></body></html>");
          
          return body.toString();

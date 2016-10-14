@@ -6,6 +6,7 @@ com\mkyong\rest\Login.class
 dao\PlaceSubscriptionOrderDAO.class
 sql\LoginSQL.class
 dao\BikerDAO.class
+dao\KitchenDeliverOrderDAO.class
 com\mkyong\Categories.class
 dao\ForgotPassword.class
 com\mkyong\rest\KitchenDetailsBean.class
@@ -24,6 +25,7 @@ dao\OrderDetailsDAO.class
 pojo\Biker.class
 pojo\KitchenStock.class
 pojo\MealTypePojo.class
+dao\PickjiCall.class
 com\mkyong\rest\SMTPAuthenticator.class
 dao\LoginDAO.class
 sql\AllItemSqlQuery.class
@@ -39,12 +41,14 @@ dao\PlaceOrderDAO.class
 utility\NumberCheck.class
 dao\OrderItemDAO.class
 com\mkyong\rest\Category.class
+dao\OrderTimingsDAO.class
 sql\SubscriptionPrePackQuery.class
 utility\Duplicate.class
 pojo\Item.class
 com\mkyong\rest\PropertyFile.class
 com\mkyong\rest\DBConnection$1.class
 com\mkyong\rest\Kitchen.class
+dao\QueryTypeDAO.class
 dao\RoundRobin.class
 pojo\TimeSlot.class
 com\mkyong\TestJson.class
@@ -70,6 +74,7 @@ dao\KitchenNotifyOrderDAO.class
 dao\AllItemsDAO.class
 dao\PincodeDAO.class
 pojo\PickJi.class
+dao\FetchAlaCarteItemDAO.class
 com\mkyong\rest\Customer.class
 dao\RoundRobinKitchenFinder.class
 utility\DateTimeSlotFinder.class

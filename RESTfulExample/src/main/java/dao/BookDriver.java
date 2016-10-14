@@ -3,6 +3,7 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Time;
 import java.time.Period;
 import java.util.ArrayList;
 
@@ -22,7 +23,7 @@ public class BookDriver {
 	 * @param mealTypePojo
 	 * @return
 	 */
-	public static boolean bookDriverSlot(MealTypePojo mealTypePojo ){
+	public static boolean bookDriverSlot(MealTypePojo mealTypePojo, TimeSlot timeSlot ){
 		boolean booked = false;
 		try {
 			SQL:{
@@ -50,9 +51,15 @@ public class BookDriver {
 			      
 				  try {
 						preparedStatement = connection.prepareStatement(sql);
-						preparedStatement.setInt(1, mealTypePojo.getQuantity());
-						preparedStatement.setString(2, mealTypePojo.getBoyUSerId());
-						preparedStatement.setInt(3, mealTypePojo.getSlotId());
+						/*for(TimeSlot slot : timeSlotList){
+							preparedStatement.setInt(1, slot.quantity);
+							preparedStatement.setString(2, slot.bikerUserId);
+							preparedStatement.setInt(3, slot.slotId);
+							preparedStatement.addBatch();
+						}*/
+						preparedStatement.setInt(1, timeSlot.getQuantity());
+						preparedStatement.setString(2, timeSlot.bikerUserId);
+						preparedStatement.setInt(3, timeSlot.getSlotId());
 						int count = preparedStatement.executeUpdate();
 						if(count > 0){
 							booked = true;
@@ -73,9 +80,15 @@ public class BookDriver {
 			// TODO: handle exception
 		}
 		if(booked){
-			System.out.println("Slot "+mealTypePojo.getSlotId()+" booked for boy id:: "+mealTypePojo.getBoyUSerId());
+			/*for(TimeSlot slot : timeSlotList){
+				System.out.println("Slot "+slot.getSlotId()+" booked for boy id:: "+slot.bikerUserId);
+			}*/
+			System.out.println("Item code "+timeSlot.getItemCode()+" Slot "+timeSlot.getSlotId()+"  BOOKED for boy id:: "+timeSlot.bikerUserId+" with qty: "+timeSlot.quantity);
 		}else{
-			System.out.println("Slot "+mealTypePojo.getSlotId()+" NOT BOOKED for boy id:: "+mealTypePojo.getBoyUSerId());
+			/*for(TimeSlot slot : timeSlotList){
+				System.out.println("Slot "+slot.getSlotId()+" booked for boy id:: "+slot.bikerUserId);
+			}*/
+			System.out.println("Slot "+timeSlot.getSlotId()+" NOT BOOKED for boy id:: "+timeSlot.bikerUserId+" with qty: "+timeSlot.quantity);
 		}
 		return booked;
 	}
@@ -87,7 +100,7 @@ public class BookDriver {
 	 * @param mealTypePojo
 	 * @return
 	 */
-	public static boolean freeDriverSlot(MealTypePojo mealTypePojo ){
+	public static boolean freeDriverSlot(MealTypePojo mealTypePojo, ArrayList<TimeSlot> timeSlotList ){
 		boolean freed = false;
 		try {
 			SQL:{
@@ -151,7 +164,7 @@ public class BookDriver {
 	 * @param mealTypePojo
 	 * @return
 	 */
-	public static boolean isSlotFull(MealTypePojo mealTypePojo ){
+	public static boolean isSlotFull(MealTypePojo mealTypePojo,TimeSlot timeSlot ){
 		boolean isSlotFull = false;
 		try {
 			SQL:{
@@ -161,22 +174,21 @@ public class BookDriver {
 					String sql ="";
 					if(mealTypePojo.isLunchToday()){
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
-								+ " (no_of_orders = 2 or quantity >= 8) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = 2 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
 					}else if(mealTypePojo.isDinnerToday()){
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
-								+ " (no_of_orders = 2 or quantity >= 8) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = 2 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
 					}else if(mealTypePojo.isLunchTomorrow()){
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
-								+ " (no_of_orders = 2 or quantity >= 8) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = 2 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
 					}else{
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
-								+ " (no_of_orders = 2 or quantity >= 8) and driver_user_id = ? and time_slot_id = ?";
-					}
-					
+								+ " (no_of_orders = 2 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
+					}	
 					try {
 						preparedStatement = connection.prepareStatement(sql);
-						preparedStatement.setString(1, mealTypePojo.getBoyUSerId());
-						preparedStatement.setInt(2, mealTypePojo.getSlotId());
+						preparedStatement.setString(1, timeSlot.bikerUserId);
+						preparedStatement.setInt(2, timeSlot.getSlotId());
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
 							int timeSlotId = resultSet.getInt("time_slot_id");
@@ -200,9 +212,9 @@ public class BookDriver {
 			// TODO: handle exception
 		}
 		if(isSlotFull){
-			System.out.println("Slot "+mealTypePojo.getSlotId()+" FULL for boy id:: "+mealTypePojo.getBoyUSerId());
+			System.out.println("Slot "+timeSlot.getSlotId()+" FULL for boy id:: "+timeSlot.bikerUserId);
 		}else{
-			System.out.println("Slot "+mealTypePojo.getSlotId()+" NOT FULL for boy id:: "+mealTypePojo.getBoyUSerId());
+			System.out.println("Slot "+timeSlot.getSlotId()+" NOT FULL for boy id:: "+timeSlot.bikerUserId);
 		}	
 		return isSlotFull;
 	}
@@ -213,7 +225,7 @@ public class BookDriver {
 	 * @param mealTypePojo
 	 * @return
 	 */
-	public static boolean makeSlotLocked(MealTypePojo mealTypePojo){
+	public static boolean makeSlotLocked(MealTypePojo mealTypePojo , TimeSlot timeSlot){
 		boolean slotInactivation  = false;
 		try {
 			SQL:{
@@ -222,22 +234,22 @@ public class BookDriver {
 				String sql ="";
 				if(mealTypePojo.isLunchToday()){
 					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=8)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=10)";
 				}else if(mealTypePojo.isDinnerToday()){
 					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=8)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=10)";
 				}else if(mealTypePojo.isLunchTomorrow()){
 					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=8)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=10)";
 				}else{
 					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=8)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=10)";
 				}
 				
 				try {
 					preparedStatement = connection.prepareStatement(sql);
-					preparedStatement.setString(1, mealTypePojo.getBoyUSerId());
-					preparedStatement.setInt(2, mealTypePojo.getSlotId());
+					preparedStatement.setString(1, timeSlot.bikerUserId);
+					preparedStatement.setInt(2, timeSlot.getSlotId());
 					int countUpdate = preparedStatement.executeUpdate();
 					if(countUpdate>0){
 							slotInactivation = true;
@@ -258,9 +270,9 @@ public class BookDriver {
 			// TODO: handle exception
 		}
 		if(slotInactivation){
-			System.out.println("Slot "+mealTypePojo.getSlotId()+" locked for boy id:: "+mealTypePojo.getBoyUSerId());
+			System.out.println("Slot "+timeSlot.getSlotId()+" locked for boy id:: "+timeSlot.bikerUserId);
 		}else{
-			System.out.println("Slot "+mealTypePojo.getSlotId()+" NOT locked for boy id:: "+mealTypePojo.getBoyUSerId());
+			System.out.println("Slot "+timeSlot.getSlotId()+" NOT locked for boy id:: "+timeSlot.bikerUserId);
 		}
 		return slotInactivation ;
 	}
@@ -321,6 +333,47 @@ public class BookDriver {
 			System.out.println("Slot "+mealTypePojo.getSlotId()+" NOT unlocked for boy id:: "+mealTypePojo.getBoyUSerId());
 		}
 		return slotActivation ;
+	}
+	
+	
+	public static void saveBikersQtyWithKitchen(ArrayList<TimeSlot> bikerSlotList, int orderId){
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					String sql ="INSERT INTO public.fapp_biker_orders"
+							   + " ( biker_user_id, kitchen_id, order_id, slot_id,order_quantity, item_code)"
+							   +" VALUES (?, ?, ?, ?, ?, ?) ";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						for(TimeSlot slot : bikerSlotList){
+							preparedStatement.setString(1, slot.bikerUserId);
+							preparedStatement.setInt(2, slot.kitchenID);
+							preparedStatement.setInt(3, orderId);
+							preparedStatement.setInt(4, slot.slotId);
+							preparedStatement.setInt(5, slot.quantity);
+							preparedStatement.setString(6, slot.itemCode);
+							preparedStatement.addBatch();
+						}
+						int[] insertedData = preparedStatement.executeBatch();
+						if(insertedData.length>0){
+							System.out.println("Bikers orders qty inserted successfully!");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						System.out.println("ERROR AT saveBikersQty BookDriver 364"+e);
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}if(connection!=null){
+							connection.close();
+						}
+					}
+           
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 	}
 	
 	/**

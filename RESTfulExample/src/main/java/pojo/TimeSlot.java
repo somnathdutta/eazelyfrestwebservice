@@ -1,16 +1,22 @@
 package pojo;
 
-public class TimeSlot {
+public class TimeSlot implements Comparable<TimeSlot>{
 
-	public int slotId,kitchenID,quantity;
-	public String timeSlot,bikerUserId;
+	public int slotId,kitchenID,quantity,noOfOrders,cuisineId;
+	public String timeSlot,bikerUserId,itemCode;
 	public String status;
 	public boolean checked = false;
 	
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return slotId+" "+timeSlot+" "+bikerUserId+" "+kitchenID;
+		return "( Kithen id "+kitchenID+" Qty "+quantity+" SLOTID "+slotId+" ITEM "+itemCode+")";
+	}
+	
+	@Override
+	public int compareTo(TimeSlot another) {
+		// TODO Auto-generated method stub
+		return this.slotId - another.slotId;
 	}
 	
 	public int getSlotId() {
@@ -57,6 +63,30 @@ public class TimeSlot {
 	public void setQuantity(int quantity) {
 		this.quantity = quantity;
 	}
+
+	public int getNoOfOrders() {
+		return noOfOrders;
+	}
+
+	public void setNoOfOrders(int noOfOrders) {
+		this.noOfOrders = noOfOrders;
+	}
+
+	public int getCuisineId() {
+		return cuisineId;
+	}
+
+	public void setCuisineId(int cuisineId) {
+		this.cuisineId = cuisineId;
+	}
+	public String getItemCode() {
+		return itemCode;
+	}
+
+	public void setItemCode(String itemCode) {
+		this.itemCode = itemCode;
+	}
+
 	
 	
 }

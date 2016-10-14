@@ -50,7 +50,7 @@ public class BikerDAO {
 		System.out.println("On notify biker details for message ::");
 		System.out.println("Biker name: "+biker.getBikerName());
 		System.out.println("Biker id: "+biker.getUserId());
-		System.out.println("Biker phn: "+biker.getClass());
+		System.out.println("Biker phn: "+biker.getBikerContact());
 		return biker;
 	}
 	
@@ -87,7 +87,7 @@ public class BikerDAO {
 		System.out.println("On pickUp biker details for customer ::");
 		System.out.println("Biker name: "+biker.getBikerName());
 		System.out.println("Biker id: "+biker.getUserId());
-		System.out.println("Biker phn: "+biker.getClass());
+		System.out.println("Biker phn: "+biker.getBikerContact());
 		return biker;
 	}
 	

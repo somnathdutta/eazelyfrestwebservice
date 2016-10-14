@@ -3,7 +3,7 @@ package pojo;
 public class KitchenStock implements Comparable<KitchenStock> {
 
 	public Integer kitchenId,stock;
-
+	
 	public KitchenStock(Integer kitchenId, Integer stock) {
 		super();
 		this.kitchenId = kitchenId;
@@ -11,6 +11,11 @@ public class KitchenStock implements Comparable<KitchenStock> {
 	}
 
 	
+	public KitchenStock() {
+		// TODO Auto-generated constructor stub
+	}
+
+
 	public Integer getKitchenId() {
 		return kitchenId;
 	}
@@ -40,5 +45,7 @@ public class KitchenStock implements Comparable<KitchenStock> {
 		// TODO Auto-generated method stub
 		return kitchenId.toString()+"\t"+stock.toString();
 	}
+
+
 	
 }

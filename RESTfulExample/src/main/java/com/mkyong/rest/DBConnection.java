@@ -95,8 +95,10 @@ import dao.Invoice;
 import dao.OrderDetailsDAO;
 import dao.OrderItemDAO;
 import dao.PlaceOrderDAO;
+import dao.RoundRobinKitchenFinder;
 import dao.SameUserPlaceOrder;
 import dao.SendMessageDAO;
+import dao.TimeSlotFinder;
 import dao.UserDetailsDao;
 
 @SuppressWarnings("deprecation")
@@ -1542,10 +1544,12 @@ public class DBConnection {
 						resultSet = preparedStatement.executeQuery();
 						while(resultSet.next()){
 							JSONObject orders = new JSONObject();
-							/*orders.put("city", resultSet.getString("city"));
-							orders.put("flatno", resultSet.getString("flat_no"));
-							orders.put("streetname", resultSet.getString("street_name"));
-							orders.put("landmark", resultSet.getString("landmark"));*/
+							Double payamount = resultSet.getDouble("final_price");
+							if(payamount!=null){
+								orders.put("payamount", payamount.toString());
+							}else{
+								orders.put("payamount", "0.0");
+							}
 							orders.put("pincode", resultSet.getString("pincode"));
 							orders.put("orderid", resultSet.getInt("order_id"));
 							orders.put("orderno", resultSet.getString("order_no"));
@@ -1564,17 +1568,24 @@ public class DBConnection {
 							}else{
 								orders.put("deliveryaddress", " ");
 							}
-							String orderDate="",reformattedOrderDate="";
+							String orderDate="",reformattedOrderDate="",deliveryDate="",reformattedDeliveryDate="";
 							SimpleDateFormat fromUser = new SimpleDateFormat("yyyy-MM-dd");
 							SimpleDateFormat myFormat = new SimpleDateFormat("dd-MM-yyyy");
 							orderDate = resultSet.getString("order_date");
+							if(resultSet.getString("delivery_date")!=null){
+								deliveryDate = resultSet.getString("delivery_date");
+							}else{
+								deliveryDate = orderDate;
+							}
 							try {
 								reformattedOrderDate = myFormat.format(fromUser.parse(orderDate));
+								reformattedDeliveryDate = myFormat.format(fromUser.parse(deliveryDate));
 							} catch (Exception e) {
 								// TODO: handle exception
 								e.printStackTrace();
 							}
 							orders.put("orderdate", reformattedOrderDate);
+							orders.put("deliverydate", reformattedDeliveryDate);
 							orders.put("startdate", " ");
 							orders.put("enddate", " ");
 							orders.put("orderstatus", resultSet.getString("order_status_name"));
@@ -1672,22 +1683,12 @@ public class DBConnection {
     						resultSet = preparedStatement.executeQuery();
     						while(resultSet.next()){
     							JSONObject orders = new JSONObject();
-    							//orders.put("city", resultSet.getString("city"));
-    							//orders.put("flatno", resultSet.getString("flat_no"));
-    							//orders.put("streetname", resultSet.getString("street_name"));
-    							//orders.put("landmark", resultSet.getString("landmark"));
-    							/*if( resultSet.getString("delivery_zone")!=null){
-								orders.put("deliveryzone", resultSet.getString("delivery_zone"));
-								}else{
-								orders.put("deliveryzone", " ");
-								}*/
-    							/*if( resultSet.getString("instruction")!=null){
-								orders.put("instruction", resultSet.getString("instruction"));
-								}else{
-								orders.put("instruction", " ");
-								}*/
-    							//orders.put("orderdate", resultSet.getString("order_date"));
-    							
+    							Double payamount = resultSet.getDouble("final_price");
+    							if(payamount!=null){
+    								orders.put("payamount", payamount.toString());
+    							}else{
+    								orders.put("payamount", "0.0");
+    							}
     							orders.put("pincode", resultSet.getString("pincode"));
     							orders.put("orderid", resultSet.getInt("order_id"));
     							orders.put("orderno", resultSet.getString("order_no"));
@@ -1721,18 +1722,24 @@ public class DBConnection {
     							orders.put("orderstatus", resultSet.getString("order_status_name"));
     							orders.put("startdate", " ");
     							orders.put("enddate", " ");
-    							String orderDate="",reformattedOrderDate="";
+    							String orderDate="",reformattedOrderDate="",deliveryDate="",reformattedDeliveryDate="";
     							SimpleDateFormat fromUser = new SimpleDateFormat("yyyy-MM-dd");
     							SimpleDateFormat myFormat = new SimpleDateFormat("dd-MM-yyyy");
     							orderDate = resultSet.getString("order_date");
+    							if(resultSet.getString("delivery_date")!=null){
+    								deliveryDate = resultSet.getString("delivery_date");
+    							}else{
+    								deliveryDate = orderDate;
+    							}
     							try {
     								reformattedOrderDate = myFormat.format(fromUser.parse(orderDate));
+    								reformattedDeliveryDate = myFormat.format(fromUser.parse(deliveryDate));
     							} catch (Exception e) {
     								// TODO: handle exception
     								e.printStackTrace();
     							}
     							orders.put("orderdate", reformattedOrderDate);
-    							
+    							orders.put("deliverydate", reformattedDeliveryDate);
     							
     							orders.put("itemdetails", getitemdetails(orders.getString("orderno")));
     							
@@ -3064,18 +3071,19 @@ public class DBConnection {
     		Integer locationId,String mealType, String timeSlot, ArrayList<OrderItems> orderItemList,
     		String deliveryZone,String deliveryAddress,String instruction,String deliveryDay,
     		String payAmount,boolean credit, String payType, int totalNoOfQuantity , MealTypePojo mealTypePojo, 
-    		ArrayList<TimeSlot> timeSlotList ) throws Exception{
+    		ArrayList<TimeSlot> timeSlotList,Set<Integer> servingKitchenIds ) throws Exception{
     	
-    	boolean isGuestUser = false,isUserSameOrder = false ,
+    	boolean isGuestUser = false,isUserSameOrder = false ,sameCuisineSplit = false,
     			userDetailsInserted = false, itemDetailsInserted = false,
     			kitchenAssigned = false, onlyBengCuisine = false, onlyNiCuisine = false, bengNiCuisine = false;
     	
     	java.util.Date delivery_Date = new java.util.Date();
-    	int orderId = 0;
+    	int orderId = 0,totalBenQty =0, totalNiQty = 0;
     	
     	ArrayList<Integer> dealingKitchenIds = new ArrayList<Integer>();
     	ArrayList<OrderItems> niCuisineIdList = new ArrayList<OrderItems>();
 		ArrayList<OrderItems> bengCuisineIdList = new ArrayList<OrderItems>();
+		ArrayList<OrderItems> sameKitchenOrderList = new ArrayList<OrderItems>();
     	
 		JSONObject isOrderPlaced = new JSONObject();
     	String orderBy = null ;
@@ -3091,15 +3099,6 @@ public class DBConnection {
     		System.out.println("* * * * Registered user * * * ");
     		isGuestUser = false;
     	}
-    	/*if(guestName!=null ){*/
-    	/*if(!isUserRegistered(contactNumber)){
-    		System.out.println("Guest user is placing order! ");
-    		isGuestUser = true;
-    	}else{
-    		System.out.println("Registered user is placing order!");
-    		isGuestUser = false;
-    	}*/
-    	
     	
     	if(isGuestUser){
     		orderBy = guestName;
@@ -3110,6 +3109,7 @@ public class DBConnection {
     		userMailId = getUserMailId(contactNumber);
     		System.out.println("Mail id of registered user->"+userMailId);
     	}
+    	
     	Double finalPrice = Double.valueOf(payAmount);
 		System.out.println("payAmount :: "+payAmount+" finalPrice :: "+finalPrice);
     	
@@ -3119,10 +3119,12 @@ public class DBConnection {
 		
 		for(int i=0;i<orderItemList.size();i++){
 			if(orderItemList.get(i).cuisineId==2){
+				totalNiQty += orderItemList.get(i).quantity;
 				niCuisineIdList.add(new OrderItems(orderItemList.get(i).cuisineId, orderItemList.get(i).categoryId, 
 						orderItemList.get(i).itemCode,orderItemList.get(i).quantity, orderItemList.get(i).price) );
 			}
 			if(orderItemList.get(i).cuisineId==1){
+				totalBenQty += orderItemList.get(i).quantity;
 				bengCuisineIdList.add(new OrderItems(orderItemList.get(i).cuisineId, orderItemList.get(i).categoryId, 
 						orderItemList.get(i).itemCode,orderItemList.get(i).quantity, orderItemList.get(i).price) );
 			}
@@ -3144,6 +3146,16 @@ public class DBConnection {
     	
     	if(onlyBengCuisine){
     		System.out.println("** Order contains only bengali cuisine **");
+    		int countKitchen = 0 ;
+    		for(Integer kid : servingKitchenIds){
+    			if(TimeSlotFinder.findKitchenType(kid)==1){
+    				countKitchen++;
+    			}
+    		}
+    		if(countKitchen == servingKitchenIds.size() && servingKitchenIds.size()>1){
+    			sameCuisineSplit = true;
+    		}
+    		System.out.println("SAME CUISINE SPILT::::::::"+sameCuisineSplit);
     	}
     	if(onlyNiCuisine){
     		System.out.println("** Order contains only ni cuisine **");
@@ -3152,157 +3164,176 @@ public class DBConnection {
     		System.out.println("** Order contains  bengali and ni cuisine **");
     	}
     	
-    	/*if(totalNoOfQuantity == 1 && bengNiCuisine){
-    		dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode, mealType, deliveryDay);
-    	}
-    	else if(totalNoOfQuantity == 1 && onlyBengCuisine){
-    		dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress);
-    		if(dealingKitchenIds.size()==0){
-    			dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode, mealType, deliveryDay);
-    		}	
-    	}
-    	else if(totalNoOfQuantity == 1 && onlyNiCuisine){
-    		dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress);
-    		if(dealingKitchenIds.size()==0){
-    			dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode, mealType, deliveryDay);
-    		}	
-    	}
-    	else{*/
-    			if(totalNoOfQuantity > 1){//kitchen biker and slot already known
-    				System.out.println("* * * * More than 1 quantity order * * *");
-    				Map<Integer, Integer> cuisineKitchenMap = new HashMap<Integer, Integer>();//cuisine kitchen map
-    				ArrayList<Integer> nikitchenids = new ArrayList<Integer>();//ni kitchens
-    				ArrayList<Integer> bengkitchenids = new ArrayList<Integer>();// beng kitchens
+
+    	if(totalNoOfQuantity > 1){//kitchen biker and slot already known
+    		System.out.println("* * * * More than 1 quantity order * * *");
+    		Map<Integer, Integer> cuisineKitchenMap = new HashMap<Integer, Integer>();//cuisine kitchen map
+    		ArrayList<Integer> nikitchenids = new ArrayList<Integer>();//ni kitchens
+    		ArrayList<Integer> bengkitchenids = new ArrayList<Integer>();// beng kitchens
+
     		
-    				for(TimeSlot slot: timeSlotList){
-    					int cuisine = CuisineKitchenDAO.kitchenCuisine(slot.kitchenID);//find kitchen type beng or ni
-    					cuisineKitchenMap.put(cuisine, slot.kitchenID);//put cuisine and kitchen in a map
-    				}
-    				for(Entry<Integer, Integer> entry: cuisineKitchenMap.entrySet()){
-    					if(entry.getKey()==1){//if map contains cuisine ==1 bengali
-    						bengkitchenids.add(entry.getValue());//add all kitchen id to bengali kitchens
-    					}
-    					if(entry.getKey()==2){//if map contains cuisine ==2 ni
-    						nikitchenids.add(entry.getValue());//add all kitchen id to ni kitchens
-    					}
-    				}
-    				if(onlyBengCuisine){//when only bengali cuisine orders
-    					for(int i=0;i<orderItemList.size();i++){
-    						dealingKitchenIds.addAll(bengkitchenids);//add all kitchens to items for bangali
-    					}
-    				}
-    				if(onlyNiCuisine){//when only ni cuisine orders
-    					for(int i=0;i<orderItemList.size();i++){
-    						dealingKitchenIds.addAll(nikitchenids);//add all kitchens to items for ni
-    					}
-    				}
-    				if(bengNiCuisine){//when  bengali  & ni cuisine orders
-    					Collections.sort(orderItemList);//sort order items from bengali to ni(1 then 2)
-    					for(int i=0;i<orderItemList.size();i++){
-    						dealingKitchenIds.addAll(bengkitchenids);// first add bengali
-    						dealingKitchenIds.addAll(nikitchenids);// second add ni
-    					}
-    				}
-    				
-    				for(int i=0 ; i < orderItemList.size() ; i++){
-    					System.out.print("CUID::"+orderItemList.get(i).cuisineId+"\t");
-    					System.out.print("CATID::"+orderItemList.get(i).categoryId+"\t");
-    					System.out.print("ITEM::"+orderItemList.get(i).itemCode+"\t");
-    		    		System.out.print("QTY::"+orderItemList.get(i).quantity+"\t");
-    		    		System.out.println("KITCHEN::"+dealingKitchenIds.get(i)+"\n");
-    				}	
-    				
-    			}else{
-    				System.out.println("* * * * single quantity order * * *");
-    				Map<Integer, Integer> cuisineKitchenMap = new HashMap<Integer, Integer>();//cuisine kitchen map
-    				ArrayList<Integer> nikitchenids = new ArrayList<Integer>();//ni kitchens
-    				ArrayList<Integer> bengkitchenids = new ArrayList<Integer>();// beng kitchens
-    		
-    				for(TimeSlot slot: timeSlotList){
-    					int cuisine = CuisineKitchenDAO.kitchenCuisine(slot.kitchenID);//find kitchen type beng or ni
-    					cuisineKitchenMap.put(cuisine, slot.kitchenID);//put cuisine and kitchen in a map
-    				}
-    				for(Entry<Integer, Integer> entry: cuisineKitchenMap.entrySet()){
-    					if(entry.getKey()==1){//if map contains cuisine ==1 bengali
-    						bengkitchenids.add(entry.getValue());//add all kitchen id to bengali kitchens
-    					}
-    					if(entry.getKey()==2){//if map contains cuisine ==2 ni
-    						nikitchenids.add(entry.getValue());//add all kitchen id to ni kitchens
-    					}
-    				}
-    				if(onlyBengCuisine){//when only bengali cuisine orders
-    					for(int i=0;i<orderItemList.size();i++){
-    						dealingKitchenIds.addAll(bengkitchenids);//add all kitchens to items for bangali
-    					}
-    				}
-    				if(onlyNiCuisine){//when only ni cuisine orders
-    					for(int i=0;i<orderItemList.size();i++){
-    						dealingKitchenIds.addAll(nikitchenids);//add all kitchens to items for ni
-    					}
-    				}
-    				for(int i=0 ; i < orderItemList.size() ; i++){
-    					System.out.print("CUID::"+orderItemList.get(i).cuisineId+"\t");
-    					System.out.print("CATID::"+orderItemList.get(i).categoryId+"\t");
-    					System.out.print("ITEM::"+orderItemList.get(i).itemCode+"\t");
-    		    		System.out.print("QTY::"+orderItemList.get(i).quantity+"\t");
-    		    		System.out.println("KITCHEN::"+dealingKitchenIds.get(i)+"\n");
-    				}	
+
+    		for(TimeSlot slot: timeSlotList){
+    			int cuisine = CuisineKitchenDAO.kitchenCuisine(slot.kitchenID);//find kitchen type beng or ni
+    			cuisineKitchenMap.put(cuisine, slot.kitchenID);//put cuisine and kitchen in a map
+    		}
+    		for(Entry<Integer, Integer> entry: cuisineKitchenMap.entrySet()){
+    			if(entry.getKey()==1){//if map contains cuisine ==1 bengali
+    				bengkitchenids.add(entry.getValue());//add all kitchen id to bengali kitchens
     			}
-    	//}
-    	
-    	
-    	//dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress);
-    	//if(dealingKitchenIds.size()>0){
-    	//	isUserSameOrder = true;
-    	//	System.out.println("The user last order same assign last kitchen...");
-    	//}else{
-    		//dealingKitchenIds = Duplicate.getKitchenId(orderItemList, pincode);
-    	//	dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode);
-    	//}
-    	
-    	
-    	//List<Integer> dealingKitchenIds = new ArrayList<Integer>();
-    
-    	/*ArrayList<KitchenDetailsBean> kitchenDetailsBeanList =  new ArrayList<KitchenDetailsBean>();
-    	
-    	kitchenDetailsBeanList = getKitchenDetails(pincode);*/
-    	
-    	/*for(KitchenDetailsBean bean :  kitchenDetailsBeanList){
-    		System.out.println("kitchen cuisine:"+bean.getKitchenId()+" kitchen cuisine:"+bean.getCuisineId()+" kitchen category:"+bean.getCategoryId());
-    	}*/
-    	
-    	/*int listSize = kitchenDetailsBeanList.size();
-    	System.out.println("order list size--"+orderItemList.size());
-    	for(int i=0; i< orderItemList.size() ; i++){
-    		for(int j=0 ; j< listSize ;j++){	
-    			if(orderItemList.get(i).cuisineId.equals(kitchenDetailsBeanList.get(j).getCuisineId()) 
-    			 && orderItemList.get(i).categoryId.equals(kitchenDetailsBeanList.get(j).getCategoryId())){
-    				System.out.println("Selected kitchen id->"+kitchenDetailsBeanList.get(j).getKitchenId() );
-    				dealingKitchenIds.add(kitchenDetailsBeanList.get(j).getKitchenId());
+    			if(entry.getKey()==2){//if map contains cuisine ==2 ni
+    				nikitchenids.add(entry.getValue());//add all kitchen id to ni kitchens
     			}
     		}
-    	}*/
-    	
-    	/*for(int i=0 ; i < orderItemList.size() && i < dealingKitchenIds.size(); i++){
-    		System.out.println("\n******* "+i+" item starts here*******************");
-    		System.out.println("Cuisine Id:"+orderItemList.get(i).cuisineId);
-    		System.out.println("Category Id:"+orderItemList.get(i).categoryId);
-    		System.out.println("Qty :"+orderItemList.get(i).quantity);
-    		System.out.println("Price :"+orderItemList.get(i).price);
-    		System.out.println("kitchen Id:"+dealingKitchenIds.get(i));
-    		System.out.println("******** "+i+" item end ***************");
-    	}*/
-    	/*System.out.println("Selected kitchen ids * * * * * "+dealingKitchenIds);
-    	System.out.println("order list size::"+orderItemList.size());
-    	System.out.println("kitchen id list size:"+dealingKitchenIds.size());
-    	
-    	
-    	ArrayList<Integer> selectedKitchenIds = fetchKitchenIDwithUserItems(orderItemList,pincode);
-    	if(selectedKitchenIds.size()>0){
-    		System.out.println("Selected kitchens are:="+selectedKitchenIds);
+    		if(onlyBengCuisine){//when only bengali cuisine orders
+
+    			if(sameCuisineSplit){
+    					
+    				for(TimeSlot kitchenSlot: timeSlotList){
+    					for(OrderItems items : orderItemList){
+    						if(kitchenSlot.quantity>0){
+    							if(items.quantity == 0){
+    								continue;
+    							}
+    							OrderItems kio = new OrderItems();
+    							kio.itemName = items.itemName;
+    							kio.itemDescription = items.itemDescription;
+    							kio.categoryId = items.categoryId;
+    							kio.cuisineId = items.cuisineId;
+    							kio.cuisinName = items.cuisinName;
+    							kio.itemCode = items.itemCode;
+    							kio.quantity = kitchenSlot.quantity;
+    							kio.price = items.price;
+    							kio.kitchenId = kitchenSlot.kitchenID;
+    							sameKitchenOrderList.add(kio);
+
+    						}
+    					}
+    				}
+    				orderItemList = new ArrayList<OrderItems>();
+    				orderItemList = sameKitchenOrderList;
+    				System.out.println(orderItemList);
+    				for(OrderItems oritems : sameKitchenOrderList)
+    					dealingKitchenIds.addAll(servingKitchenIds);
+    			}else{
+
+    				for(Integer kitchenid : servingKitchenIds){
+    					for(OrderItems items : orderItemList){
+    						/*if(RoundRobinKitchenFinder.isKitchenServingItem(items.itemCode, kitchenid)){
+    							items.kitchenId = kitchenid;
+    						}else{
+    							continue;
+    						}*/
+    						items.kitchenId = kitchenid;
+    						dealingKitchenIds.add(items.kitchenId);
+    					}	
+    				}
+    			}
+    			System.out.println("Only bengali dealing kitchen:: "+dealingKitchenIds);
+    		}
+    		if(onlyNiCuisine){//when only ni cuisine orders
+    			for(Integer kitchenid : servingKitchenIds){
+    				for(OrderItems items : orderItemList){
+    					/*if(RoundRobinKitchenFinder.isKitchenServingItem(items.itemCode, kitchenid)){
+    						items.kitchenId = kitchenid;
+    					}else{
+    						continue;
+    					}*/
+    					items.kitchenId = kitchenid;
+    					dealingKitchenIds.add(items.kitchenId);
+    				}
+    			}
+    			System.out.println("Only NI dealing kitchen:: "+dealingKitchenIds);
+    		}
+    		
+    		if(bengNiCuisine){//when  bengali  & ni cuisine orders
+    			Collections.sort(orderItemList);//sort order items from bengali to ni(1 then 2)
+    			for(Integer kitchenid : servingKitchenIds){
+    				for(OrderItems items : orderItemList){
+    					if(RoundRobinKitchenFinder.isKitchenServingItem(items.itemCode, kitchenid)){
+    						items.kitchenId = kitchenid;
+    					}else{
+    						continue;
+    					}
+    					dealingKitchenIds.add(items.kitchenId);
+    				}
+
+    			}
+    			/*for(int i=0;i<orderItemList.size();i++){
+    						dealingKitchenIds.addAll(bengkitchenids);// first add bengali
+    						dealingKitchenIds.addAll(nikitchenids);// second add ni
+    					}*/
+    			System.out.println("Both dealing kitchen:: "+dealingKitchenIds);
+    		}
+
+    		for(int i=0 ; i < orderItemList.size() ; i++){
+    			System.out.print("CUID::"+orderItemList.get(i).cuisineId+"\t");
+    			System.out.print("CATID::"+orderItemList.get(i).categoryId+"\t");
+    			System.out.print("ITEM::"+orderItemList.get(i).itemCode+"\t");
+    			System.out.print("QTY::"+orderItemList.get(i).quantity+"\t");
+    			System.out.println("KITCHEN::"+orderItemList.get(i).kitchenId+"\n");
+
+    		}	
+
     	}else{
-    		System.out.println("Not selected!");
-    	}*/
+    		System.out.println("* * * * single quantity order * * *");
+    		Map<Integer, Integer> cuisineKitchenMap = new HashMap<Integer, Integer>();//cuisine kitchen map
+    		ArrayList<Integer> nikitchenids = new ArrayList<Integer>();//ni kitchens
+    		ArrayList<Integer> bengkitchenids = new ArrayList<Integer>();// beng kitchens
+
+    		for(TimeSlot slot: timeSlotList){
+    			int cuisine = CuisineKitchenDAO.kitchenCuisine(slot.kitchenID);//find kitchen type beng or ni
+    			cuisineKitchenMap.put(cuisine, slot.kitchenID);//put cuisine and kitchen in a map
+    		}
+    		for(Entry<Integer, Integer> entry: cuisineKitchenMap.entrySet()){
+    			if(entry.getKey()==1){//if map contains cuisine ==1 bengali
+    				bengkitchenids.add(entry.getValue());//add all kitchen id to bengali kitchens
+    			}
+    			if(entry.getKey()==2){//if map contains cuisine ==2 ni
+    				nikitchenids.add(entry.getValue());//add all kitchen id to ni kitchens
+    			}
+    		}
+    		if(onlyBengCuisine){//when only bengali cuisine orders
+    			for(Integer kitchenid : servingKitchenIds){
+    				for(OrderItems items : orderItemList){
+    					/*if(RoundRobinKitchenFinder.isKitchenServingItem(items.itemCode, kitchenid)){
+    						items.kitchenId = kitchenid;
+    					}else{
+    						continue;
+    					}*/
+    					items.kitchenId = kitchenid;
+    					dealingKitchenIds.add(items.kitchenId);
+    				}
+    			}
+    			/*for(int i=0;i<orderItemList.size();i++){
+    				dealingKitchenIds.addAll(bengkitchenids);//add all kitchens to items for bangali
+    			}*/
+    		}
+    		if(onlyNiCuisine){//when only ni cuisine orders
+    			for(Integer kitchenid : servingKitchenIds){
+    				for(OrderItems items : orderItemList){
+    					/*if(RoundRobinKitchenFinder.isKitchenServingItem(items.itemCode, kitchenid)){
+    						items.kitchenId = kitchenid;
+    					}else{
+    						continue;
+    					}*/
+    					items.kitchenId = kitchenid;
+    					dealingKitchenIds.add(items.kitchenId);
+    				}
+    			}
+    			/*for(int i=0;i<orderItemList.size();i++){
+    				dealingKitchenIds.addAll(nikitchenids);//add all kitchens to items for ni
+    			}*/
+    		}
+    		for(int i=0 ; i < orderItemList.size() ; i++){
+    			System.out.print("CUID::"+orderItemList.get(i).cuisineId+"\t");
+    			System.out.print("CATID::"+orderItemList.get(i).categoryId+"\t");
+    			System.out.print("ITEM::"+orderItemList.get(i).itemCode+"\t");
+    			System.out.print("QTY::"+orderItemList.get(i).quantity+"\t");
+    			System.out.println("KITCHEN::"+orderItemList.get(i).kitchenId+"\n");
+    		}	
+    	}
+    	
     	System.out.println("Order list size:: "+orderItemList.size()+" Dealing kitchdens :"+dealingKitchenIds.size());
     	/************** If kitchen found in given delivery pincode ******************/
     	if(dealingKitchenIds.size()!=0){
@@ -3356,6 +3387,7 @@ public class DBConnection {
     	        				}else{
     	        					preparedStatement.setString(10, "REGISTERED USER");
     	        				}
+    	        				System.out.println(preparedStatement);
     	        				//preparedStatement.setDate(7, current_tim);
     	        				preparedStatement.execute();
     	        				//connection.commit();
@@ -3418,17 +3450,32 @@ public class DBConnection {
     		if(kitchenAssigned && orderId!=0){
     			//updateStock(orderItemList, dealingKitchenIds);
     			if(totalNoOfQuantity > 1){
-    				if(BookDriver.assignDriverWithKitchen(timeSlotList, orderId)){//assign driver id and current time wrt kitchen and order id
-    					BookDriver.bookDriverSlot(mealTypePojo);//driver status table updation qty++ order++
-    					if(BookDriver.isSlotFull(mealTypePojo) ){//check for slot is full qty<9 && order==2
-    						BookDriver.makeSlotLocked(mealTypePojo);//make slot full as inactive
-    					}
+    				if(totalBenQty > 1 || totalNiQty > 1){
+    					if(BookDriver.assignDriverWithKitchen(timeSlotList, orderId)){//assign driver id and current time wrt kitchen and order id
+        					//BookDriver.bookDriverSlot(mealTypePojo,timeSlotList);//driver status table updation qty++ order++
+        					BookDriver.saveBikersQtyWithKitchen(timeSlotList, orderId);
+        					for(TimeSlot slot : timeSlotList){	
+        						mealTypePojo.setBoyUSerId(slot.bikerUserId);
+        						mealTypePojo.setSlotId(slot.slotId);
+        						
+        						BookDriver.bookDriverSlot(mealTypePojo, slot);//driver status table updation qty++ order++
+        						if(BookDriver.isSlotFull(mealTypePojo, slot) ){//check for slot is full qty<9 && order==2
+            						BookDriver.makeSlotLocked(mealTypePojo,slot);//make slot full as inactive
+            					}
+        					}
+        					/*if(BookDriver.isSlotFull(mealTypePojo,timeSlotList) ){//check for slot is full qty<9 && order==2
+        						BookDriver.makeSlotLocked(mealTypePojo,timeSlotList);//make slot full as inactive
+        					}*/
+        				}
     				}
+    				
     			}
     			ArrayList<KitchenStock> kitchenQtyList = new ArrayList<KitchenStock>();
     			Collections.sort(orderItemList);
-    			for(int i=0 ; i < orderItemList.size() && i < dealingKitchenIds.size(); i++){
-    	    		kitchenQtyList.add(new KitchenStock(dealingKitchenIds.get(i) , orderItemList.get(i).quantity ));
+    			//for(int i=0 ; i < orderItemList.size() && i < dealingKitchenIds.size(); i++){
+    			for(int i=0 ; i < orderItemList.size() ; i++){	
+    			//kitchenQtyList.add(new KitchenStock(dealingKitchenIds.get(i) , orderItemList.get(i).quantity ));
+    				kitchenQtyList.add(new KitchenStock(orderItemList.get(i).kitchenId , orderItemList.get(i).quantity ));
     	    	}
     			ArrayList<KitchenStock> updationKitchenStockList = new ArrayList<KitchenStock>();
     			
@@ -4763,7 +4810,7 @@ public class DBConnection {
 				try {
 						preparedStatement = connection.prepareStatement(sql);
 						Collections.sort(orderItemList);
-						for(int i=0 ; i < orderItemList.size() && i < kitchenIdList.size(); i++){
+						/*for(int i=0 ; i < orderItemList.size() && i < kitchenIdList.size(); i++){
 				    		preparedStatement.setInt(1, orderId);
 				    		preparedStatement.setInt(2, orderItemList.get(i).categoryId); 
 				    		preparedStatement.setInt(3, orderItemList.get(i).quantity);
@@ -4775,14 +4822,29 @@ public class DBConnection {
 				    		preparedStatement.setString(9, orderItemList.get(i).itemCode);
 				    		preparedStatement.setString(10, orderItemList.get(i).packing);
 				    		preparedStatement.addBatch();
-				    	}
+				    	}*/
+						int i=0;
+						for(OrderItems items : orderItemList){
+							preparedStatement.setInt(1, orderId);
+				    		preparedStatement.setInt(2, items.categoryId); 
+				    		preparedStatement.setInt(3, items.quantity);
+				    		preparedStatement.setDouble(4, items.price); 
+				    		preparedStatement.setDouble(5, (items.quantity*items.price) );
+				    		preparedStatement.setInt(6, items.cuisineId);
+				    		preparedStatement.setInt(7, items.kitchenId);
+				    		preparedStatement.setString(8, orderId.toString()+"/"+(i+1) );
+				    		preparedStatement.setString(9, items.itemCode);
+				    		preparedStatement.setString(10, items.packing);
+				    		preparedStatement.addBatch();
+				    		i++;
+						}
 						int [] count = preparedStatement.executeBatch();
 				    	 //  connection.commit();
 				    	   for(Integer integer : count){
 				    		   inserted = true;
 				    	   }
 				} catch (Exception e) {
-					connection.rollback();
+//					connection.rollback();
 					e.printStackTrace();
 				}finally{
 					if(preparedStatement!=null){
@@ -4842,7 +4904,8 @@ public class DBConnection {
 			    			   //message to kitchen
 			    			   if(orderType.equalsIgnoreCase("REGULAR")){
 			    				  System.out.println("Right now messege is closed for temp. .");
-			    				 //   sendMessageToMobile(getKitchenMobile(id), getOrderNo(orderId,"REGULAR"), getOrderTime(getOrderNo(orderId,"REGULAR"),orderType), 1);	  
+			    				  
+			    				    sendMessageToMobile(getKitchenMobile(id), getOrderNo(orderId,"REGULAR"), getOrderTime(getOrderNo(orderId,"REGULAR"),orderType), 1);	  
 			    			   }else{
 			    				  // sendMessageToMobile(getKitchenMobile(id), getOrderNo(orderId,"SUB"), getOrderTime(getOrderNo(orderId,"SUB"),orderType), 1);		
 			    			   }
@@ -5489,7 +5552,7 @@ public class DBConnection {
 			// TODO: handle exception
 		}
     	Biker biker = BikerDAO.getDriverDetails(boyUserId);
-		//SendMessageDAO.sendMessageForDeliveryBoy(getCustomerMobile(orderNo, "REGULAR"), biker.getBikerContact(), biker.getBikerName(),  orderNo);
+		SendMessageDAO.sendMessageForDeliveryBoy(getCustomerMobile(orderNo, "REGULAR"), biker.getBikerContact(), biker.getBikerName(),  orderNo);
 
     	return orderPicked;
     }
@@ -5509,20 +5572,20 @@ public class DBConnection {
     			/**
 				 * SEND MESSAGE TO CUSTOMER FOR ORDER DELIVEREY
 				 */
-    			//if(SendMessageDAO.isDeliveryMessageSend(orderNo)){
-    			//	System.out.println("Already message sent!!!");
-    			//}else{
-    			//	sendMessageToMobile(getCustomerMobile(orderNo, "REGULAR"), 
-    				//		orderNo, "orderTime" , 7);
-    			//}
-				
-				User user = UserDetailsDao.getUserDetails(null, orderNo);
-				Order order = OrderDetailsDAO.getOrderDetails(orderNo);
-				ArrayList<OrderItems> orderItemList = OrderItemDAO.getOrderItemDetails(orderNo);
-				/**
-				 * SEND INVOICE TO CUSTOMER 
-				 */
-				Invoice.generateAndSendEmail(user, order, orderItemList);
+    			if(SendMessageDAO.isDeliveryMessageSend(orderNo)){
+    				System.out.println("Already message sent!!!");
+    			}else{
+    				sendMessageToMobile(getCustomerMobile(orderNo, "REGULAR"), 
+    						orderNo, "orderTime" , 7);
+    				User user = UserDetailsDao.getUserDetails(null, orderNo);
+    				Order order = OrderDetailsDAO.getOrderDetails(orderNo);
+    				ArrayList<OrderItems> orderItemList = OrderItemDAO.getOrderItemDetails(orderNo);
+    				/**
+    				 * SEND INVOICE TO CUSTOMER 
+    				 */
+    				Invoice.generateAndSendEmail(user, order, orderItemList);
+    				SendMessageDAO.updateSendMessageStatus(orderNo);
+    			}
     		}
     		deliverJsonObj.put("status", true);
     		if(isAllOrdersDelivered(boyUserId)){// check whether the no of total order and delivered order are same or not
@@ -7569,9 +7632,9 @@ public class DBConnection {
 	public static JSONArray fetchItemsWrtCategory(int categoryId,String pincode,Connection connection,String deliveryDay) throws JSONException{
 		//JSONObject fetchAllCategory = new JSONObject();
 		JSONArray jArray = new JSONArray();
+		if( !(categoryId == 78 || categoryId == 79) ){
 			try {
 				SQL:{
-						//Connection connection = DBConnection.createConnection();
 						PreparedStatement preparedStatement = null;
 						ResultSet resultSet = null;
 						/*String sql ="SELECT * FROM vw_category_from_kitchen_details WHERE area_id = "
@@ -7609,8 +7672,6 @@ public class DBConnection {
 								jobject.put("categoryimage", categoryImage);
 						    	jobject.put("categoryname",resultSet.getString("item_name"));
 						    	
-						    	//System.out.println("Dinner stock : "+dinnerStock);
-						    	//System.out.println("Lunch stock : "+stock);
 						    	boolean isBikerAvailableForLunch = false,isBikerAvailableForDinner = false;
 						    	//isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
 						    	//isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
@@ -7628,43 +7689,7 @@ public class DBConnection {
 						    	jobject.put("dinnerstock", dinnerStock);
 						    	isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
 						    	jobject.put("availableBikerForDinner", isBikerAvailableForDinner);
-						    	/*if(Integer.valueOf(stock)>0){
-						    		//System.out.println("lunch Stock > 0");
-						    		isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
-						    		if(isBikerAvailableForLunch){
-						    		//	System.out.println("lunch Stock available true");
-						    			jobject.put("stock", stock);
-								    	jobject.put("lunchstock", stock);
-								    	jobject.put("availableBikerForLunch", true);
-						    		}else{
-						    		//	System.out.println("else lunch Stock available false");
-						    			jobject.put("stock", "0");
-								    	jobject.put("lunchstock", "0");
-								    	jobject.put("availableBikerForLunch", false);
-						    		}
-						    	}else{
-						    		//System.out.println("lunch Stock < 0");
-						    		jobject.put("stock", "0");
-							    	jobject.put("lunchstock", "0");
-							    	jobject.put("availableBikerForLunch", false);
-						    	}
-						    	if(Integer.valueOf(dinnerStock) > 0){
-						    		//System.out.println("dinnerStock Stock > 0");
-						    		isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
-						    		if(isBikerAvailableForDinner){
-						    		//	System.out.println("dinnerStock Stock available true");
-						    			jobject.put("dinnerstock", dinnerStock);
-						    			jobject.put("availableBikerForDinner", true);
-						    		}else{
-						    		//	System.out.println("dinnerStock Stock available false");
-						    			jobject.put("dinnerstock", "0");
-						    			jobject.put("availableBikerForDinner", false);
-						    		}
-						    	}else{
-						    	//	System.out.println("dinnerStock Stock < 0");
-						    		jobject.put("dinnerstock", "0");
-						    		jobject.put("availableBikerForDinner", false);
-						    	}*/
+						    	
 						    	if(isBikerAvailableForLunch && isBikerAvailableForDinner){
 						    		jobject.put("available",true);
 						    	}else{
@@ -7687,10 +7712,76 @@ public class DBConnection {
 								connection.close();
 							}*/
 						}
-			}
+				}
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
+		}else{
+			System.out.println("Category "+categoryId);
+			try {
+				SQL:{
+						PreparedStatement preparedStatement = null;
+						ResultSet resultSet = null;
+						
+						String sql ="select distinct category_image from vw_alacarte_item_details_from_kitchen "
+								+" where category_id = ? and serving_zipcodes LIKE ? "	;	
+						try {
+							preparedStatement = connection.prepareStatement(sql);
+							preparedStatement.setInt(1, categoryId);
+							preparedStatement.setString(2, "%"+pincode+"%");
+							int serialNo = 0;
+							resultSet = preparedStatement.executeQuery();
+							while (resultSet.next()) {
+								JSONObject jobject =  new JSONObject();
+								jobject.put("serial", serialNo);
+								jobject.put("itemcode", "");
+								jobject.put("cuisineid", "");
+								jobject.put("categoryid","");
+								jobject.put("categorydescription", "" );
+								String tempImage  = resultSet.getString("category_image");
+								String categoryImage;
+								if(tempImage.contains("C:\\apache-tomcat-7.0.62/webapps/")){
+									 categoryImage = tempImage.replace("C:\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+								}else if(tempImage.startsWith("http://")){
+									categoryImage = tempImage.replace("http://", "");
+								}else{
+									 categoryImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+								}
+								
+								jobject.put("categoryimage", categoryImage);
+						    	jobject.put("categoryname","");
+						    	
+						    	boolean isBikerAvailableForLunch = false,isBikerAvailableForDinner = false;
+						    	
+						    	jobject.put("stock", 0);
+						    	jobject.put("lunchstock", 0);
+						    	jobject.put("availableBikerForLunch", true);
+						    	
+						    	jobject.put("dinnerstock", 0);
+						    	jobject.put("availableBikerForDinner", true);
+						    	jobject.put("available",true);
+						    	
+						    	
+						    	jobject.put("mealtype", "BOTH");
+						    	jobject.put("categoryprice", 0.0);
+						    	jArray.put(jobject);
+						    	serialNo++;
+							}
+							
+						} catch (Exception e) {
+							e.printStackTrace();
+						}finally{
+							if(preparedStatement!=null){
+								preparedStatement.close();
+							}
+						}
+				}
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+			 
+		}
+		
 			
 			//System.out.println("Category size: "+jArray.length());
 			//fetchAllCategory.put("Categories", jArray);
@@ -8754,7 +8845,7 @@ public class DBConnection {
     				/*String sql = "select * from vw_kitchen_order_list where kitchen_name = ? AND order_date = CURRENT_DATE";
     				String sql = "select * from vw_kitchen_orders where kitchen_name = ? AND delivered_to_boy ='N' "
     						+ "AND (order_date = CURRENT_DATE OR CURRENT_DATE<=delivery_date) order by order_no DESC";*/
-    				String sql = "select * from vw_all_kitchen_orders where kitchen_name = ? AND order_date = CURRENT_DATE order by order_no DESC";
+    				String sql = "select * from vw_all_kitchen_orders where kitchen_name = ? AND delivery_date = CURRENT_DATE order by order_no DESC";
     				try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, kitchenName);
@@ -11173,7 +11264,7 @@ public class DBConnection {
 			SQL:{
 				
 				PreparedStatement preparedStatement = null;
-				String sql = "UPDATE fapp_order_tracking SET delivered_to_boy = 'Y',driver_pickup_time=current_timestamp "
+				String sql = "UPDATE fapp_order_tracking SET delivered_to_boy = 'Y',delivery_time=current_timestamp "
 						   + " WHERE order_id = (SELECT order_id from fapp_orders where order_no = ?) "
 						   + " AND kitchen_id = (SELECT kitchen_id from fapp_kitchen where kitchen_name = ?)";
 				
@@ -11442,97 +11533,103 @@ public class DBConnection {
 	
 
     
-	private static void sendMessageToMobile(String recipient, String orderNo, String orderTime, Integer orderStatusId){
-		try {
-			//String recipient = "+917872979469";
-			//String message = orderNo+" is assigned for you!";
-			String message = "";
-			if(orderStatusId==1){
-				if(orderNo.startsWith("SUB")){
-					message = "New Subscription order "+orderNo+" is assigned to you :  "+orderTime+". Eazelyf.";
-					//message = "New Subscription order "+ orderNo +" is assigned to you : "+orderTime+". Thnx & Rgds Eazelyf.";
+	public static void sendMessageToMobile(String recipient, String orderNo, String orderTime, Integer orderStatusId){
+		if(SendMessageDAO.isSmsActive()){
+			try {
+				//String recipient = "+917872979469";
+				//String message = orderNo+" is assigned for you!";
+				String message = "";
+				if(orderStatusId==1){
+					if(orderNo.startsWith("SUB")){
+						message = "New Subscription order "+orderNo+" is assigned to you :  "+orderTime+". Eazelyf.";
+						//message = "New Subscription order "+ orderNo +" is assigned to you : "+orderTime+". Thnx & Rgds Eazelyf.";
+					}else{
+						message = "New Retail order "+orderNo+" is assigned to you : "+orderTime+". Eazelyf.";
+						//message = "New order "+ orderNo +" is assigned to you : "+orderTime+". Thnx & Rgds Eazelyf.";
+					}	
+				}else if(orderStatusId==7){
+					message = orderNo+" has been successfully delivered to you. Eazelyf.";
+					//message = orderNo +" has been successfully delivered to you. Thnx & Rgds Eazelyf. ";
 				}else{
-					message = "New Retail order "+orderNo+" is assigned to you : "+orderTime+". Eazelyf.";
-					//message = "New order "+ orderNo +" is assigned to you : "+orderTime+". Thnx & Rgds Eazelyf.";
-				}	
-			}else if(orderStatusId==7){
-				message = orderNo+" has been successfully delivered to you. Eazelyf.";
-				//message = orderNo +" has been successfully delivered to you. Thnx & Rgds Eazelyf. ";
-			}else{
-				if(orderNo.startsWith("REG")){
-					message = "Your order "+orderNo+" has been accepted. Eazelyf.";
-					//message = "Your order "+orderNo+" is under process"+". Thnx & Rgds Eazelyf.";
-					//Your order "+orderNo+" has been accepted.Thank you for choosing us. Have a great day! Thnx & Rgds Eazelyf.";
-				}else{
-					message = "Your order "+orderNo+" for subscription is accepted. Thank you for choosing us. Have a great day!. Eazelyf.";
-					//message = "Your order "+orderNo+" for subscription is accepted. "
-						//	+ "Thank you for choosing us. Have a great day! Thnx & Rgds Eazelyf.";
+					if(orderNo.startsWith("REG")){
+						message = "Your order "+orderNo+" has been accepted. Eazelyf.";
+						//message = "Your order "+orderNo+" is under process"+". Thnx & Rgds Eazelyf.";
+						//Your order "+orderNo+" has been accepted.Thank you for choosing us. Have a great day! Thnx & Rgds Eazelyf.";
+					}else{
+						message = "Your order "+orderNo+" for subscription is accepted. Thank you for choosing us. Have a great day!. Eazelyf.";
+						//message = "Your order "+orderNo+" for subscription is accepted. "
+							//	+ "Thank you for choosing us. Have a great day! Thnx & Rgds Eazelyf.";
+					}
 				}
-			}
-			/*
-			 * Delivery boy ABCD having mobile no 91XXXXXXXX is assigned to deliver your order.Thnx & Rgds Eazelyf.
-				ORDER/000001 has been successfully delivered to you.Thnx & Rgds Eazelyf.
-			 */
-			String username = "nextgenvision"; 
-			String password = "sms@123";
-			String senderId = "eazelyf";
-			String requestUrl  = "http://fastsms.way2mint.com/SendSMS/sendmsg.php?" +
-					 "uname=" + URLEncoder.encode(username, "UTF-8") +
-					 "&pass=" + URLEncoder.encode(password, "UTF-8") +
-					 "&send=" + URLEncoder.encode(senderId, "UTF-8") +
-					 "&dest=" + URLEncoder.encode(recipient, "UTF-8") +
-					 "&msg=" + URLEncoder.encode(message, "UTF-8") ;
-			System.out.println("Message sent to mobile no::"+recipient+"::"+message);
-			URL url = new URL(requestUrl);
-			HttpURLConnection uc = (HttpURLConnection)url.openConnection();
-			System.out.println("Message Response:::::"+uc.getResponseMessage());
-			uc.disconnect();
-			} catch(Exception ex) {
-			System.out.println(ex.getMessage());
-			}	
+				/*
+				 * Delivery boy ABCD having mobile no 91XXXXXXXX is assigned to deliver your order.Thnx & Rgds Eazelyf.
+					ORDER/000001 has been successfully delivered to you.Thnx & Rgds Eazelyf.
+				 */
+				String username = "nextgenvision"; 
+				String password = "sms@123";
+				String senderId = "eazelyf";
+				String requestUrl  = "http://fastsms.way2mint.com/SendSMS/sendmsg.php?" +
+						 "uname=" + URLEncoder.encode(username, "UTF-8") +
+						 "&pass=" + URLEncoder.encode(password, "UTF-8") +
+						 "&send=" + URLEncoder.encode(senderId, "UTF-8") +
+						 "&dest=" + URLEncoder.encode(recipient, "UTF-8") +
+						 "&msg=" + URLEncoder.encode(message, "UTF-8") ;
+				System.out.println("Message sent to mobile no::"+recipient+"::"+message);
+				URL url = new URL(requestUrl);
+				HttpURLConnection uc = (HttpURLConnection)url.openConnection();
+				System.out.println("Message Response:::::"+uc.getResponseMessage());
+				uc.disconnect();
+				} catch(Exception ex) {
+				System.out.println(ex.getMessage());
+				}	
+		}
+		
 	}
 	
 	private static void sendMessageForDeliveryBoy(String recipient, String deliveryBoyMobile, 
 			String boyName, String latitude, String longitude ,String subscriptionNO){
-		try {
-			//String recipient = "+917872979469";
-			//String message = orderNo+" is assigned for you!";
-			//String myAPI = "https://www.google.com/maps?q="+latitude+","+longitude+"&16z";
-			String myAPI = "http://appsquad.cloudapp.net:8080/RESTfulExample/rest/category/map?id="+subscriptionNO;
-			String message ="";
-			if(latitude.contains("dummyLat") && longitude.contains("dummyLong")){
-			 message = "Delivery boy "+boyName+" having mobile no "+deliveryBoyMobile+" is assigned to deliver your order. You may track your order "+myAPI+" Eazelyf.";
-				//message = "Delivery boy "+boyName+" having mobile no "+deliveryBoyMobile+" is assigned to deliver your order.Thnx & Rgds Eazelyf.";
-			}else{//you may track your order here
-				 /*message =" Delivery boy "+boyName+" having mobile no "+deliveryBoyMobile +" is assigned to deliver your order. Track order here "+
-						 myAPI+"Thnx & Rgds Eazelyf.";*/
+		if(SendMessageDAO.isSmsActive()){
+			try {
+				//String recipient = "+917872979469";
+				//String message = orderNo+" is assigned for you!";
+				//String myAPI = "https://www.google.com/maps?q="+latitude+","+longitude+"&16z";
+				String myAPI = "http://appsquad.cloudapp.net:8080/RESTfulExample/rest/category/map?id="+subscriptionNO;
+				String message ="";
+				if(latitude.contains("dummyLat") && longitude.contains("dummyLong")){
 				 message = "Delivery boy "+boyName+" having mobile no "+deliveryBoyMobile+" is assigned to deliver your order. You may track your order "+myAPI+" Eazelyf.";
-			}
+					//message = "Delivery boy "+boyName+" having mobile no "+deliveryBoyMobile+" is assigned to deliver your order.Thnx & Rgds Eazelyf.";
+				}else{//you may track your order here
+					 /*message =" Delivery boy "+boyName+" having mobile no "+deliveryBoyMobile +" is assigned to deliver your order. Track order here "+
+							 myAPI+"Thnx & Rgds Eazelyf.";*/
+					 message = "Delivery boy "+boyName+" having mobile no "+deliveryBoyMobile+" is assigned to deliver your order. You may track your order "+myAPI+" Eazelyf.";
+				}
+			
+				/*
+				 * Delivery boy ABCD having mobile no 91XXXXXXXX is assigned to deliver your order.Thnx & Rgds Eazelyf.
+					ORDER/000001 has been successfully delivered to you.Thnx & Rgds Eazelyf.
+				 */
+				String username = "nextgenvision"; 
+				String password = "sms@123";
+				String senderId = "eazelyf";
+				String requestUrl  = "http://fastsms.way2mint.com/SendSMS/sendmsg.php?" +
+						 "uname=" + URLEncoder.encode(username, "UTF-8") +
+						 "&pass=" + URLEncoder.encode(password, "UTF-8") +
+						 "&send=" + URLEncoder.encode(senderId, "UTF-8") +
+						 "&dest=" + URLEncoder.encode(recipient, "UTF-8") +
+						 "&msg=" + URLEncoder.encode(message, "UTF-8") ;
+				System.out.println("Message sent to mobile no::"+recipient+"::"+message);
+				URL url = new URL(requestUrl);
+				HttpURLConnection uc = (HttpURLConnection)url.openConnection();
+				System.out.println("Message Response:::::"+uc.getResponseMessage());
+				uc.disconnect();
+				} catch(Exception ex) {
+				System.out.println(ex.getMessage());
+				}	
+		}
 		
-			/*
-			 * Delivery boy ABCD having mobile no 91XXXXXXXX is assigned to deliver your order.Thnx & Rgds Eazelyf.
-				ORDER/000001 has been successfully delivered to you.Thnx & Rgds Eazelyf.
-			 */
-			String username = "nextgenvision"; 
-			String password = "sms@123";
-			String senderId = "eazelyf";
-			String requestUrl  = "http://fastsms.way2mint.com/SendSMS/sendmsg.php?" +
-					 "uname=" + URLEncoder.encode(username, "UTF-8") +
-					 "&pass=" + URLEncoder.encode(password, "UTF-8") +
-					 "&send=" + URLEncoder.encode(senderId, "UTF-8") +
-					 "&dest=" + URLEncoder.encode(recipient, "UTF-8") +
-					 "&msg=" + URLEncoder.encode(message, "UTF-8") ;
-			System.out.println("Message sent to mobile no::"+recipient+"::"+message);
-			URL url = new URL(requestUrl);
-			HttpURLConnection uc = (HttpURLConnection)url.openConnection();
-			System.out.println("Message Response:::::"+uc.getResponseMessage());
-			uc.disconnect();
-			} catch(Exception ex) {
-			System.out.println(ex.getMessage());
-			}	
 	}
 	
-	private static String getCustomerMobile(String orderNo,String orderType){
+	public static String getCustomerMobile(String orderNo,String orderType){
 		String mob="";
 		try {
 			SQL:{
@@ -11604,7 +11701,7 @@ public class DBConnection {
 		return mob;
 	}
 	
-	private static String getOrderTime(String orderNo,String orderType){
+	public static String getOrderTime(String orderNo,String orderType){
 		String time="";
 		try {
 			SQL:{

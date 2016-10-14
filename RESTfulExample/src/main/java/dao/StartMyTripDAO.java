@@ -76,7 +76,7 @@ public class StartMyTripDAO {
 					Connection connection = DBConnection.createConnection();
 					PreparedStatement preparedStatement = null;
 					String sql ="UPDATE fapp_order_tracking "
-							   +" SET delivery_boy_address=?, latitude = ?,longitude = ?   "
+							   +" SET start_trip='Y',delivery_boy_address=?, latitude = ?,longitude = ?   "
 							   +" WHERE driver_boy_user_id=? AND order_id="
 							   + "(select order_id from fapp_orders where order_no = ?) AND "
 							   +" delivered = 'N' ";

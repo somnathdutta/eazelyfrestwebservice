@@ -30,7 +30,7 @@ public class OrderItemDAO {
 							items.itemName = resultSet.getString("item_name");
 							items.itemDescription = resultSet.getString("item_description");
 							items.quantity = resultSet.getInt("qty");
-							items.price = resultSet.getDouble("total_price");
+							items.price = resultSet.getDouble("category_price");
 							orderItemList.add(items);
 						}
 								

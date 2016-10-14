@@ -16,7 +16,7 @@ public class LoginDAO {
 	public static JSONObject checkUserlogin(String mobileNo, String password) throws JSONException{
     	JSONObject jsonObject = new JSONObject();
     	Boolean loggedStatus = false;
-    	String username = "";
+    	String username = null,email=null;
     	try {
     		Connection connection = DBConnection.createConnection();
 			SQL:{
@@ -31,6 +31,7 @@ public class LoginDAO {
 						if(resultSet.next()){
 							loggedStatus = true;
 							username = resultSet.getString("username");
+							email = resultSet.getString("email");
 						}	
 					} catch (Exception e) {
 						// TODO: handle exception
@@ -53,6 +54,12 @@ public class LoginDAO {
     	if(loggedStatus){
     		if(username!=null){
 				jsonObject.put("status", username);
+				if(email!=null){
+					jsonObject.put("email", email);
+				}else{
+					jsonObject.put("email", "NO EMAIL ID FOUND!");
+				}
+				
 			}else{
 				jsonObject.put("status", mobileNo);
 			}

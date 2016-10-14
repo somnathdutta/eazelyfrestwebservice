@@ -2,7 +2,7 @@ package pojo;
 
 public class Biker {
 
-	private String bikerName,userId,bikerContact,bikerPosition,lat,lng;
+	private String bikerName,userId,bikerContact,bikerPosition,lat,lng,pickUpTime,deliveryTime;
 	private int id;
 	public String getBikerName() {
 		return bikerName;
@@ -45,5 +45,17 @@ public class Biker {
 	}
 	public void setLng(String lng) {
 		this.lng = lng;
+	}
+	public String getPickUpTime() {
+		return pickUpTime;
+	}
+	public void setPickUpTime(String pickUpTime) {
+		this.pickUpTime = pickUpTime;
+	}
+	public String getDeliveryTime() {
+		return deliveryTime;
+	}
+	public void setDeliveryTime(String deliveryTime) {
+		this.deliveryTime = deliveryTime;
 	}
 }
