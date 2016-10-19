@@ -2887,7 +2887,7 @@ public class DBConnection {
 						while (resultSet.next()) {
 							orderStatusList.add(resultSet.getInt("order_status_id")) ;
 						}
-						System.out.println("order status:"+orderStatusList);
+						
 					} catch (Exception e) {
 						System.out.println("ERROR DUE TO:"+e.getMessage());
 					}finally{
@@ -2912,7 +2912,6 @@ public class DBConnection {
     	}else{
     		orderCompleted = false;
     	}
-    	System.out.println("Complete statusids- "+orderStatusList.toString()+" with status-->"+orderCompleted);
     	return orderCompleted;
     }
     
@@ -3475,6 +3474,8 @@ public class DBConnection {
     			//for(int i=0 ; i < orderItemList.size() && i < dealingKitchenIds.size(); i++){
     			for(int i=0 ; i < orderItemList.size() ; i++){	
     			//kitchenQtyList.add(new KitchenStock(dealingKitchenIds.get(i) , orderItemList.get(i).quantity ));
+    				if(orderItemList.get(i).itemTypeId==1)
+    					continue;
     				kitchenQtyList.add(new KitchenStock(orderItemList.get(i).kitchenId , orderItemList.get(i).quantity ));
     	    	}
     			ArrayList<KitchenStock> updationKitchenStockList = new ArrayList<KitchenStock>();

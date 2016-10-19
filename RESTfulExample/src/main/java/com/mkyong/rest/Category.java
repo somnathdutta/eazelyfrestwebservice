@@ -938,7 +938,7 @@ public class Category {
 					items.price = Double.valueOf(order[3]);
 					items.quantity = Integer.valueOf(order[4]);
 					items.packing = "Meal Tray";
-
+					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
 				}else if(order.length==6){
 					items.cuisineId = Integer.valueOf(order[0]);
 					items.categoryId = Integer.valueOf(order[1]);
@@ -946,7 +946,7 @@ public class Category {
 					items.price = Double.valueOf(order[3]);
 					items.quantity = Integer.valueOf(order[4]);
 					items.packing = order[5].toUpperCase();
-
+					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
 				}
 				else if(order.length==7){
 					sub = true;
@@ -1677,10 +1677,12 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject checkfeedback(@FormParam("usermailid")String usermailId) throws JSONException{
 	
-		System.out.println("checkfeedback webservice is called...emailid->"+usermailId);
-	
+		System.out.println("**********************************************");
+		System.out.println("****** CHECKFEEDBACK webservice is called...emailid->"+usermailId);
+	    
 		JSONObject feedbackobject;
 		feedbackobject =  DBConnection.checkfeedback(usermailId);
+		System.out.println("**********************************************");
 		return feedbackobject;
 	}
 	
@@ -1935,15 +1937,26 @@ public class Category {
 	@Path("/fetchAlacarteItems")
 	@Produces(MediaType.APPLICATION_JSON)
 	public static JSONObject fetchAlaCarteItems(@FormParam("pincode")String pincode,
-			@FormParam("categoryId")String categoryId) throws JSONException{
+			@FormParam("categoryId")String categoryId,
+			@FormParam("deliveryday")String deliveryDay) throws JSONException{
 		
 		System.out.println("***************************");
 		System.out.println("** fetchAlacarteItems WEB SERVICE CALLED ********");
-		System.out.println("Pincode: "+pincode+" Catefory id: "+categoryId);
+		System.out.println("Pincode: "+pincode+" Catefory id: "+categoryId+" delievry day: "+deliveryDay);
 		System.out.println("***************************");
-		
-		JSONObject alacarteItemJson = FetchAlaCarteItemDAO.fetchAlacarteItem(pincode, categoryId);
-		
+		JSONObject alacarteItemJson = new JSONObject();
+		if(pincode.length()==0){
+			alacarteItemJson.put("status", "400");
+			alacarteItemJson.put("message", "Pincode required!");
+		}else if(categoryId.equals("0")){
+			alacarteItemJson.put("status", "400");
+			alacarteItemJson.put("message", "Category id required!");
+		}else if(deliveryDay.length() == 0){
+			alacarteItemJson.put("status", "400");
+			alacarteItemJson.put("message", "Delivery day required!");
+		}else{
+			alacarteItemJson = FetchAlaCarteItemDAO.fetchAlacarteItem(pincode, categoryId, deliveryDay);
+		}
 		return alacarteItemJson;
 	}
 	

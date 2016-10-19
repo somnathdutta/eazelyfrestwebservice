@@ -4,7 +4,7 @@ import java.sql.Date;
 
 public class OrderItems implements Comparable<OrderItems>{
 	
-	public Integer cuisineId;
+	public Integer cuisineId,itemTypeId;
 	
 	public Integer categoryId;
 	
@@ -178,6 +178,14 @@ public class OrderItems implements Comparable<OrderItems>{
 
 	public void setKitchenId(int kitchenId) {
 		this.kitchenId = kitchenId;
+	}
+
+	public Integer getItemTypeId() {
+		return itemTypeId;
+	}
+
+	public void setItemTypeId(Integer itemTypeId) {
+		this.itemTypeId = itemTypeId;
 	}
 }
   
