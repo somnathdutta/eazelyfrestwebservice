@@ -287,7 +287,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject userLogin(@FormParam("mobileNumber")String mobileNo,
 			@FormParam("password")String password ) throws JSONException{
-		System.out.println("User login webservice is called * * * * * * * * with mobile no-->"+mobileNo+" and password-->"+password);
+		System.out.println("## userlogin # "+mobileNo+" is trying for logging with password "+password+"##");
 		JSONObject object ; 
 
 		/*object = DBConnection.checkUserlogin(mobNo, password);*/
