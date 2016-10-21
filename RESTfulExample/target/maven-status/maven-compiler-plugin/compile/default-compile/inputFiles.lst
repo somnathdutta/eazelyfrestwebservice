@@ -28,6 +28,7 @@ C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\AllItemsDAO.ja
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\OrderItemDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\TestJson.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\rest\SMTPAuthenticator.java
+C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\FetchCuisineDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\KitchenNotifyOrderDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\rest\Test.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\FetchAlaCarteItemDAO.java
@@ -52,6 +53,7 @@ C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\PlaceSubscript
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\utility\LatLng.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\pojo\TimeSlot.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\pojo\User.java
+C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\OrderSummaryDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\Track.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\rest\Item.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\sql\UserQuery.java

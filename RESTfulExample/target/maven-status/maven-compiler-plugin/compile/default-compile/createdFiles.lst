@@ -25,6 +25,7 @@ dao\OrderDetailsDAO.class
 pojo\Biker.class
 pojo\KitchenStock.class
 pojo\MealTypePojo.class
+dao\OrderSummaryDAO.class
 dao\PickjiCall.class
 com\mkyong\rest\SMTPAuthenticator.class
 dao\LoginDAO.class
@@ -76,6 +77,7 @@ dao\PincodeDAO.class
 pojo\PickJi.class
 dao\FetchAlaCarteItemDAO.class
 com\mkyong\rest\Customer.class
+dao\FetchCuisineDAO.class
 dao\RoundRobinKitchenFinder.class
 utility\DateTimeSlotFinder.class
 dao\TimeSlotFinder.class

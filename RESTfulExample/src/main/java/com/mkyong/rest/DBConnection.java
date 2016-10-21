@@ -90,6 +90,7 @@ import dao.BalanceDAO;
 import dao.BikerDAO;
 import dao.BookDriver;
 import dao.CuisineKitchenDAO;
+import dao.FetchCuisineDAO;
 import dao.FindKitchensByRoundRobin;
 import dao.Invoice;
 import dao.OrderDetailsDAO;
@@ -1042,7 +1043,7 @@ public class DBConnection {
     	}else{
     		System.out.println("Referral code not given::"+referalCode);
     		//when referral code not given by user, just try to insert data in db for new user
-    		User newUser = new User(name, password, email, contactNumber);
+    		User newUser = new User(name, password, email, contactNumber,referalCode,0.0);
     		isNewUserCreated = doSignUpFor(newUser);
     		if(isNewUserCreated){
     			insertStatus = true;
@@ -1216,8 +1217,10 @@ public class DBConnection {
     	return balanceUpdated;
     }
     
-    public static JSONObject getBalance(String mobileNo){
+    public static JSONObject getBalance(String mobileNo) throws JSONException{
     	JSONObject balanceObject = new JSONObject();
+    	String myCode = null;
+    	Double myBalance = null;
     	try {
 			SQL:{
     				Connection connection = DBConnection.createConnection();
@@ -1229,18 +1232,9 @@ public class DBConnection {
 						preparedStatement.setString(1, mobileNo);
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
-							String myCode = resultSet.getString("my_code");
-							Double myBalance = resultSet.getDouble("my_balance");
-							if(myCode!=null){
-								balanceObject.put("mycode", myCode);
-							}else{
-								balanceObject.put("mycode", " ");
-							}
-							if(myBalance!=null){
-								balanceObject.put("mybalance", myBalance);
-							}else{
-								balanceObject.put("mybalance", myBalance);
-							}
+							 myCode = resultSet.getString("my_code");
+							 myBalance = resultSet.getDouble("my_balance");
+							
 						}
 					} catch (Exception e) {
 						// TODO: handle exception
@@ -1256,6 +1250,31 @@ public class DBConnection {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+    	
+    	if(myCode!=null){
+    		balanceObject.put("status", "200");
+    		balanceObject.put("mycode", myCode);
+    		if(myBalance!=null){
+    			balanceObject.put("mybalance", myBalance);
+    		}else{
+    			balanceObject.put("mybalance", myBalance);
+    		}
+    	}else{
+    		balanceObject.put("status", "204");
+    		balanceObject.put("mycode", "");
+    		balanceObject.put("mybalance", "");
+    		
+    	}
+    	/*if(myCode!=null){
+			balanceObject.put("mycode", myCode);
+		}else{
+			balanceObject.put("mycode", " ");
+		}
+		if(myBalance!=null){
+			balanceObject.put("mybalance", myBalance);
+		}else{
+			balanceObject.put("mybalance", myBalance);
+		}*/
     	return balanceObject;
     }
     
@@ -6485,7 +6504,7 @@ public class DBConnection {
     	return cuisineList;
     }*/
     
-    public static JSONObject fetchAllCuisineWithItemData(String pincode, String deliveryDay) throws Exception{
+    public static JSONObject fetchAllCuisineWithItemData(String pincode, String deliveryDay, String mobileNo) throws Exception{
     	Connection connection = null;
     	PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
@@ -6524,22 +6543,23 @@ public class DBConnection {
 						}
 						tempCuisine.put("cuisineimage", cuisineImage);
 						tempCuisine.put("cuisinename", resultSet.getString("cuisin_name"));
-						tempCuisine.put("categorylist", fetchCategoriesOfCuisineWithPincode(tempCuisine.getInt("cuisineid"),pincode,connection,deliveryDay));
+						tempCuisine.put("categorylist", fetchCategoriesOfCuisineWithPincode(tempCuisine.getInt("cuisineid"),pincode,connection,deliveryDay,mobileNo));
 						//tempCuisine.put("categorylist", fetchCategoriesOfCuisine(tempCuisine.getInt("cuisineid")));
 						cuisinesarrayList.put(tempCuisine);
 					}
+					if(!FetchCuisineDAO.isAllActive()){
+						allcuisine.put("cuisineid", cuisinesarrayList.length()+1);
+						//http://i.imgur.com/o0HO5pL.png
+			        	allcuisine.put("cuisineimage", "i.imgur.com/o0HO5pL.png");
+			        	allcuisine.put("cuisinename", "All");
+			        	allcuisine.put("categorylist", fetchCategoriesOfAllCuisineWithPincode(pincode,connection,deliveryDay,mobileNo));
+			        	cuisinesarrayList.put(allcuisine);
+					}
 					
-					allcuisine.put("cuisineid", cuisinesarrayList.length()+1);
-					//http://i.imgur.com/o0HO5pL.png
-		        	allcuisine.put("cuisineimage", "i.imgur.com/o0HO5pL.png");
-		        	allcuisine.put("cuisinename", "All");
-		        	allcuisine.put("categorylist", fetchCategoriesOfAllCuisineWithPincode(pincode,connection,deliveryDay));
-		        	cuisinesarrayList.put(allcuisine);
 		        
 				}  catch (Exception e) {
 					e.printStackTrace();
 				} finally{
-					System.out.println("In the finally block of fetch cuisine * * * * * * ");
 					if(connection!=null){
 						connection.close();
 					}
@@ -6555,6 +6575,8 @@ public class DBConnection {
     	return cuisineList;
     }
     
+    
+   
     
     /**
      * A WEB SERVICE FOR fetching all cuisine list
@@ -6635,7 +6657,7 @@ public class DBConnection {
     }
     
     public static JSONArray fetchCategoriesOfCuisineWithPincode(int CuisineID, String pincode, Connection connection,
-    		String deliveryDay){
+    		String deliveryDay, String mobileNo){
     	JSONArray categoryJSONArray = new JSONArray();
     	try {
 			SQL:{
@@ -6655,7 +6677,7 @@ public class DBConnection {
 							String categoryId = resultSet.getString("category_id");
 							categoryObject.put("categoryid", categoryId);
 							categoryObject.put("categoryname", resultSet.getString("category_name"));
-							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode, connection,deliveryDay));
+							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode, connection,deliveryDay, mobileNo));
 							categoryJSONArray.put(categoryObject);
 						}
 					} catch (Exception e) {
@@ -6715,7 +6737,8 @@ public class DBConnection {
     	return categoryJSONArray;
     }
     
-    public static JSONArray fetchCategoriesOfAllCuisineWithPincode(String pincode,Connection connection,String deliveryDay){
+    public static JSONArray fetchCategoriesOfAllCuisineWithPincode(String pincode,Connection connection,
+    		String deliveryDay,String mobileNo){
     	JSONArray categoryJSONArray = new JSONArray();
     	try {
 			SQL:{
@@ -6734,7 +6757,7 @@ public class DBConnection {
 							String categoryId = resultSet.getString("category_id");
 							categoryObject.put("categoryid", categoryId);
 							categoryObject.put("categoryname", resultSet.getString("category_name"));
-							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode ,connection, deliveryDay));
+							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode ,connection, deliveryDay, mobileNo));
 							categoryJSONArray.put(categoryObject);
 						}
 					} catch (Exception e) {
@@ -7630,22 +7653,32 @@ public class DBConnection {
 		
 	}
 	
-	public static JSONArray fetchItemsWrtCategory(int categoryId,String pincode,Connection connection,String deliveryDay) throws JSONException{
+	public static JSONArray fetchItemsWrtCategory(int categoryId,String pincode,Connection connection,
+			String deliveryDay, String mobileNo) throws JSONException{
 		//JSONObject fetchAllCategory = new JSONObject();
 		JSONArray jArray = new JSONArray();
 		if( !(categoryId == 78 || categoryId == 79) ){
+			boolean isNewUser = FetchCuisineDAO.isNewUser(mobileNo);
 			try {
 				SQL:{
 						PreparedStatement preparedStatement = null;
 						ResultSet resultSet = null;
+						String sql = null;
 						/*String sql ="SELECT * FROM vw_category_from_kitchen_details WHERE area_id = "
 								   +" (select area_id from sa_area where area_name ILIKE ? and city_id = "
 			    				   +" (select city_id from sa_city where city_name ILIKE ?))";*/
-						String sql ="SELECT distinct kitchen_cuisine_id,category_id,item_name,item_code,"
+						if(deliveryDay.equalsIgnoreCase("TODAY")){
+							sql ="SELECT distinct kitchen_cuisine_id,category_id,item_name,item_code,"
 									+" item_price,item_description,item_image "
-									/*+" FROM vw_category_item_details_from_kitchen "*/
 									+" FROM vw_kitchen_items "
-									+" WHERE category_id=? and serving_zipcodes LIKE ? order by item_code"	;	
+									+" WHERE category_id=? and serving_zipcodes LIKE ? and is_active='Y' order by item_code"	;
+						}else{
+							sql ="SELECT distinct kitchen_cuisine_id,category_id,item_name,item_code,"
+									+" item_price,item_description,item_image "
+									+" FROM vw_kitchen_items "
+									+" WHERE category_id=? and serving_zipcodes LIKE ? and is_active_tomorrow='Y' order by item_code"	;
+						}
+							
 						try {
 							preparedStatement = connection.prepareStatement(sql);
 							preparedStatement.setInt(1, categoryId);
@@ -7654,9 +7687,106 @@ public class DBConnection {
 							resultSet = preparedStatement.executeQuery();
 							while (resultSet.next()) {
 								JSONObject jobject =  new JSONObject();
+								boolean isBikerAvailableForLunch = false,isBikerAvailableForDinner = false;
+								String bikerAvailableKitchensForLunch,bikerAvailableKitchensForDinner,stock,dinnerStock;
 								jobject.put("serial", serialNo);
 								String itemCode = resultSet.getString("item_code");
-								jobject.put("itemcode", itemCode);
+								if(!isNewUser){
+									//do as usual show all items
+									jobject.put("itemcode", itemCode);
+									jobject.put("cuisineid", resultSet.getString("kitchen_cuisine_id"));
+									jobject.put("categoryid",resultSet.getString("category_id"));
+									jobject.put("categorydescription", resultSet.getString("item_description") );
+									String tempImage  = resultSet.getString("item_image");
+									String categoryImage;
+									if(tempImage.contains("C:\\apache-tomcat-7.0.62/webapps/")){
+										 categoryImage = tempImage.replace("C:\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+									}else if(tempImage.startsWith("http://")){
+										categoryImage = tempImage.replace("http://", "");
+									}else{
+										 categoryImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+									}
+									
+									jobject.put("categoryimage", categoryImage);
+							    	jobject.put("categoryname",resultSet.getString("item_name"));
+							    	
+							    	//isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
+							    	//isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
+							    	 bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true);
+							    	 bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false);
+							    	
+							    	 stock = getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,bikerAvailableKitchensForLunch);
+							    	 dinnerStock = getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,bikerAvailableKitchensForDinner);
+							    	
+							    	jobject.put("stock", stock);
+							    	jobject.put("lunchstock", stock);
+							    	isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
+							    	jobject.put("availableBikerForLunch", isBikerAvailableForLunch);
+							    	
+							    	jobject.put("dinnerstock", dinnerStock);
+							    	isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
+							    	jobject.put("availableBikerForDinner", isBikerAvailableForDinner);
+							    	
+							    	if(isBikerAvailableForLunch && isBikerAvailableForDinner){
+							    		jobject.put("available",true);
+							    	}else{
+							    		jobject.put("available",false);
+							    	}
+							    	
+							    	jobject.put("mealtype", getLunchOrDinner(pincode, itemCode,connection));
+							    	jobject.put("categoryprice", resultSet.getDouble("item_price"));
+							    	jArray.put(jobject);
+							    	serialNo++;
+								}else{
+									//show mew user items
+									if(FetchCuisineDAO.isNewUserItem(itemCode)){
+										jobject.put("itemcode", itemCode);
+										jobject.put("cuisineid", resultSet.getString("kitchen_cuisine_id"));
+										jobject.put("categoryid",resultSet.getString("category_id"));
+										jobject.put("categorydescription", resultSet.getString("item_description") );
+										String tempImage  = resultSet.getString("item_image");
+										String categoryImage;
+										if(tempImage.contains("C:\\apache-tomcat-7.0.62/webapps/")){
+											 categoryImage = tempImage.replace("C:\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+										}else if(tempImage.startsWith("http://")){
+											categoryImage = tempImage.replace("http://", "");
+										}else{
+											 categoryImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+										}
+										
+										jobject.put("categoryimage", categoryImage);
+								    	jobject.put("categoryname",resultSet.getString("item_name"));
+								    	
+								    	//isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
+								    	//isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
+								    	 bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true);
+								    	 bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false);
+								    	
+								    	 stock = getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,bikerAvailableKitchensForLunch);
+								    	 dinnerStock = getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,bikerAvailableKitchensForDinner);
+								    	
+								    	jobject.put("stock", stock);
+								    	jobject.put("lunchstock", stock);
+								    	isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
+								    	jobject.put("availableBikerForLunch", isBikerAvailableForLunch);
+								    	
+								    	jobject.put("dinnerstock", dinnerStock);
+								    	isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
+								    	jobject.put("availableBikerForDinner", isBikerAvailableForDinner);
+								    	
+								    	if(isBikerAvailableForLunch && isBikerAvailableForDinner){
+								    		jobject.put("available",true);
+								    	}else{
+								    		jobject.put("available",false);
+								    	}
+								    	
+								    	jobject.put("mealtype", getLunchOrDinner(pincode, itemCode,connection));
+								    	jobject.put("categoryprice", resultSet.getDouble("item_price"));
+								    	jArray.put(jobject);
+								    	serialNo++;
+									}
+								}
+								/*jobject.put("itemcode", itemCode);
 								jobject.put("cuisineid", resultSet.getString("kitchen_cuisine_id"));
 								jobject.put("categoryid",resultSet.getString("category_id"));
 								jobject.put("categorydescription", resultSet.getString("item_description") );
@@ -7673,14 +7803,13 @@ public class DBConnection {
 								jobject.put("categoryimage", categoryImage);
 						    	jobject.put("categoryname",resultSet.getString("item_name"));
 						    	
-						    	boolean isBikerAvailableForLunch = false,isBikerAvailableForDinner = false;
 						    	//isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
 						    	//isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
-						    	String bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true);
-						    	String bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false);
+						    	 bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true);
+						    	 bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false);
 						    	
-						    	String stock = getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,bikerAvailableKitchensForLunch);
-						    	String dinnerStock = getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,bikerAvailableKitchensForDinner);
+						    	 stock = getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,bikerAvailableKitchensForLunch);
+						    	 dinnerStock = getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,bikerAvailableKitchensForDinner);
 						    	
 						    	jobject.put("stock", stock);
 						    	jobject.put("lunchstock", stock);
@@ -7700,7 +7829,7 @@ public class DBConnection {
 						    	jobject.put("mealtype", getLunchOrDinner(pincode, itemCode,connection));
 						    	jobject.put("categoryprice", resultSet.getDouble("item_price"));
 						    	jArray.put(jobject);
-						    	serialNo++;
+						    	serialNo++;*/
 							}
 							
 						} catch (Exception e) {
@@ -7718,7 +7847,6 @@ public class DBConnection {
 				// TODO: handle exception
 			}
 		}else{
-			System.out.println("Category "+categoryId);
 			try {
 				SQL:{
 						PreparedStatement preparedStatement = null;
@@ -8867,6 +8995,11 @@ public class DBConnection {
 								orders.put("payType", resultSet.getString("payment_name"));
 							}else{
 								orders.put("payType", "");
+							}
+							if(resultSet.getString("external_order_id")!=null){
+								orders.put("pickjiOrderNo", resultSet.getString("external_order_id"));
+							}else{
+								orders.put("pickjiOrderNo", "");
 							}
 							/*if(resultSet.getString("city")!=null){
 								orders.put("city", resultSet.getString("city"));

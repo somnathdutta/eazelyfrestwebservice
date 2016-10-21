@@ -267,7 +267,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject login(@FormParam("mobileNumber")String mobNo,
 			@FormParam("password")String password ) throws JSONException{
-		System.out.println("login webservice is called * * * * * * * * with mobile no-->"+mobNo+" and password-->"+password);
+		System.out.println("## "+mobNo+" is trying for logging with password "+password+"##");
 		JSONObject object = null ; 
 
 		if( !NumberCheck.isNumeric(mobNo)){
@@ -276,7 +276,7 @@ public class Category {
 
 		//object = DBConnection.checklogin(mobNo, password);
 
-		System.out.println("login webservice json response status::"+object);
+		System.out.println("## login status::"+object);
 
 		return object;
 
@@ -717,6 +717,16 @@ public class Category {
 		System.out.println("kitchenorders web service is end here:");
 		return kitchenorders;
 	}
+	
+	@POST
+	@Path("/orderSummary")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject kitchenOrderSummary(@FormParam("kitchenid")String kitchenid) throws JSONException{
+		System.out.println(" orderSummary web service is called...");
+		JSONObject kitchenorders = DBConnection.getKitchenOrders(kitchenid);
+		System.out.println("kitchenorders web service is end here:");
+		return kitchenorders;
+	}
 
 	@POST
 	@Path("/receiveorder")
@@ -774,7 +784,6 @@ public class Category {
 		System.out.println("*******************************************************************");
 		System.out.println("ordertimings webservice is called!");
 		JSONObject timingsObject = OrderTimingsDAO.getOrderTimings();
-		System.out.println(timingsObject);
 		System.out.println("ordertimings webservice is ended!");
 		System.out.println("*******************************************************************");
 		return timingsObject;
@@ -1745,6 +1754,67 @@ public class Category {
 	
 	}
 	
+	@POST
+	@Path("/fetchcuisine")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchCuisineList(@FormParam("pincode")String pincode,
+			@FormParam("deliveryday")String deliveryDay/*,
+			@FormParam("mobileNo")String mobileNo*/) throws Exception{
+		System.out.println("***********************************************");
+		System.out.println("***** fetchcuisine webservice called ***************");
+		System.out.println(" Pincode: "+pincode+" Day: "+deliveryDay);
+		//System.out.println("Mobile no: "+mobileNo+" length :: "+mobileNo.length());
+		JSONObject jsonObject = new JSONObject();
+		//System.out.println(pincode.trim().length());
+		String mobileNo = "9934170084";
+		if(pincode!=null && pincode.trim().length()>0){
+			//System.out.println("Pincode given!");
+			if(PincodeDAO.isPincodeAvailable(pincode)){
+				jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode, deliveryDay, mobileNo);
+			}else{
+				jsonObject.put("status", "204");
+				jsonObject.put("message", "Currently we are not serving in this zip code!");
+				jsonObject.put("cuisinelist", new JSONArray());
+			}
+			System.out.println("********** fetchcuisine ended here ***************");
+			return jsonObject;
+		}else{
+			System.out.println("No Pincode found!");
+			System.out.println("fetchcuisine ended with null here * * * * * ");
+			jsonObject.put("status", "204");
+			jsonObject.put("message", "Currently we are not serving in this zip code!");
+			System.out.println("********** fetchcuisine ended here ***************");
+			return jsonObject.put("cuisinelist", new JSONArray());
+		}
+	}
+	
+	@POST
+	@Path("/fetchAlacarteItems")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject fetchAlaCarteItems(@FormParam("pincode")String pincode,
+			@FormParam("categoryId")String categoryId,
+			@FormParam("deliveryday")String deliveryDay) throws JSONException{
+		
+		System.out.println("***************************");
+		System.out.println("** fetchAlacarteItems WEB SERVICE CALLED ********");
+		System.out.println("Pincode: "+pincode+" Catefory id: "+categoryId+" delievry day: "+deliveryDay);
+		System.out.println("***************************");
+		JSONObject alacarteItemJson = new JSONObject();
+		if(pincode.length()==0){
+			alacarteItemJson.put("status", "400");
+			alacarteItemJson.put("message", "Pincode required!");
+		}else if(categoryId.equals("0")){
+			alacarteItemJson.put("status", "400");
+			alacarteItemJson.put("message", "Category id required!");
+		}else if(deliveryDay.length() == 0){
+			alacarteItemJson.put("status", "400");
+			alacarteItemJson.put("message", "Delivery day required!");
+		}else{
+			alacarteItemJson = FetchAlaCarteItemDAO.fetchAlacarteItem(pincode, categoryId, deliveryDay);
+		}
+		return alacarteItemJson;
+	}
+	
 	/**
 	 *  1 st webservice to fetch location list
 	 * @return
@@ -1755,13 +1825,13 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchlocation() throws JSONException{
 	
-		System.out.println("fetchlocation webservice is called * * * * * * *");
+		//System.out.println("fetchlocation webservice is called * * * * * * *");
 	
 		JSONObject jobjLocation ;
 	
 		jobjLocation = DBConnection.fetchlocation();
 	
-		System.out.println("End of fetchlocation webservice * * * * * * * * * * * * *");
+		//System.out.println("End of fetchlocation webservice * * * * * * * * * * * * *");
 		return jobjLocation;
 	}
 	
@@ -1770,11 +1840,11 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchservinglocation() throws JSONException{
 	
-		System.out.println("fetchservinglocation webservice is called * * * * * * * ");
+		//System.out.println("fetchservinglocation webservice is called * * * * * * * ");
 	
 		JSONObject jobjLocation= DBConnection.fetchServinglocation();
 	
-		System.out.println("End of fetchservinglocation webservice * * * * * * * * * * * * *");
+		//System.out.println("End of fetchservinglocation webservice * * * * * * * * * * * * *");
 		return jobjLocation;
 	}
 	
@@ -1782,11 +1852,11 @@ public class Category {
 	@Path("/fetchlocationname")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchLocationList() throws JSONException{
-		System.out.println("fetchServinglocationname webservice is called * * * * * * * ");
+		//System.out.println("fetchServinglocationname webservice is called * * * * * * * ");
 	
 		JSONObject jobjLocation= DBConnection.getLocationName();
 	
-		System.out.println("End of fetchservinglocation webservice * * * * * * * * * * * * *");
+		//System.out.println("End of fetchservinglocation webservice * * * * * * * * * * * * *");
 		return jobjLocation;
 	}
 	
@@ -1904,61 +1974,7 @@ public class Category {
 			return jobjCusine;
 		}*/
 	
-	@POST
-	@Path("/fetchcuisine")
-	@Produces(MediaType.APPLICATION_JSON)
-	public JSONObject fetchCuisineList(@FormParam("pincode")String pincode,
-			@FormParam("deliveryday")String deliveryDay) throws Exception{
-		System.out.println("fetchcuisine webservice is called with pincode * * *>> "+pincode+" and day->*"+deliveryDay);
 	
-		JSONObject jsonObject = new JSONObject();
-		//System.out.println(pincode.trim().length());
-		if(pincode!=null && pincode.trim().length()>0){
-			//System.out.println("Pincode given!");
-			if(PincodeDAO.isPincodeAvailable(pincode)){
-				jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode, deliveryDay);
-			}else{
-				jsonObject.put("status", "204");
-				jsonObject.put("message", "Currently we are not serving in this zip code!");
-				jsonObject.put("cuisinelist", new JSONArray());
-			}
-			System.out.println("fetchcuisine ended here * * * * * ");
-			return jsonObject;
-		}else{
-			System.out.println("No Pincode found!");
-			System.out.println("fetchcuisine ended with null here * * * * * ");
-			jsonObject.put("status", "204");
-			jsonObject.put("message", "Currently we are not serving in this zip code!");
-			return jsonObject.put("cuisinelist", new JSONArray());
-		}
-	}
-	
-	@POST
-	@Path("/fetchAlacarteItems")
-	@Produces(MediaType.APPLICATION_JSON)
-	public static JSONObject fetchAlaCarteItems(@FormParam("pincode")String pincode,
-			@FormParam("categoryId")String categoryId,
-			@FormParam("deliveryday")String deliveryDay) throws JSONException{
-		
-		System.out.println("***************************");
-		System.out.println("** fetchAlacarteItems WEB SERVICE CALLED ********");
-		System.out.println("Pincode: "+pincode+" Catefory id: "+categoryId+" delievry day: "+deliveryDay);
-		System.out.println("***************************");
-		JSONObject alacarteItemJson = new JSONObject();
-		if(pincode.length()==0){
-			alacarteItemJson.put("status", "400");
-			alacarteItemJson.put("message", "Pincode required!");
-		}else if(categoryId.equals("0")){
-			alacarteItemJson.put("status", "400");
-			alacarteItemJson.put("message", "Category id required!");
-		}else if(deliveryDay.length() == 0){
-			alacarteItemJson.put("status", "400");
-			alacarteItemJson.put("message", "Delivery day required!");
-		}else{
-			alacarteItemJson = FetchAlaCarteItemDAO.fetchAlacarteItem(pincode, categoryId, deliveryDay);
-		}
-		return alacarteItemJson;
-	}
 	
 	
 	/**

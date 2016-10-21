@@ -476,4 +476,69 @@ public class BookDriver {
 		
 		 return isSaved;
 	 }
+	 
+	 public static boolean isPickJiBoy(String bikerUserId){
+		 boolean isPickJi = false;
+		 String pickJiBoy = null;
+		 try {
+			SQL:{
+			 		Connection connection = DBConnection.createConnection();
+			 		PreparedStatement preparedStatement = null;
+			 		ResultSet resultSet = null;
+			 		String sql = "select is_pickji_boy from fapp_delivery_boy where delivery_boy_user_id = ?";
+			 		try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, bikerUserId);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							pickJiBoy = resultSet.getString("is_pickji_boy");
+							if(pickJiBoy.equals("Y")){
+								isPickJi = true;
+							}
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+					}
+		 		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		} 
+		 return isPickJi;
+	 }
+	 
+	 public static String getBikerUserID(String kitchenName, String orderNo){
+		 String bikerUserId = null;
+		 try {
+			SQL:{
+			 		Connection connection = DBConnection.createConnection();
+			 		PreparedStatement preparedStatement = null;
+			 		ResultSet resultSet = null;
+			 		String sql = "select driver_boy_user_id from fapp_order_tracking where kitchen_id = "
+			 				+ " (select kitchen_id from fapp_kitchen where kitchen_name = ?) and order_id="
+			 				+ " (select order_id from fapp_orders where order_no = ? )";
+			 		try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, kitchenName);
+						preparedStatement.setString(2, orderNo);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							bikerUserId = resultSet.getString("driver_boy_user_id");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+		 		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		 return bikerUserId;
+	 }
 }
