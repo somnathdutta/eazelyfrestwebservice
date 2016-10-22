@@ -133,7 +133,7 @@ public class RoundRobinKitchenFinder {
 										+" fki.kitchen_id = fk.kitchen_id "
 										+" where fki.item_code IN "+itemcodes
 										+" and fk.serving_zipcodes LIKE ? and fki.stock_tomorrow >0 "
-										+ " and fk.is_active='Y' and fki.is_active='Y'";
+										+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";
 							}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY")){
 								sql = "select  fki.kitchen_id,fki.dinner_stock AS stock "
 										+" from fapp_kitchen_items fki "
@@ -149,7 +149,7 @@ public class RoundRobinKitchenFinder {
 										+" fki.kitchen_id = fk.kitchen_id "
 										+" where fki.item_code IN "+itemcodes
 										+" and fk.serving_zipcodes LIKE ? and fki.dinner_stock_tomorrow >0 "
-										+ " and fk.is_active='Y' and fki.is_active='Y'";
+										+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";
 							}
 							
 							try {
@@ -450,7 +450,7 @@ public class RoundRobinKitchenFinder {
 									+" fki.kitchen_id = fk.kitchen_id "
 									+" where fki.item_code IN "+itemcodes
 									+" and fk.serving_zipcodes LIKE ? and fki.stock_tomorrow >0 "
-									+ " and fk.is_active='Y' and fki.is_active='Y'";
+									+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";
 						}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY")){
 							sql = "select  fki.kitchen_id,fki.dinner_stock AS stock "
 									+" from fapp_kitchen_items fki "
@@ -466,7 +466,7 @@ public class RoundRobinKitchenFinder {
 									+" fki.kitchen_id = fk.kitchen_id "
 									+" where fki.item_code IN "+itemcodes
 									+" and fk.serving_zipcodes LIKE ? and fki.dinner_stock_tomorrow >0 "
-									+ " and fk.is_active='Y' and fki.is_active='Y'";
+									+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";
 						}
 						try {
 							preparedStatement = connection.prepareStatement(sql);
@@ -476,8 +476,11 @@ public class RoundRobinKitchenFinder {
 						     kitchenFoundFromPincode = true;
 							 int kid = resultSet.getInt("kitchen_id");
 							 int stock = resultSet.getInt("stock");
-							 kitchenIds.add(kid);
-							 kitchenStockMap.put(kid, stock);
+							//Check if kitchen having stock but having bikers or not?
+							 if(isKitchenHavingFreeBikers(kid, mealTypePojo)){
+								 kitchenIds.add(kid);
+								 kitchenStockMap.put(kid, stock);
+							 }
 							}
 						} catch (Exception e) {
 							// TODO: handle exception
@@ -494,6 +497,8 @@ public class RoundRobinKitchenFinder {
 			
 			if(kitchenFoundFromPincode){
 					
+				System.out.println("Item serving kitchen ids "+kitchenIds);
+				
 				ArrayList<Integer> singleCombinationIds = new ArrayList<Integer>();
 				for(Integer dup : kitchenIds){
 				if(Collections.frequency(kitchenIds, dup)==1){
@@ -549,6 +554,8 @@ public class RoundRobinKitchenFinder {
 				 * Separating free biker kitchens from sorted kitchen ids
 				 */
 				ArrayList<Integer> freeBikerKitchenIds = new ArrayList<Integer>();
+				int totalAvailableStock = getTotalAvailableStock(itemcodes,mealTypePojo,totalOrderedItems);
+				
 				for(Integer sortedIds : sortedKitchenIds){
 					if(SameUserPlaceOrder.isKitchenCapable(sortedIds, mealTypePojo, totalOrderedQuantity, itemcodes)){
 						if(isKitchenHavingFreeBikers(sortedIds, mealTypePojo)){
@@ -556,10 +563,23 @@ public class RoundRobinKitchenFinder {
 						}
 					}
 				}
-				
+				System.out.println("After first calculation freeBikerKitchenIds:: "+freeBikerKitchenIds);
+				boolean sameCuisineSpilt = false;
+				System.out.println("TOATL AVAIL STOCK::::"+totalAvailableStock);
+				//if all kitchens not capable
+				if(freeBikerKitchenIds.size()==0){
+					if(isAllKitchenServable(sorted_map, totalAvailableStock)){
+						sameCuisineSpilt = true;
+						freeBikerKitchenIds.addAll(sortedKitchenIds);
+					}
+				}
 				System.out.println("freeBikerKitchenIds:: "+freeBikerKitchenIds);
-				if(freeBikerKitchenIds.size()>1){
+				System.out.println("IS SAME CUISINE SPILT :: "+sameCuisineSpilt);
+				
+				if(freeBikerKitchenIds.size()>1 && !sameCuisineSpilt){
 					//Do round robin logic
+					System.out.println("Only single kitchen do round robin. . . .");
+					
 					int tot=0;
 					for(Integer kitchenId : freeBikerKitchenIds){
 						if( RoundRobin.alreadyOrdered(kitchenId,2)){
@@ -723,28 +743,28 @@ public class RoundRobinKitchenFinder {
 								+" fapp_timeslot_driver_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id <4 "
-								+" and (quantity<8 or no_of_orders <2)" ; 
+								+" and (quantity<10 or no_of_orders <2)" ; 
 					}else if(mealTypePojo.isLunchTomorrow()){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status_tommorrow " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id <4 "
-								+" and (quantity<8 or no_of_orders <2)" ; 
+								+" and (quantity<10 or no_of_orders <2)" ; 
 					}else if(mealTypePojo.isDinnerToday()){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id > 3 "
-								+" and (quantity<8 or no_of_orders <2)" ; 
+								+" and (quantity<10 or no_of_orders <2)" ; 
 					}else{
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status_tommorrow " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id > 3 "
-								+" and (quantity<8 or no_of_orders <2)" ;
+								+" and (quantity<10 or no_of_orders <2)" ;
 					}
 					
 					try {
@@ -818,17 +838,19 @@ public class RoundRobinKitchenFinder {
 					ResultSet resultSet = null;
 					String sql = "";
 					if(mealTypePojo.isLunchToday()){
-						sql = "select sum(stock)As stock from fapp_kitchen_items "
+						/*sql = "select sum(stock)As stock from fapp_kitchen_items "
+								+" where is_active='Y' and item_code IN "+orderItemCodes;*/
+						sql = "select sum(stock)As stock from vw_active_kitchen_items "
 								+" where is_active='Y' and item_code IN "+orderItemCodes;
 					}else if(mealTypePojo.isLunchTomorrow()){
-						sql = "select sum(stock_tomorrow)As stock from fapp_kitchen_items "
-								+" where is_active='Y' and item_code IN "+orderItemCodes;
+						sql = "select sum(stock_tomorrow)As stock from vw_active_kitchen_items "
+								+" where is_active_tomorrow='Y' and item_code IN "+orderItemCodes;
 					}else if(mealTypePojo.isDinnerToday()){
-						sql = "select sum(dinner_stock)As stock from fapp_kitchen_items "
+						sql = "select sum(dinner_stock)As stock from vw_active_kitchen_items "
 								+" where is_active='Y' and item_code IN "+orderItemCodes;
 					}else{
-						sql = "select sum(dinner_stock_tomorrow)As stock from fapp_kitchen_items "
-								+" where is_active='Y' and item_code IN "+orderItemCodes;
+						sql = "select sum(dinner_stock_tomorrow)As stock from vw_active_kitchen_items "
+								+" where is_active_tomorrow='Y' and item_code IN "+orderItemCodes;
 					}
 					
 					try {
@@ -881,16 +903,16 @@ public class RoundRobinKitchenFinder {
 					String sql = "";
 					if(mealTypePojo.isLunchToday()){
 						sql = "select distinct(stock)As stock from fapp_kitchen_items "
-							+ " where kitchen_id = ? and is_active='Y'";
+							+ " where kitchen_id = ? ";
 					}else if(mealTypePojo.isLunchTomorrow()){
 						sql = "select distinct(stock_tomorrow)As stock from fapp_kitchen_items "
-								+ " where kitchen_id = ? and is_active='Y'";
+								+ " where kitchen_id = ? ";
 					}else if(mealTypePojo.isDinnerToday()){
 						sql = "select distinct(dinner_stock)As stock from fapp_kitchen_items "
-							+ " where kitchen_id = ? and is_active='Y'";
+							+ " where kitchen_id = ? ";
 					}else{
 						sql = "select distinct(dinner_stock_tomorrow)As stock from fapp_kitchen_items "
-							+ " where kitchen_id = ? and is_active='Y'";
+							+ " where kitchen_id = ? ";
 					}
 					try {
 						preparedStatement = connection.prepareStatement(sql);

@@ -54,23 +54,23 @@ public class SameUserPlaceOrder {
 					 +" and order_ =(select created_date from vw_last_order_user where contact_number = ?"
 					 +" and pincode = ? "
 					 +" order by created_date desc limit 1) and stock >0 order by cuisine_id ";*/
-			sqlQuery = "select distinct kitchen_id,cuisine_id from vw_last_order_user where contact_number = ? " 
-					 +" and pincode= ? and stock >0 and cuisine_id in "+cuisineIds+" and "
+			sqlQuery = "select distinct kitchen_id,cuisine_id from vw_last_order_user where contact_number = ? and is_active='Y' " 
+					 +" and pincode= ? and stock >0 and kitchen_active='Y' and cuisine_id in "+cuisineIds+" and "
 					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
 					 +" and pincode= ?  ) order by cuisine_id ";
 		}else if(mealTypePojo.isLunchTomorrow()){
-			sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? " 
-					 +" and pincode= ?  and stock_tomorrow >0  and cuisine_id in "+cuisineIds+" and "
+			sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? and is_active_tomorrow='Y' " 
+					 +" and pincode= ?  and stock_tomorrow >0 and kitchen_active='Y'   and cuisine_id in "+cuisineIds+" and "
 					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
 					 +" and pincode= ?  ) order by cuisine_id ";
 		}else if(mealTypePojo.isDinnerToday()){
-			sqlQuery = "select distinct kitchen_id,cuisine_id from vw_last_order_user where contact_number = ? " 
-					 +" and pincode= ? and dinner_stock >0  and cuisine_id in "+cuisineIds+" and "
+			sqlQuery = "select distinct kitchen_id,cuisine_id from vw_last_order_user where contact_number = ? and is_active='Y' " 
+					 +" and pincode= ? and dinner_stock >0 and kitchen_active='Y'   and cuisine_id in "+cuisineIds+" and "
 					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
 					 +" and pincode= ?  ) order by cuisine_id ";
 		}else{
-			sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? " 
-					 +" and pincode= ? and dinner_stock_tomorrow >0 and cuisine_id in "+cuisineIds+" and "
+			sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? and is_active_tomorrow='Y' " 
+					 +" and pincode= ? and dinner_stock_tomorrow >0 and kitchen_active='Y'  and cuisine_id in "+cuisineIds+" and "
 					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
 					 +" and pincode= ?  ) order by cuisine_id ";
 		}
@@ -237,7 +237,7 @@ public class SameUserPlaceOrder {
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
 					String sql = "select count(item_code)As total_items from "
-							+ " fapp_kitchen_items where item_code in"+itemCodes+" and kitchen_id=? and is_active='Y' ";
+							+ " fapp_kitchen_items where item_code in"+itemCodes+" and kitchen_id=?  ";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setInt(1, kitchenId);
@@ -287,7 +287,7 @@ public class SameUserPlaceOrder {
 								+ "and item_code IN "+itemCodes;
 					}else if(mealTypePojo.isLunchTomorrow()){
 						sql = "select distinct(stock_tomorrow)As stock from fapp_kitchen_items "
-								+ "where kitchen_id = ? and is_active='Y'  "
+								+ "where kitchen_id = ? and is_active_tomorrow='Y'  "
 								+ "and item_code IN "+itemCodes;
 					}else if(mealTypePojo.isDinnerToday()){
 						sql = "select distinct(dinner_stock)As stock from fapp_kitchen_items "
@@ -295,7 +295,7 @@ public class SameUserPlaceOrder {
 								+ "and item_code IN "+itemCodes;
 					}else{
 						sql = "select distinct(dinner_stock_tomorrow)As stock from fapp_kitchen_items "
-								+ "where kitchen_id = ? and is_active='Y'  "
+								+ "where kitchen_id = ? and is_active_tomorrow='Y'  "
 								+ "and item_code IN "+itemCodes;
 					}
 					try {

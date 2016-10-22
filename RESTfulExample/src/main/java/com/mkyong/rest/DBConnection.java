@@ -7962,7 +7962,7 @@ public class DBConnection {
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
-    								+" where fki.item_code= ? and fki.is_active='Y' "
+    								+" where fki.item_code= ? and fki.is_active_tomorrow='Y' "
     								+" and fk.is_active='Y'and fki.kitchen_id IN "+kitchenIds;
     					}else{
     						sql = "select sum(stock_tomorrow)AS stock "
@@ -7970,7 +7970,7 @@ public class DBConnection {
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
-    								+" where fki.item_code= ? and fki.is_active='Y' "
+    								+" where fki.item_code= ? and fki.is_active_tomorrow='Y' "
     								+" and fk.is_active='Y' ";
     					}
     					/*sql = "select sum(stock_tomorrow)AS stock "
@@ -8014,7 +8014,7 @@ public class DBConnection {
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
-    								+" where fki.item_code= ? and fki.is_active='Y' "
+    								+" where fki.item_code= ? and fki.is_active_tomorrow='Y' "
     								+" and fk.is_active='Y' and fki.kitchen_id IN "+kitchenIds;
     					}else{
     						sql = "select sum(fki.dinner_stock_tomorrow)AS stock "
@@ -8022,7 +8022,7 @@ public class DBConnection {
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
-    								+" where fki.item_code= ? and fki.is_active='Y' "
+    								+" where fki.item_code= ? and fki.is_active_tomorrow='Y' "
     								+" and fk.is_active='Y' ";
     					}
     					/*sql = "select sum(fki.dinner_stock_tomorrow)AS stock "

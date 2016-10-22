@@ -94,7 +94,7 @@ public class PlaceOrderDAO {
 			String deliveryDay, boolean isLunch){
 		boolean isServable = false;
 		int totalNoOfBikers = 0,bikerSlot = 0; 
-		ArrayList<Integer> servableKitchenIds = findServingKitchens(itemCode, connection, deliveryDay, isLunch);
+		ArrayList<Integer> servableKitchenIds = findServableKitchens(itemCode, connection, deliveryDay, isLunch);
 		
 		for(Integer kitchenId : servableKitchenIds){
 			ArrayList<String> bikerList = findBikerOfKitchen(kitchenId,connection);
@@ -106,7 +106,6 @@ public class PlaceOrderDAO {
 				}
 			}
 		}
-		
 		if(totalNoOfBikers == bikerSlot){
 			isServable = false;
 		}else{
@@ -134,21 +133,33 @@ public class PlaceOrderDAO {
 				 ResultSet resultSet = null;
 				 String sql = "";
 				 if(deliveryDay.equalsIgnoreCase("TODAY") && isLunch){
-					 sql = "select fki.kitchen_id from"
+					/* sql = "select fki.kitchen_id from"
 						  + " fapp_kitchen_items fki where fki.item_code = ? "
-						  + " and fki.stock >0 and fki.is_active='Y'";
+						  + " and fki.stock >0 and fki.is_active='Y'";*/
+					 sql = "select kitchen_id from"
+							  + " vw_active_kitchen_items where item_code = ? "
+							  + " and stock >0 and is_active='Y'";
 				 }else if(deliveryDay.equalsIgnoreCase("TODAY") && (isLunch==false)){
-					 sql = "select fki.kitchen_id from"
+					 /*sql = "select fki.kitchen_id from"
 							  + " fapp_kitchen_items fki where fki.item_code = ? "
-							  + " and fki.dinner_stock >0 and fki.is_active='Y'";
+							  + " and fki.dinner_stock >0 and fki.is_active='Y'";*/
+					 sql = "select kitchen_id from"
+							  + " vw_active_kitchen_items where item_code = ? "
+							  + " and dinner_stock >0 and is_active='Y'";
 				 }else if(deliveryDay.equalsIgnoreCase("TOMORROW") && isLunch){
-					 sql = "select fki.kitchen_id from"
+					/* sql = "select fki.kitchen_id from"
 							  + " fapp_kitchen_items fki where fki.item_code = ? "
-							  + " and fki.stock_tomorrow >0 and fki.is_active='Y'";
+							  + " and fki.stock_tomorrow >0 and fki.is_active_tomorrow='Y'";*/
+					 sql = "select kitchen_id from"
+							  + " vw_active_kitchen_items where item_code = ? "
+							  + " and stock_tomorrow >0 and is_active_tomorrow='Y'";
 				 }else{
-					 sql = "select fki.kitchen_id from"
+					/* sql = "select fki.kitchen_id from"
 							  + " fapp_kitchen_items fki where fki.item_code = ? "
-							  + " and fki.dinner_stock_tomorrow > 0 and fki.is_active='Y'";
+							  + " and fki.dinner_stock_tomorrow > 0 and fki.is_active_tomorrow='Y'";*/
+					 sql = "select kitchen_id from"
+							  + " vw_active_kitchen_items where item_code = ? "
+							  + " and dinner_stock_tomorrow > 0 and is_active_tomorrow='Y'";
 				 }
 				 
 				 try {
@@ -167,7 +178,6 @@ public class PlaceOrderDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		//System.out.println(kitchenIds);
 		return kitchenIds;
 	}
 	
@@ -230,7 +240,7 @@ public class PlaceOrderDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		//System.out.println(kitchenIds);
+		System.out.println("serving kitchens:: "+kitchenIds);
 		return kitchenIds;
 	}
 	
@@ -286,14 +296,14 @@ public class PlaceOrderDAO {
 								+" fapp_timeslot_driver_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id<4"
-								+" and (quantity<8 or no_of_orders <2)" ; 
+								+" and (quantity<10 or no_of_orders <2)" ; 
 					}else if(deliverDay.equalsIgnoreCase("TODAY") && !isLunch){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id > 3"
-								+" and (quantity<8 or no_of_orders <2)" ;
+								+" and (quantity<10 or no_of_orders <2)" ;
 					}else if(deliverDay.equalsIgnoreCase("TOMORROW") && isLunch){
 						//System.out.println("target - - ");
 						sql = "select count(time_slot_id) "
@@ -301,14 +311,14 @@ public class PlaceOrderDAO {
 								+" fapp_timeslot_driver_status_tommorrow " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id < 4"
-								+" and (quantity<8 or no_of_orders <2)" ;
+								+" and (quantity<10 or no_of_orders <2)" ;
 					}else if(deliverDay.equalsIgnoreCase("TOMORROW") && !isLunch){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status_tommorrow " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id > 3"
-								+" and (quantity<8 or no_of_orders <2)" ;
+								+" and (quantity<10 or no_of_orders <2)" ;
 					}
 					/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
@@ -322,6 +332,7 @@ public class PlaceOrderDAO {
 						resultSet = preparedStatement.executeQuery();
 						if(resultSet.next())
 								noOfFreeSlots = resultSet.getInt("no_of_free_slots");
+						
 					} catch (Exception e) {
 						e.printStackTrace();
 					}finally{

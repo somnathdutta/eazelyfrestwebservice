@@ -2,7 +2,8 @@ package pojo;
 
 public class User {
 
-	private String userName,password,emailId,contactNumber,referalCode,myCode,deliveryAddress;
+	private String userName,password,emailId,
+	contactNumber,referalCode,myCode,deliveryAddress,toMail,myMessage;
 	private double myBalance;
 	
 	public User() {
@@ -108,6 +109,26 @@ public class User {
 
 	public void setDeliveryAddress(String deliveryAddress) {
 		this.deliveryAddress = deliveryAddress;
+	}
+
+
+	public String getToMail() {
+		return toMail;
+	}
+
+
+	public void setToMail(String toMail) {
+		this.toMail = toMail;
+	}
+
+
+	public String getMyMessage() {
+		return myMessage;
+	}
+
+
+	public void setMyMessage(String myMessage) {
+		this.myMessage = myMessage;
 	}
 
 	

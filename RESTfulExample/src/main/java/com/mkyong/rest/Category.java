@@ -49,6 +49,7 @@ import dao.BikerDAO;
 import dao.BookDriver;
 import dao.CallPickJiBikerDAO;
 import dao.FetchAlaCarteItemDAO;
+import dao.FetchBannersDAO;
 import dao.ForgotPassword;
 import dao.ItemDAO;
 import dao.KitchenDeliverOrderDAO;
@@ -267,7 +268,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject login(@FormParam("mobileNumber")String mobNo,
 			@FormParam("password")String password ) throws JSONException{
-		System.out.println("## "+mobNo+" is trying for logging with password "+password+"##");
+		System.out.println("** kitchen "+mobNo+" is trying for logging with password "+password+"***");
 		JSONObject object = null ; 
 
 		if( !NumberCheck.isNumeric(mobNo)){
@@ -287,7 +288,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject userLogin(@FormParam("mobileNumber")String mobileNo,
 			@FormParam("password")String password ) throws JSONException{
-		System.out.println("## userlogin # "+mobileNo+" is trying for logging with password "+password+"##");
+		System.out.println("*** userlogin ** "+mobileNo+" is trying for logging with password "+password+" * * * *");
 		JSONObject object ; 
 
 		/*object = DBConnection.checkUserlogin(mobNo, password);*/
@@ -1755,18 +1756,45 @@ public class Category {
 	}
 	
 	@POST
+	@Path("/fetchBanners")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchBanners() throws Exception{
+	   System.out.println("***************************************");
+		System.out.println("fetchBanners webservice is called...");
+	
+		JSONObject jobjBanner = new JSONObject();
+				
+		JSONArray bannerList = FetchBannersDAO.fetchBanners();
+		
+		if(bannerList.length()>0){
+			jobjBanner.put("status", "200");
+			jobjBanner.put("message", "Banner found!");
+			jobjBanner.put("bannerList", bannerList);
+		}else{
+			jobjBanner.put("status", "204");
+			jobjBanner.put("message", "Banner not found!");
+			jobjBanner.put("bannerList", bannerList);
+		}
+		System.out.println("fetchBanners webservice end..."+bannerList.length());
+		System.out.println("***************************************");
+		return jobjBanner;
+	}
+	
+	@POST
 	@Path("/fetchcuisine")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchCuisineList(@FormParam("pincode")String pincode,
-			@FormParam("deliveryday")String deliveryDay/*,
-			@FormParam("mobileNo")String mobileNo*/) throws Exception{
+			@FormParam("deliveryday")String deliveryDay,
+			@FormParam("mobileNo")String mobileNo) throws Exception{
 		System.out.println("***********************************************");
 		System.out.println("***** fetchcuisine webservice called ***************");
 		System.out.println(" Pincode: "+pincode+" Day: "+deliveryDay);
-		//System.out.println("Mobile no: "+mobileNo+" length :: "+mobileNo.length());
+		if(mobileNo!=null){
+			System.out.println("Mobile no: "+mobileNo+" length :: "+mobileNo.length());
+		}
 		JSONObject jsonObject = new JSONObject();
 		//System.out.println(pincode.trim().length());
-		String mobileNo = "9934170084";
+		//String mobileNo = "9934170084";
 		if(pincode!=null && pincode.trim().length()>0){
 			//System.out.println("Pincode given!");
 			if(PincodeDAO.isPincodeAvailable(pincode)){
@@ -1787,6 +1815,8 @@ public class Category {
 			return jsonObject.put("cuisinelist", new JSONArray());
 		}
 	}
+	
+	
 	
 	@POST
 	@Path("/fetchAlacarteItems")
@@ -2184,6 +2214,8 @@ public class Category {
 	
 		return jobjdeal;
 	}
+	
+	
 	
 	@POST
 	@Path("/getCityList")

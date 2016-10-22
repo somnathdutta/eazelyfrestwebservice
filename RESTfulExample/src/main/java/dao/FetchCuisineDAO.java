@@ -47,35 +47,40 @@ public class FetchCuisineDAO {
 	 
 	 public static boolean isNewUser(String mobileNo){
 		 boolean isNewUser = false;
-		 try {
-			SQL:{
-			 		Connection connection = DBConnection.createConnection();
-			 		PreparedStatement preparedStatement = null;
-			 		ResultSet resultSet = null;
-			 		String sql = "select count(contact_number)AS new_user from fapp_orders where contact_number = ?";
-			 		try {
-						preparedStatement = connection.prepareStatement(sql);
-						preparedStatement.setString(1, mobileNo);
-						resultSet = preparedStatement.executeQuery();
-						while (resultSet.next()) {
-							int count = resultSet.getInt("new_user");
-							if(count == 0){
-								isNewUser = true;
+		 if(mobileNo!=null ){
+			 try {
+					SQL:{
+					 		Connection connection = DBConnection.createConnection();
+					 		PreparedStatement preparedStatement = null;
+					 		ResultSet resultSet = null;
+					 		String sql = "select count(contact_number)AS new_user from fapp_orders where contact_number = ?";
+					 		try {
+								preparedStatement = connection.prepareStatement(sql);
+								preparedStatement.setString(1, mobileNo);
+								resultSet = preparedStatement.executeQuery();
+								while (resultSet.next()) {
+									int count = resultSet.getInt("new_user");
+									if(count == 0){
+										isNewUser = true;
+									}
+								}
+							} catch (Exception e) {
+								// TODO: handle exception
+								e.printStackTrace();
+							}if(preparedStatement!=null){
+								preparedStatement.close();
 							}
-						}
-					} catch (Exception e) {
-						// TODO: handle exception
-						e.printStackTrace();
-					}if(preparedStatement!=null){
-						preparedStatement.close();
-					}
-					if(connection!=null){
-						connection.close();
-					}
-		 		}
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
+							if(connection!=null){
+								connection.close();
+							}
+				 		}
+				} catch (Exception e) {
+					// TODO: handle exception
+				}
+		 }else{
+			 isNewUser = false;
+		 }
+		 
 		 return isNewUser ;
 	 }
 

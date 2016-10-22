@@ -1,1 +1,3 @@
 com\mkyong\rest\Token.class
+com\mkyong\rest\SendMailTLS$1.class
+com\mkyong\rest\SendMailTLS.class

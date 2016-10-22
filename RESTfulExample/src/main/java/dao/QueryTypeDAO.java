@@ -108,6 +108,7 @@ public class QueryTypeDAO {
 			if(submitted){
 				submitJson.put("status", "200");
 				submitJson.put("message", "Thank you for writing to us.\nWe will get back to you shortly.");
+				
 			}else{
 				submitJson.put("status", "204");
 				submitJson.put("message", "NO content found!");

@@ -25,6 +25,7 @@ dao\OrderDetailsDAO.class
 pojo\Biker.class
 pojo\KitchenStock.class
 pojo\MealTypePojo.class
+dao\FetchBannersDAO.class
 dao\OrderSummaryDAO.class
 dao\PickjiCall.class
 com\mkyong\rest\SMTPAuthenticator.class
