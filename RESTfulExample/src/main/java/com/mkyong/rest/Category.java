@@ -48,6 +48,7 @@ import dao.AllItemsDAO;
 import dao.BikerDAO;
 import dao.BookDriver;
 import dao.CallPickJiBikerDAO;
+import dao.FaqDAO;
 import dao.FetchAlaCarteItemDAO;
 import dao.FetchBannersDAO;
 import dao.ForgotPassword;
@@ -56,11 +57,13 @@ import dao.KitchenDeliverOrderDAO;
 import dao.KitchenNotifyOrderDAO;
 import dao.KitchenReceiveOrderDAO;
 import dao.LoginDAO;
+import dao.OrderSummaryDAO;
 import dao.OrderTimingsDAO;
 import dao.PickJiDAO;
 import dao.PickjiCall;
 import dao.PincodeDAO;
 import dao.PlaceSubscriptionOrderDAO;
+import dao.PromoCodeDAO;
 import dao.QueryTypeDAO;
 import dao.RoundRobinKitchenFinder;
 import dao.StartMyTripDAO;
@@ -722,10 +725,14 @@ public class Category {
 	@POST
 	@Path("/orderSummary")
 	@Produces(MediaType.APPLICATION_JSON)
-	public JSONObject kitchenOrderSummary(@FormParam("kitchenid")String kitchenid) throws JSONException{
+	public JSONObject kitchenOrderSummary(@FormParam("kitchenid")String kitchenName,
+			@FormParam("deliveryDay")String deliveryDay,@FormParam("mealType")String mealType) throws JSONException{
+		System.out.println("*******************************************");
 		System.out.println(" orderSummary web service is called...");
-		JSONObject kitchenorders = DBConnection.getKitchenOrders(kitchenid);
-		System.out.println("kitchenorders web service is end here:");
+		System.out.println("Kitchen: "+kitchenName+" DeliveryDay : "+deliveryDay+" Meal Type: "+mealType);
+		JSONObject kitchenorders = OrderSummaryDAO.fetchOrderSummary(kitchenName, deliveryDay, mealType);
+		System.out.println("orderSummary web service is end here:");
+		System.out.println("*********************************************");
 		return kitchenorders;
 	}
 
@@ -1915,6 +1922,17 @@ public class Category {
 	}
 	
 	@POST
+	@Path("/fetchFaq")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject fetchFaqList() throws JSONException{
+		System.out.println("************************************************************");
+		System.out.println("***** fetchFaq webservice  * * * * * * * * * * * * *");
+		JSONObject faqJsonObject = FaqDAO.fetchAllFaqs();
+		System.out.println("***** fetchFaq webservice  ends* * * * * * * * * *  *");
+		return faqJsonObject;
+	}
+	
+	@POST
 	@Path("/submitMessage")
 	@Produces(MediaType.APPLICATION_JSON)
 	public static JSONObject submitMessage(@FormParam("queryTypeId")String queryTypeId,
@@ -1929,6 +1947,34 @@ public class Category {
 		return queryTypeJsonObject;
 	}
 	
+	@POST
+	@Path("/isPromoCodeValid")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject checkValidPromoCode(@FormParam("promoCode")String promoCode,
+			@FormParam("fooddetails[]")List<String> orderDetails) throws JSONException{
+		System.out.println("************************************************************");
+		System.out.println("***** isPromoCodeValid webservice "+promoCode+" * * * * * * * * * * * * *");
+		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
+		for(String str : orderDetails){	
+			OrderItems items = new OrderItems();
+			String[] order = str.split("\\$");
+			for(int i=0;i<order.length;i++){
+				if(order.length==6){
+					items.cuisineId = Integer.valueOf(order[0]);
+					items.categoryId = Integer.valueOf(order[1]);
+					items.itemCode = order[2].trim();
+					items.price = Double.valueOf(order[3]);
+					items.quantity = Integer.valueOf(order[4]);
+					items.packing = order[5].trim().toUpperCase();
+				}
+			}
+			orderItemList.add(items);
+		}
+		
+		JSONObject queryTypeJsonObject = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList);
+		System.out.println("***** getQueryTypelist webservice  ends* * * * * * * * * *  *");
+		return queryTypeJsonObject;
+	}
 	
 	@POST
 	@Path("/getpostcode")

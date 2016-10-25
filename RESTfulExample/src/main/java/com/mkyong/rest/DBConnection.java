@@ -1133,8 +1133,8 @@ public class DBConnection {
 					/**
 					 * Current share and earn logic update balance 50 on sign up with ref code
 					 */
-					String sql = "INSERT INTO fapp_accounts(username,email,mobile_no,password,ref_code,my_balance) "
-							   + " VALUES(?, ?, ?,?,?,?)";
+					String sql = "INSERT INTO fapp_accounts(username,email,mobile_no,password,ref_code,my_balance,role_id) "
+							   + " VALUES(?, ?, ?, ?, ?, ?, 4)";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 					
@@ -6664,8 +6664,8 @@ public class DBConnection {
     				//Connection connection = DBConnection.createConnection();
     				PreparedStatement preparedStatement = null;
     				ResultSet resultSet = null;
-    				String sql = "select distinct category_id,category_name from vw_category_kitchen "
-    						+ " where kitchen_cuisine_id = ?";
+    				String sql = "select distinct category_id,category_name,is_lunch,is_dinner from vw_category_kitchen "
+    						+ " where kitchen_cuisine_id = ?  order by category_id";
     				/*String sql = "select category_id,category_name from food_category "
     						+ " where category_price IS NULL AND cuisine_id = ?";*/
     				try {
@@ -6677,6 +6677,19 @@ public class DBConnection {
 							String categoryId = resultSet.getString("category_id");
 							categoryObject.put("categoryid", categoryId);
 							categoryObject.put("categoryname", resultSet.getString("category_name"));
+							String mealTypeLunch = resultSet.getString("is_lunch");
+							String mealTypeDinner = resultSet.getString("is_dinner");
+							if(mealTypeLunch.equalsIgnoreCase("Y")){
+								categoryObject.put("mealtype", "LUNCH");
+							}
+								
+							if(mealTypeDinner.equalsIgnoreCase("Y")){
+								categoryObject.put("mealtype", "DINNER");
+							}
+							
+							if(mealTypeLunch.equalsIgnoreCase("Y") && mealTypeDinner.equalsIgnoreCase("Y")){
+								categoryObject.put("mealtype", "BOTH");
+							}
 							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode, connection,deliveryDay, mobileNo));
 							categoryJSONArray.put(categoryObject);
 						}
@@ -6745,7 +6758,7 @@ public class DBConnection {
     				//Connection connection = DBConnection.createConnection();
     				PreparedStatement preparedStatement = null;
     				ResultSet resultSet = null;
-    				String sql = "select distinct category_id,category_name from vw_category_kitchen ";
+    				String sql = "select distinct category_id,category_name,is_lunch,is_dinner from vw_category_kitchen order by category_id ";
     						
     				/*String sql = "select category_id,category_name from food_category "
     						+ " where category_price IS NULL order by category_id";*/
@@ -6757,6 +6770,19 @@ public class DBConnection {
 							String categoryId = resultSet.getString("category_id");
 							categoryObject.put("categoryid", categoryId);
 							categoryObject.put("categoryname", resultSet.getString("category_name"));
+							String mealTypeLunch = resultSet.getString("is_lunch");
+							String mealTypeDinner = resultSet.getString("is_dinner");
+							if(mealTypeLunch.equalsIgnoreCase("Y")){
+								categoryObject.put("mealtype", "LUNCH");
+							}
+								
+							if(mealTypeDinner.equalsIgnoreCase("Y")){
+								categoryObject.put("mealtype", "DINNER");
+							}
+							
+							if(mealTypeLunch.equalsIgnoreCase("Y") && mealTypeDinner.equalsIgnoreCase("Y")){
+								categoryObject.put("mealtype", "BOTH");
+							}
 							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode ,connection, deliveryDay, mobileNo));
 							categoryJSONArray.put(categoryObject);
 						}
@@ -7882,11 +7908,11 @@ public class DBConnection {
 						    	
 						    	boolean isBikerAvailableForLunch = false,isBikerAvailableForDinner = false;
 						    	
-						    	jobject.put("stock", 0);
-						    	jobject.put("lunchstock", 0);
+						    	jobject.put("stock", 1);
+						    	jobject.put("lunchstock", 1);
 						    	jobject.put("availableBikerForLunch", true);
 						    	
-						    	jobject.put("dinnerstock", 0);
+						    	jobject.put("dinnerstock", 1);
 						    	jobject.put("availableBikerForDinner", true);
 						    	jobject.put("available",true);
 						    	

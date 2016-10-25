@@ -3,7 +3,9 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Date;
 
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -67,4 +69,98 @@ public class OrderSummaryDAO {
 		
 		return orderSummaryJson;
 	}
+	
+	public static JSONObject fetchOrderSummary(String kitchenName,String deliveryDay,String mealType) throws JSONException{
+		JSONObject orderSummaryJson = new JSONObject();
+		java.util.Date deliveryDate = new java.util.Date();
+		deliveryDate = DBConnection.getDeliveryDate(deliveryDay);
+		JSONArray orderSummaryArray = new JSONArray(); 
+		
+		try {
+				
+			SQL:{
+						Connection connection = DBConnection.createConnection();
+						PreparedStatement preparedStatement = null;
+						ResultSet resultSet = null;
+						String sql ;
+						sql = "select distinct item_name,item_code"
+								+ " from vw_order_items_of_kitchen "
+								+ " where  kitchen_name = ? and delivery_date= ? ";
+						try {
+							preparedStatement = connection.prepareStatement(sql);
+							preparedStatement.setString(1, kitchenName);
+							preparedStatement.setDate(2, new java.sql.Date(deliveryDate.getTime()));
+							resultSet = preparedStatement.executeQuery();
+							while (resultSet.next()) {
+								JSONObject orderItem = new JSONObject();
+								String itemCode = resultSet.getString("item_code");
+								orderItem.put("itemName", resultSet.getString("item_name"));
+								orderItem.put("quantity", getItemQuanity(kitchenName,deliveryDate,itemCode));
+								orderSummaryArray.put(orderItem);
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+						}finally{
+							if(preparedStatement!=null){
+								preparedStatement.close();
+							}
+							if(connection!=null){
+								connection.close();
+							}
+						}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		if(orderSummaryArray.length()>0){
+			orderSummaryJson.put("status", "200");
+			orderSummaryJson.put("message", "Order details");
+			orderSummaryJson.put("itemList", orderSummaryArray);
+		}else{
+			orderSummaryJson.put("status", "204");
+			orderSummaryJson.put("message", "No Order details found!");
+			orderSummaryJson.put("itemList", orderSummaryArray);
+		}
+		
+		return orderSummaryJson;
+	}
+	
+	public static String getItemQuanity(String kitchenName, Date deliveryDate, String itemCode){
+		String itemQuantity = null;
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql= "select SUM(qty)As no_of_item from "
+							+ " vw_order_items_of_kitchen where  "
+							+ " kitchen_name = ? and delivery_date=? and item_code=?";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, kitchenName);
+						preparedStatement.setDate(2, new java.sql.Date(deliveryDate.getTime()));
+						preparedStatement.setString(3, itemCode);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							itemQuantity = resultSet.getString("no_of_item");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return itemQuantity;
+	}
+	
+	
 }
