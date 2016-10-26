@@ -24,8 +24,9 @@ public class PromoCodeDAO {
 					Connection connection = DBConnection.createConnection();
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
-					String sql = "select promo_code,promo_value,promo_type_id,promo_code_application_type_id from vw_promo_code_details where promo_code_is_active='Y'"
-							+ " and promo_code = ? and from_date>=current_date OR to_date<=current_date";
+					String sql = "select promo_code,promo_value,promo_type_id,promo_code_application_type_id "
+							+ "from vw_promo_code_details where promo_code_is_active='Y'"
+							+ " and promo_code = ? and current_date>=from_date AND current_date<=to_date";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, promoCode);
@@ -63,7 +64,7 @@ public class PromoCodeDAO {
 				//}
 			}
 			System.out.println("Total: "+finalTotal);
-			if(totalQuantity>1){
+			/*if(totalQuantity>1){
 				if( promoCodeApplicationTypeId == 1 ){//ON volume
 					if((promoTypeId == 1)){	//FLAT
 						discountedValue = ( totalQuantity - 1 ) * promoValue;
@@ -76,17 +77,29 @@ public class PromoCodeDAO {
 				}
 			}else{
 				discountedValue = -0.0;
+			}*/
+			if(promoTypeId==1){//FLAT
+				System.out.println("FLAT DISCOUNT::");
+				discountedValue = promoValue;
+			}else if(promoTypeId == 2){//Percentage
+				System.out.println("PERCENTAGE DISCOUNT::");
+				finalTotal = ( finalTotal * promoValue/100);
+				discountedValue = finalTotal;
+			}else{
+				System.out.println("DABBA DISCOUNT::");
+				if(totalQuantity>1){
+					discountedValue = (totalQuantity - 1) * promoValue;
+				}
 			}
-				
 			promoCodeValidJson.put("status","200");
 			promoCodeValidJson.put("message", "Valid PromoCode");
 			promoCodeValidJson.put("isValid", true);
 			promoCodeValidJson.put("promoValue",(- discountedValue) );
 		}else{
-			promoCodeValidJson.put("status","204");
+			promoCodeValidJson.put("status","200");
 			promoCodeValidJson.put("message", "InValid PromoCode");
 			promoCodeValidJson.put("isValid", false);
-			promoCodeValidJson.put("promoValue", discountedValue);
+			promoCodeValidJson.put("promoValue", (- discountedValue) );
 		}
 		System.out.println(promoCodeValidJson.toString());
 		return promoCodeValidJson;
