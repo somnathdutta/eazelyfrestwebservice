@@ -54,36 +54,41 @@ public class PromoCodeDAO {
 		
 		if(count>0){
 			for(OrderItems items : orderItems){
-				if(items.categoryId==78 || items.categoryId==79){
+				/*if(items.categoryId==78 || items.categoryId==79){
 					finalTotal += items.price;
 					continue;
-				}else{
+				}else{*/
 					finalTotal += items.price;
 					totalQuantity += items.quantity;
-				}
+				//}
 			}
 			System.out.println("Total: "+finalTotal);
-			if(promoCodeApplicationTypeId == 1){//ON volume
-				discountedValue = ( totalQuantity - 1 ) * promoValue;
-				totalValue = finalTotal - discountedValue;
-				System.out.println("Discounted on volume: "+discountedValue);
-			}else if(promoTypeId == 1){//Flat
-				discountedValue = finalTotal - promoValue;
-				System.out.println("Discounted on flat: "+discountedValue);
+			if(totalQuantity>1){
+				if( promoCodeApplicationTypeId == 1 ){//ON volume
+					if((promoTypeId == 1)){	//FLAT
+						discountedValue = ( totalQuantity - 1 ) * promoValue;
+						System.out.println("Discounted on volume flat: "+discountedValue);
+					}else{//Percentage
+						//discountedValue = ( totalQuantity - 1 ) * promoValue;
+						discountedValue =finalTotal - ( finalTotal * (promoValue/100) );
+						System.out.println("Discounted on %: "+discountedValue);
+					}
+				}
 			}else{
-				discountedValue =finalTotal - ( finalTotal * (promoValue/100) );
-				System.out.println("Discounted on %: "+discountedValue);
-			}			
+				discountedValue = -0.0;
+			}
+				
 			promoCodeValidJson.put("status","200");
 			promoCodeValidJson.put("message", "Valid PromoCode");
 			promoCodeValidJson.put("isValid", true);
-			promoCodeValidJson.put("promoValue", discountedValue);
+			promoCodeValidJson.put("promoValue",(- discountedValue) );
 		}else{
 			promoCodeValidJson.put("status","204");
 			promoCodeValidJson.put("message", "InValid PromoCode");
 			promoCodeValidJson.put("isValid", false);
 			promoCodeValidJson.put("promoValue", discountedValue);
 		}
+		System.out.println(promoCodeValidJson.toString());
 		return promoCodeValidJson;
 	}
 	

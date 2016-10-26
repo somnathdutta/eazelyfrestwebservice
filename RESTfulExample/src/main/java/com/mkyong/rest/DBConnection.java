@@ -99,6 +99,7 @@ import dao.PlaceOrderDAO;
 import dao.RoundRobinKitchenFinder;
 import dao.SameUserPlaceOrder;
 import dao.SendMessageDAO;
+import dao.ShareDAO;
 import dao.TimeSlotFinder;
 import dao.UserDetailsDao;
 
@@ -1220,7 +1221,7 @@ public class DBConnection {
     public static JSONObject getBalance(String mobileNo) throws JSONException{
     	JSONObject balanceObject = new JSONObject();
     	String myCode = null;
-    	Double myBalance = null;
+    	double myBalance = 0.0,credit=0.0;
     	try {
 			SQL:{
     				Connection connection = DBConnection.createConnection();
@@ -1234,7 +1235,7 @@ public class DBConnection {
 						while (resultSet.next()) {
 							 myCode = resultSet.getString("my_code");
 							 myBalance = resultSet.getDouble("my_balance");
-							
+							 credit = ShareDAO.getShareCredit();
 						}
 					} catch (Exception e) {
 						// TODO: handle exception
@@ -1254,16 +1255,21 @@ public class DBConnection {
     	if(myCode!=null){
     		balanceObject.put("status", "200");
     		balanceObject.put("mycode", myCode);
-    		if(myBalance!=null){
+    		if(myBalance>0.0){
     			balanceObject.put("mybalance", myBalance);
     		}else{
     			balanceObject.put("mybalance", myBalance);
+    		}
+    		if(credit>0.0){
+    			balanceObject.put("creditValue", credit);
+    		}else{
+    			balanceObject.put("creditValue", credit);
     		}
     	}else{
     		balanceObject.put("status", "204");
     		balanceObject.put("mycode", "");
     		balanceObject.put("mybalance", "");
-    		
+    		balanceObject.put("creditValue", 0.0);
     	}
     	/*if(myCode!=null){
 			balanceObject.put("mycode", myCode);
@@ -6665,7 +6671,7 @@ public class DBConnection {
     				PreparedStatement preparedStatement = null;
     				ResultSet resultSet = null;
     				String sql = "select distinct category_id,category_name,is_lunch,is_dinner from vw_category_kitchen "
-    						+ " where kitchen_cuisine_id = ?  order by category_id";
+    						+ " where kitchen_cuisine_id = ?  order by category_id ";
     				/*String sql = "select category_id,category_name from food_category "
     						+ " where category_price IS NULL AND cuisine_id = ?";*/
     				try {
@@ -7683,7 +7689,7 @@ public class DBConnection {
 			String deliveryDay, String mobileNo) throws JSONException{
 		//JSONObject fetchAllCategory = new JSONObject();
 		JSONArray jArray = new JSONArray();
-		if( !(categoryId == 78 || categoryId == 79) ){
+		/*if( !(categoryId == 78 || categoryId == 79) ){*/
 			boolean isNewUser = FetchCuisineDAO.isNewUser(mobileNo);
 			try {
 				SQL:{
@@ -7872,7 +7878,7 @@ public class DBConnection {
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
-		}else{
+		/*}else{
 			try {
 				SQL:{
 						PreparedStatement preparedStatement = null;
@@ -7935,7 +7941,7 @@ public class DBConnection {
 				// TODO: handle exception
 			}
 			 
-		}
+		}*/
 		
 			
 			//System.out.println("Category size: "+jArray.length());

@@ -14,6 +14,7 @@ C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\LoginDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\Categories.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\TestJson.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\KitchenNotifyOrderDAO.java
+C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\AboutUsDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\sql\ForgotPasswordSQL.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\rest\Constants.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\sql\FaqSql.java
@@ -24,10 +25,13 @@ C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\pojo\MealTypePojo.
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\utility\DateTimeSlotFinder.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\RoundRobinKitchenFinder.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\AddressDAO.java
+C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\pojo\Share.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\utility\LatLng.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\pojo\TimeSlot.java
+C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\ContactUsDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\PromoCodeDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\PickjiCall.java
+C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\ShareDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\SameUserPlaceOrder.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\rest\OrderItems.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\Invoice.java
@@ -84,6 +88,7 @@ C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\pojo\User.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\OrderSummaryDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\Track.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\rest\Item.java
+C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\PrivacyPolicyDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\sql\UserQuery.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\rest\DBConnection.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\rest\StrongAES.java
@@ -93,6 +98,7 @@ C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\ItemDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\pojo\Item.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\sql\SubscriptionPrePackQuery.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\UserDetailsDao.java
+C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\TermsAndConditionDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\sql\SignUpSQL.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\dao\StartMyTripDAO.java
 C:\Users\somnathd\webservice\git\RESTfulExample\src\main\java\com\mkyong\rest\Order.java

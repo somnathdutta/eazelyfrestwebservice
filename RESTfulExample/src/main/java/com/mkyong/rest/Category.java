@@ -43,11 +43,13 @@ import pojo.Prepack;
 import pojo.TimeSlot;
 import pojo.User;
 import utility.NumberCheck;
+import dao.AboutUsDAO;
 import dao.AddressDAO;
 import dao.AllItemsDAO;
 import dao.BikerDAO;
 import dao.BookDriver;
 import dao.CallPickJiBikerDAO;
+import dao.ContactUsDAO;
 import dao.FaqDAO;
 import dao.FetchAlaCarteItemDAO;
 import dao.FetchBannersDAO;
@@ -63,11 +65,14 @@ import dao.PickJiDAO;
 import dao.PickjiCall;
 import dao.PincodeDAO;
 import dao.PlaceSubscriptionOrderDAO;
+import dao.PrivacyPolicyDAO;
 import dao.PromoCodeDAO;
 import dao.QueryTypeDAO;
 import dao.RoundRobinKitchenFinder;
+import dao.ShareDAO;
 import dao.StartMyTripDAO;
 import dao.SubmitFeedBackDAO;
+import dao.TermsAndConditionDAO;
 import dao.TimeSlotFinder;
 import dao.UserDetailsDao;
 
@@ -966,14 +971,22 @@ public class Category {
 					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
 				}
 				else if(order.length==7){
-					sub = true;
 					items.cuisineId = Integer.valueOf(order[0]);
 					items.categoryId = Integer.valueOf(order[1]);
 					items.itemCode = order[2];
 					items.price = Double.valueOf(order[3]);
 					items.quantity = Integer.valueOf(order[4]);
+					items.packing = order[5].toUpperCase();
+					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
+					items.mealType = order[6].trim().toUpperCase();
+					//sub = true;
+					/*items.cuisineId = Integer.valueOf(order[0]);
+					items.categoryId = Integer.valueOf(order[1]);
+					items.itemCode = order[2];
+					items.price = Double.valueOf(order[3]);
+					items.quantity = Integer.valueOf(order[4]);
 					items.day = order[5];
-					items.meal = order[6];
+					items.meal = order[6];*/
 					/*String stDateUserString = order[6].trim();
 	    	    	String enDateUserString = order[7].trim();
 	    	    	DateFormat format1 = new SimpleDateFormat("MM-dd-yyyy");
@@ -1269,9 +1282,9 @@ public class Category {
 					contactNumber, city, location, flatNumber,streetName,pincode,landmark , subscriptiontype,
 					getLocationId(location, city), day, orderItemList);*/
 		System.out.println("deliverypincode-"+pincode+" dZone--"+deliveryZone+" dAdd--"+deliveryAddress+" ins - -"+instruction);
-		orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactNumber
-				, city, location,pincode, subscriptiontype , deliveryZone, deliveryAddress, instruction
-				, day, orderItemList);
+		//orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactNumber
+		//		, city, location,pincode, subscriptiontype , deliveryZone, deliveryAddress, instruction
+		//		, day, orderItemList);
 		/*orderPlaced.put("success", "subscription_success");*/
 		System.out.println("status send to app--"+orderPlaced);
 		return orderPlaced; 
@@ -1933,6 +1946,61 @@ public class Category {
 	}
 	
 	@POST
+	@Path("/fetchShareEarn")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject fetchShareEarn() throws JSONException{
+		System.out.println("************************************************************");
+		System.out.println("***** fetchShareEarn webservice  * * * * * * * * * * * * *");
+		JSONObject faqJsonObject = ShareDAO.fetchShareEarn();
+		System.out.println("***** fetchShareEarn webservice  ends* * * * * * * * * *  *");
+		return faqJsonObject;
+	}
+	
+	@POST
+	@Path("/fetchContactUs")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject fetchContactUs() throws JSONException{
+		System.out.println("************************************************************");
+		System.out.println("***** fetchContactUs webservice  * * * * * * * * * * * * *");
+		JSONObject faqJsonObject = ContactUsDAO.getCustomerCareNumber();
+		System.out.println("***** fetchContactUs webservice  ends* * * * * * * * * *  *");
+		return faqJsonObject;
+	}
+	
+	@POST
+	@Path("/fetchAboutUs")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject fetchAboutUs() throws JSONException{
+		System.out.println("************************************************************");
+		System.out.println("***** fetchAboutUs webservice  * * * * * * * * * * * * *");
+		JSONObject faqJsonObject = AboutUsDAO.getAboutUS();
+		System.out.println("***** fetchAboutUs webservice  ends* * * * * * * * * *  *");
+		return faqJsonObject;
+	}
+	
+	@POST
+	@Path("/termsAndConditions")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject termsAndConditions() throws JSONException{
+		System.out.println("************************************************************");
+		System.out.println("***** termsAndConditions webservice  * * * * * * * * * * * * *");
+		JSONObject faqJsonObject = TermsAndConditionDAO.getTermsAndConditions();
+		System.out.println("***** termsAndConditions webservice  ends* * * * * * * * * *  *");
+		return faqJsonObject;
+	}
+	
+	@POST
+	@Path("/privacyPolicy")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject privacyPolicy() throws JSONException{
+		System.out.println("************************************************************");
+		System.out.println("***** privacyPolicy webservice  * * * * * * * * * * * * *");
+		JSONObject faqJsonObject = PrivacyPolicyDAO.getPrivacyPolicy();
+		System.out.println("***** privacyPolicy webservice  ends* * * * * * * * * *  *");
+		return faqJsonObject;
+	}
+	
+	@POST
 	@Path("/submitMessage")
 	@Produces(MediaType.APPLICATION_JSON)
 	public static JSONObject submitMessage(@FormParam("queryTypeId")String queryTypeId,
@@ -1954,18 +2022,20 @@ public class Category {
 			@FormParam("fooddetails[]")List<String> orderDetails) throws JSONException{
 		System.out.println("************************************************************");
 		System.out.println("***** isPromoCodeValid webservice "+promoCode+" * * * * * * * * * * * * *");
+		System.out.println("food details:: "+orderDetails);
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
 		for(String str : orderDetails){	
 			OrderItems items = new OrderItems();
 			String[] order = str.split("\\$");
 			for(int i=0;i<order.length;i++){
-				if(order.length==6){
+				if(order.length==7){
 					items.cuisineId = Integer.valueOf(order[0]);
 					items.categoryId = Integer.valueOf(order[1]);
 					items.itemCode = order[2].trim();
 					items.price = Double.valueOf(order[3]);
 					items.quantity = Integer.valueOf(order[4]);
 					items.packing = order[5].trim().toUpperCase();
+					items.mealType = order[6].trim().toUpperCase();
 				}
 			}
 			orderItemList.add(items);

@@ -38,6 +38,7 @@ com\mkyong\rest\AddressBean.class
 dao\FaqDAO.class
 com\mkyong\rest\Order.class
 dao\AllItemsDAO.class
+dao\AboutUsDAO.class
 pojo\PickJi.class
 dao\FetchAlaCarteItemDAO.class
 com\mkyong\rest\Customer.class
@@ -47,6 +48,7 @@ dao\PickJiDAO.class
 dao\SubmitFeedBackDAO.class
 utility\LatLng.class
 dao\SendMessageDAO.class
+dao\TermsAndConditionDAO.class
 com\mkyong\rest\TimeCalculation.class
 dao\PlaceSubscriptionOrderDAO.class
 sql\LoginSQL.class
@@ -63,6 +65,7 @@ pojo\KitchenStock.class
 dao\OrderSummaryDAO.class
 dao\PickjiCall.class
 com\mkyong\rest\SMTPAuthenticator.class
+pojo\Share.class
 com\mkyong\rest\OrderItemDetailsBean.class
 sql\UserQuery.class
 com\mkyong\rest\DBConnection.class
@@ -70,6 +73,7 @@ com\mkyong\rest\Test.class
 utility\ValueComparator.class
 sql\SameUserSQL.class
 dao\CallPickJiBikerDAO.class
+dao\ContactUsDAO.class
 dao\PlaceOrderDAO.class
 pojo\PromoCode.class
 dao\OrderTimingsDAO.class
@@ -89,10 +93,12 @@ dao\StartMyTripDAO.class
 com\mkyong\rest\TimeFormattor.class
 dao\KitchenNotifyOrderDAO.class
 dao\PincodeDAO.class
+dao\ShareDAO.class
 dao\RoundRobinKitchenFinder.class
 dao\TimeSlotFinder.class
 dao\Test.class
 dao\SignUpDAO.class
+dao\PrivacyPolicyDAO.class
 com\mkyong\rest\Constants.class
 dao\FindKitchensByRoundRobin.class
 sql\SignUpSQL.class

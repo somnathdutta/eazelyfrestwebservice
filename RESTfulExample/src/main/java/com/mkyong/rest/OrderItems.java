@@ -8,7 +8,7 @@ public class OrderItems implements Comparable<OrderItems>{
 	
 	public Integer categoryId;
 	
-	public String itemCode, itemName, cuisinName, categoryName, packing, itemDescription;
+	public String itemCode, itemName, cuisinName, categoryName, packing, itemDescription,mealType;
 	
 	public Integer quantity;
 	
@@ -186,6 +186,14 @@ public class OrderItems implements Comparable<OrderItems>{
 
 	public void setItemTypeId(Integer itemTypeId) {
 		this.itemTypeId = itemTypeId;
+	}
+
+	public String getMealType() {
+		return mealType;
+	}
+
+	public void setMealType(String mealType) {
+		this.mealType = mealType;
 	}
 }
   
