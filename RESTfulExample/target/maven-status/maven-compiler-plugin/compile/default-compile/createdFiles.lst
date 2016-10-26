@@ -44,6 +44,7 @@ dao\FetchAlaCarteItemDAO.class
 com\mkyong\rest\Customer.class
 dao\FetchCuisineDAO.class
 utility\DateTimeSlotFinder.class
+dao\SetItemDetailsDao.class
 dao\PickJiDAO.class
 dao\SubmitFeedBackDAO.class
 utility\LatLng.class

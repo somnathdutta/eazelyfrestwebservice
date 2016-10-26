@@ -69,6 +69,7 @@ import dao.PrivacyPolicyDAO;
 import dao.PromoCodeDAO;
 import dao.QueryTypeDAO;
 import dao.RoundRobinKitchenFinder;
+import dao.SetItemDetailsDao;
 import dao.ShareDAO;
 import dao.StartMyTripDAO;
 import dao.SubmitFeedBackDAO;
@@ -2602,5 +2603,19 @@ public class Category {
 		return object;
 	}
 	
+	/**
+	 * set details
+	 * @throws JSONException 
+	 * 
+	 * */
+	
+	@POST
+	@Path("/setItemDetails")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject setItemDetails() throws JSONException{
+		JSONObject setItemJson = SetItemDetailsDao.fetchSetDetails();
+		return setItemJson;
+		
+	}
 	
 	}
