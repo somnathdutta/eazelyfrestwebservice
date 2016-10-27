@@ -91,6 +91,7 @@ import dao.BikerDAO;
 import dao.BookDriver;
 import dao.CuisineKitchenDAO;
 import dao.FetchCuisineDAO;
+import dao.FetchLocationDAO;
 import dao.FindKitchensByRoundRobin;
 import dao.Invoice;
 import dao.OrderDetailsDAO;
@@ -1668,8 +1669,8 @@ public class DBConnection {
         		SQL:{
         				PreparedStatement preparedStatement = null;
         				ResultSet resultSet = null;
-        				String sqlGuest = "SELECT * from vw_track_order where user_mail_id = ? ";
-        				String sqlRegistered = "SELECT * from vw_track_order where contact_number = ? ";
+        				String sqlGuest = "SELECT * from vw_track_order where user_mail_id = ? and (order_date=current_date OR delivery_date=current_date)";
+        				String sqlRegistered = "SELECT * from vw_track_order where contact_number = ? and (order_date=current_date OR delivery_date=current_date)";
         						/* "select " 
     			    				+" foud.city,"
     			    				+" foud.flat_no,"
@@ -6671,12 +6672,13 @@ public class DBConnection {
     				PreparedStatement preparedStatement = null;
     				ResultSet resultSet = null;
     				String sql = "select distinct category_id,category_name,is_lunch,is_dinner from vw_category_kitchen "
-    						+ " where kitchen_cuisine_id = ?  order by category_id ";
+    						+ " where kitchen_cuisine_id = ? and serving_zipcodes like ? order by category_id ";
     				/*String sql = "select category_id,category_name from food_category "
     						+ " where category_price IS NULL AND cuisine_id = ?";*/
     				try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setInt(1, CuisineID);
+						preparedStatement.setString(2, "%"+pincode+"%");
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
 							JSONObject categoryObject = new JSONObject();
@@ -7237,6 +7239,7 @@ public class DBConnection {
     public static JSONObject getLocationName() throws JSONException{
     	JSONObject locationNameObj = new JSONObject();
     	JSONArray locationArray = new JSONArray();
+    	Map<String, String> locationMap = new HashMap<String, String>();
     	try {
 			SQL:{
     			 Connection connection = DBConnection.createConnection();
@@ -7252,6 +7255,8 @@ public class DBConnection {
 						name.put("areaname", resultSet.getString("locality_name"));
 						name.put("zipcode", resultSet.getString("zip_code"));
 						locationArray.put(name);
+						locationMap.put(resultSet.getString("zip_code"), 
+								resultSet.getString("locality_name").toUpperCase());
 					}
 				} catch (Exception e) {
 					// TODO: handle exception
@@ -7266,6 +7271,8 @@ public class DBConnection {
 			// TODO: handle exception
 		}
     	locationNameObj.put("arealist", locationArray);
+    	
+    	//locationNameObj.put("arealist", FetchLocationDAO.fetchZipWithKitchenListArray(locationMap));
     	return locationNameObj;
     }
     
@@ -7399,6 +7406,8 @@ public class DBConnection {
     private static JSONArray getServingZipsWithName(Integer areaId) throws JSONException{
     	JSONArray servingCodeList = new JSONArray();
     	String areacodes = "";
+    	Map<String, String> locationMap = new HashMap<String, String>();
+		
     	try {
 			SQL:{
     				Connection connection = DBConnection.createConnection();
@@ -7415,6 +7424,8 @@ public class DBConnection {
 				    		zip.put("zipcode", resultSet.getString("zip_code"));
 				    		zip.put("servingarea", resultSet.getString("locality_name").toUpperCase());
 				    		servingCodeList.put(zip);
+							/*locationMap.put(resultSet.getString("zip_code"), 
+									resultSet.getString("locality_name").toUpperCase());*/
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -7428,6 +7439,7 @@ public class DBConnection {
 			// TODO: handle exception
 		}
     	
+    	//servingCodeList = FetchLocationDAO.fetchZipWithKitchenListArray(locationMap);
     	return servingCodeList;
     }
     

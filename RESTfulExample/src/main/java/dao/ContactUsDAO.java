@@ -13,18 +13,19 @@ public class ContactUsDAO {
 
 	public static JSONObject getCustomerCareNumber() throws JSONException{
 		JSONObject jsonObject = new JSONObject();
-		String contactNO = null;
+		String contactNO = null,contactMessage=null;
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
-					String sql = "select contct_no from  fapp_contact_us where is_delete='N'";
+					String sql = "select contct_no,contact_message from  fapp_contact_us where is_delete='N'";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
-							contactNO = resultSet.getString("contct_no");		
+							contactNO = resultSet.getString("contct_no");
+							contactMessage = resultSet.getString("contact_message");
 						}
 						
 					} catch (Exception e) {
@@ -44,10 +45,12 @@ public class ContactUsDAO {
 			jsonObject.put("status", "200");
 			jsonObject.put("message", "Data found!");
 			jsonObject.put("contactNo", contactNO);
+			jsonObject.put("contactMessage", contactMessage);
 		}else{
 			jsonObject.put("status", "204");
 			jsonObject.put("message", "No Data found!");
 			jsonObject.put("contactNo", "");
+			jsonObject.put("contactMessage", "");
 		}
 		return jsonObject ;
 	}

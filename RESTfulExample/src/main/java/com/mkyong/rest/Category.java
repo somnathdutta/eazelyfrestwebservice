@@ -69,6 +69,7 @@ import dao.PrivacyPolicyDAO;
 import dao.PromoCodeDAO;
 import dao.QueryTypeDAO;
 import dao.RoundRobinKitchenFinder;
+import dao.SetItemDetailsDao;
 import dao.ShareDAO;
 import dao.StartMyTripDAO;
 import dao.SubmitFeedBackDAO;
@@ -1875,7 +1876,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchlocation() throws JSONException{
 	
-		//System.out.println("fetchlocation webservice is called * * * * * * *");
+		System.out.println("*** fetchlocation webservice is called * * * * * * *");
 	
 		JSONObject jobjLocation ;
 	
@@ -1890,7 +1891,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchservinglocation() throws JSONException{
 	
-		//System.out.println("fetchservinglocation webservice is called * * * * * * * ");
+		System.out.println("*** fetchservinglocation webservice is called * * * * * * * ");
 	
 		JSONObject jobjLocation= DBConnection.fetchServinglocation();
 	
@@ -1902,7 +1903,7 @@ public class Category {
 	@Path("/fetchlocationname")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchLocationList() throws JSONException{
-		//System.out.println("fetchServinglocationname webservice is called * * * * * * * ");
+		System.out.println("*** fetchlocationnames webservice is called * * * * * * * ");
 	
 		JSONObject jobjLocation= DBConnection.getLocationName();
 	
@@ -2602,5 +2603,19 @@ public class Category {
 		return object;
 	}
 	
+	/**
+	 * set details
+	 * @throws JSONException 
+	 * 
+	 * */
+	
+	@POST
+	@Path("/setItemDetails")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject setItemDetails() throws JSONException{
+		JSONObject setItemJson = SetItemDetailsDao.fetchSetDetails();
+		return setItemJson;
+		
+	}
 	
 	}
