@@ -27,6 +27,7 @@ public class KitchenNotifyOrderDAO {
 		JSONObject notifiedJsonObject = new JSONObject();
 		JSONObject responseJsonObject = new JSONObject();
 		Boolean orderNotified = false;
+		JSONObject notifyObject ;
 		int totalNoOfQuantity = PlaceOrderDAO.getTotalNoOfQuantity(kitchenName, orderNo);
 		orderNotified = notifyOrder(orderNo, kitchenName);
 		if(isAllKitchenNotified(orderNo)){
@@ -35,55 +36,110 @@ public class KitchenNotifyOrderDAO {
 		if(orderNotified){
 			if(totalNoOfQuantity==1){
 				JSONObject pickJiBiker = CallPickJiBikerDAO.callPickJi(orderNo, kitchenName);
-				 Biker biker = new Biker();
-				 String lat = null,lng = null ;
-				  if(pickJiBiker.getString("responseCode").equalsIgnoreCase("200")){
-					 JSONObject orderDetails = pickJiBiker.getJSONObject("orderDetails");
-					  biker.setBikerName(orderDetails.getString("bikerName"));
-					  biker.setBikerContact(orderDetails.getString("bikerMobile"));
-					  biker.setBikerPosition(orderDetails.getString("bikerPosition"));
-					  biker.setPickUpTime(orderDetails.getString("schedulePickupTime"));
-					  biker.setDeliveryTime(orderDetails.getString("scheduleDeliveryTime"));
-				  }
-				  if( !biker.getBikerName().equals("null")){
-					  System.out.println("Biker name: "+biker.getBikerName());
-					  System.out.println("Biker contct:: "+biker.getBikerContact());
-					  System.out.println("Biker position:: "+biker.getBikerPosition());
-					  String[] latlng =  biker.getBikerPosition().split(",");
-					  for(int i=0;i<latlng.length;i++){
-						  lat = latlng[0];
-						  lng = latlng[1];
-					  }
-					  System.out.println("LAT:: "+lat.trim());
-					  System.out.println("LNG:: "+lng.trim());
-					  System.out.println("Pickup:: "+biker.getPickUpTime());
-					  System.out.println("Deliery :"+biker.getDeliveryTime());
-					  biker.setLat(lat);
-					  biker.setLng(lng);
-					  notifiedJsonObject.put("status", true);
-					  notifiedJsonObject.put("boyId", "PickJiBoyID");
-					  notifiedJsonObject.put("boyName", biker.getBikerName());
-					  notifiedJsonObject.put("boyPhoneNo", biker.getBikerContact());
-					  if(savePickJiBikerDetails(biker, kitchenName, orderNo)){
-						  System.out.println("Pickji biker details saved!");
-					  }
-				  }else{
-					  notifiedJsonObject.put("status", true);
-					  notifiedJsonObject.put("boyId", "NO BOY ID");
-					  notifiedJsonObject.put("boyName", "NO BOY NAME");
-					  notifiedJsonObject.put("boyPhoneNo", "NO BOY CONTACT");
-				  }
-				  
-				
-			}else{
-				if(callDriver(orderNo, kitchenName, boyId)){
-					Biker biker = BikerDAO.getDriverDetailsFromKitchen(orderNo, kitchenName);
+				Biker biker = new Biker();
+				String lat = null,lng = null ;
+				if(pickJiBiker.getString("responseCode").equalsIgnoreCase("200")){
+					JSONObject orderDetails = pickJiBiker.getJSONObject("orderDetails");
+					biker.setBikerName(orderDetails.getString("bikerName"));
+					biker.setBikerContact(orderDetails.getString("bikerMobile"));
+					biker.setBikerPosition(orderDetails.getString("bikerPosition"));
+					biker.setPickUpTime(orderDetails.getString("schedulePickupTime"));
+					biker.setDeliveryTime(orderDetails.getString("scheduleDeliveryTime"));
+				}
+				if( !biker.getBikerName().equals("null")){
+					System.out.println("Biker name: "+biker.getBikerName());
+					System.out.println("Biker contct:: "+biker.getBikerContact());
+					System.out.println("Biker position:: "+biker.getBikerPosition());
+					String[] latlng =  biker.getBikerPosition().split(",");
+					for(int i=0;i<latlng.length;i++){
+						lat = latlng[0];
+						lng = latlng[1];
+					}
+					System.out.println("LAT:: "+lat.trim());
+					System.out.println("LNG:: "+lng.trim());
+					System.out.println("Pickup:: "+biker.getPickUpTime());
+					System.out.println("Deliery :"+biker.getDeliveryTime());
+					biker.setLat(lat);
+					biker.setLng(lng);
 					notifiedJsonObject.put("status", true);
-					notifiedJsonObject.put("boyId", biker.getUserId());
+					notifiedJsonObject.put("boyId", "PickJiBoyID");
 					notifiedJsonObject.put("boyName", biker.getBikerName());
 					notifiedJsonObject.put("boyPhoneNo", biker.getBikerContact());
+					if(savePickJiBikerDetails(biker, kitchenName, orderNo)){
+						System.out.println("Pickji biker details saved!");
+					}
+				}else{
+					System.out.println("************************* **************************** ********************************");
+					System.out.println("************************* *********** NO ***************** ****************************");
+					System.out.println("************************* ********* BIKER *********************************************");
+					System.out.println("************************* ******** ASSIGNED ******************** **********************");
+					System.out.println("************************* ********* FROM ****************** ********************");
+					System.out.println("************************* ********* PICKJI ****************** ********************");
+					notifiedJsonObject.put("status", true);
+					notifiedJsonObject.put("boyId", "NO BOY ID");
+					notifiedJsonObject.put("boyName", "NO BOY NAME");
+					notifiedJsonObject.put("boyPhoneNo", "NO BOY CONTACT");
 				}
-			}	
+			}else{
+
+				String bikerUserId = BookDriver.getBikerUserID(kitchenName, orderNo);//Get biker user id
+				if(BookDriver.isPickJiBoy(bikerUserId)){
+					JSONObject pickJiBiker = CallPickJiBikerDAO.callPickJi(orderNo, kitchenName);
+					Biker biker = new Biker();
+					String lat = null,lng = null ;
+					if(pickJiBiker.getString("responseCode").equalsIgnoreCase("200")){
+						JSONObject orderDetails = pickJiBiker.getJSONObject("orderDetails");
+						biker.setBikerName(orderDetails.getString("bikerName"));
+						biker.setBikerContact(orderDetails.getString("bikerMobile"));
+						biker.setBikerPosition(orderDetails.getString("bikerPosition"));
+						biker.setPickUpTime(orderDetails.getString("schedulePickupTime"));
+						biker.setDeliveryTime(orderDetails.getString("scheduleDeliveryTime"));
+					}
+					if( !biker.getBikerName().equals("null")){
+						System.out.println("Biker name: "+biker.getBikerName());
+						System.out.println("Biker contct:: "+biker.getBikerContact());
+						System.out.println("Biker position:: "+biker.getBikerPosition());
+						String[] latlng =  biker.getBikerPosition().split(",");
+						for(int i=0;i<latlng.length;i++){
+							lat = latlng[0];
+							lng = latlng[1];
+						}
+						System.out.println("LAT:: "+lat.trim());
+						System.out.println("LNG:: "+lng.trim());
+						System.out.println("Pickup:: "+biker.getPickUpTime());
+						System.out.println("Deliery :"+biker.getDeliveryTime());
+						biker.setLat(lat);
+						biker.setLng(lng);
+						notifiedJsonObject.put("status", true);
+						notifiedJsonObject.put("boyId", "PickJiBoyID");
+						notifiedJsonObject.put("boyName", biker.getBikerName());
+						notifiedJsonObject.put("boyPhoneNo", biker.getBikerContact());
+						if(savePickJiBikerDetails(biker, kitchenName, orderNo)){
+							System.out.println("Pickji biker details saved!");
+						}
+					}else{
+						System.out.println("************************* **************************** ********************************");
+						System.out.println("************************* *********** NO ***************** ****************************");
+						System.out.println("************************* ********* BIKER *********************************************");
+						System.out.println("************************* ******** ASSIGNED ******************** **********************");
+						System.out.println("************************* ********* FROM ****************** ********************");
+						System.out.println("************************* ********* PICKJI ****************** ********************");
+						notifiedJsonObject.put("status", true);
+						notifiedJsonObject.put("boyId", "NO BOY ID");
+						notifiedJsonObject.put("boyName", "NO BOY NAME");
+						notifiedJsonObject.put("boyPhoneNo", "NO BOY CONTACT");
+					}
+
+				}else{
+					if(callDriver(orderNo, kitchenName, boyId)){
+						Biker biker = BikerDAO.getDriverDetailsFromKitchen(orderNo, kitchenName);
+						notifiedJsonObject.put("status", true);
+						notifiedJsonObject.put("boyId", biker.getUserId());
+						notifiedJsonObject.put("boyName", biker.getBikerName());
+						notifiedJsonObject.put("boyPhoneNo", biker.getBikerContact());
+					}
+				}
+			}
 		}
 		System.out.println(notifiedJsonObject);
 		return notifiedJsonObject;

@@ -163,10 +163,15 @@ public class KitchenDeliverOrderDAO {
 						preparedStatement.setString(2, kitchenName);
 						resultSet = preparedStatement.executeQuery();
 						if(resultSet.next()){
-							biker = new Biker();
-							biker.setUserId(resultSet.getString("external_order_id")); 
-							biker.setBikerName(resultSet.getString("driver_name"));
-							biker.setBikerContact(resultSet.getString("driver_number"));
+							if(resultSet.getString("external_order_id")!=null){
+								biker = new Biker();
+								biker.setUserId(resultSet.getString("external_order_id")); 
+								biker.setBikerName(resultSet.getString("driver_name"));
+								biker.setBikerContact(resultSet.getString("driver_number"));
+							}else{
+								
+							}
+							
 						}
 					} catch (Exception e) {
 						// TODO: handle exception

@@ -169,7 +169,7 @@ public class SlotDAO {
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
-							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders < 2 and quantity <11 "
+							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders < 4 and quantity <11 "
 							/*+ " and assigned_date = current_date and ftds.time_slot_id <4 ";*/
 							+ " and ftds.time_slot_id <4 ";
 				}else if(mealTypePojo.isDinnerToday() ){
@@ -178,7 +178,7 @@ public class SlotDAO {
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
-							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders < 2 and quantity <11 "
+							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders < 4 and quantity <11 "
 							/*+ " and assigned_date = current_date and ftds.time_slot_id >3 ";
 							+ " and ftds.time_slot_id >3 "*/;
 				}else if(mealTypePojo.isLunchTomorrow() ){
@@ -187,7 +187,7 @@ public class SlotDAO {
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
-							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders < 2 and quantity <11 "
+							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders < 4 and quantity <11 "
 							/*+ " and assigned_date = current_date and ftds.time_slot_id <4 ";
 							+ " and ftds.time_slot_id <4 "*/;
 				}else{
@@ -196,7 +196,7 @@ public class SlotDAO {
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
-							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders < 2 and quantity <11 "
+							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders < 4 and quantity <11 "
 							/*+ " and assigned_date = current_date and ftds.time_slot_id >3 ";
 							+ " and ftds.time_slot_id >3 "*/;
 

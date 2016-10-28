@@ -174,16 +174,16 @@ public class BookDriver {
 					String sql ="";
 					if(mealTypePojo.isLunchToday()){
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
-								+ " (no_of_orders = 2 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = 3 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
 					}else if(mealTypePojo.isDinnerToday()){
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
-								+ " (no_of_orders = 2 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = 3 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
 					}else if(mealTypePojo.isLunchTomorrow()){
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
-								+ " (no_of_orders = 2 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = 3 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
 					}else{
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
-								+ " (no_of_orders = 2 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = 3 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
 					}	
 					try {
 						preparedStatement = connection.prepareStatement(sql);
@@ -234,16 +234,16 @@ public class BookDriver {
 				String sql ="";
 				if(mealTypePojo.isLunchToday()){
 					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=10)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=3 or quantity>=10)";
 				}else if(mealTypePojo.isDinnerToday()){
 					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=10)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=3 or quantity>=10)";
 				}else if(mealTypePojo.isLunchTomorrow()){
 					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=10)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=3 or quantity>=10)";
 				}else{
 					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=2 or quantity>=10)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=3 or quantity>=10)";
 				}
 				
 				try {

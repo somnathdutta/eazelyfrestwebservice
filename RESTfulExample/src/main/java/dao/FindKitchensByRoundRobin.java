@@ -666,29 +666,29 @@ public class FindKitchensByRoundRobin {
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status " 
 								+" where driver_user_id= ? "
-								+" and is_slot_locked = 'N' and time_slot_id <4 "
-								+" and (quantity<10 or no_of_orders <2)" ; 
+								+" and is_slot_locked = 'N' and is_lunch='Y' and is_slot_active='N' "
+								+" and (quantity<10 or no_of_orders <3)" ; 
 					}else if(mealTypePojo.isLunchTomorrow()){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status_tommorrow " 
 								+" where driver_user_id= ? "
-								+" and is_slot_locked = 'N' and time_slot_id <4 "
-								+" and (quantity<10 or no_of_orders <2)" ; 
+								+" and is_slot_locked = 'N' and is_lunch='Y' and is_slot_active='N'  "
+								+" and (quantity<10 or no_of_orders <3)" ; 
 					}else if(mealTypePojo.isDinnerToday()){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status " 
 								+" where driver_user_id= ? "
-								+" and is_slot_locked = 'N' and time_slot_id > 3 "
-								+" and (quantity<10 or no_of_orders <2)" ; 
+								+" and is_slot_locked = 'N' and  is_lunch='N' and is_slot_active='N' "
+								+" and (quantity<10 or no_of_orders <3)" ; 
 					}else{
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status_tommorrow " 
 								+" where driver_user_id= ? "
-								+" and is_slot_locked = 'N' and time_slot_id > 3 "
-								+" and (quantity<10 or no_of_orders <2)" ;
+								+" and is_slot_locked = 'N' and is_lunch='N' and is_slot_active='N' "
+								+" and (quantity<10 or no_of_orders <3)" ;
 					}
 					
 					try {
