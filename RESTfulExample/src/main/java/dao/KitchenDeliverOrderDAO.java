@@ -30,7 +30,7 @@ public class KitchenDeliverOrderDAO {
 				//Send cutomer message about biker details
 				SendMessageDAO.sendMessageToCustomerForPickJiBiker(customerContact, pickJibiker.getBikerContact(), pickJibiker.getBikerName()
 						, pickJibiker.getUserId());
-				 PickjiCall myRunnable = new PickjiCall( kitchenName, orderNo);
+				 PickjiCall myRunnable = new PickjiCall( kitchenName, orderNo, pickJibiker.getUserId());
 			     Thread t = new Thread(myRunnable);
 			     t.start();
 			    

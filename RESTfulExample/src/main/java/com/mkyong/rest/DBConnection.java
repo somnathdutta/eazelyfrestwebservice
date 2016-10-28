@@ -3096,7 +3096,7 @@ public class DBConnection {
     		Integer locationId,String mealType, String timeSlot, ArrayList<OrderItems> orderItemList,
     		String deliveryZone,String deliveryAddress,String instruction,String deliveryDay,
     		String payAmount,boolean credit, String payType, int totalNoOfQuantity , MealTypePojo mealTypePojo, 
-    		ArrayList<TimeSlot> timeSlotList,Set<Integer> servingKitchenIds ) throws Exception{
+    		ArrayList<TimeSlot> timeSlotList,Set<Integer> servingKitchenIds, String promoCode ) throws Exception{
     	
     	boolean isGuestUser = false,isUserSameOrder = false ,sameCuisineSplit = false,
     			userDetailsInserted = false, itemDetailsInserted = false,
@@ -3372,8 +3372,8 @@ public class DBConnection {
         				/*String sql = "INSERT INTO fapp_orders(user_mail_id, order_by, contact_number,order_no,meal_type,time_slot)"
         							+" VALUES (?, ?, ?, ?,?,?)";*/
         				String sql = "INSERT INTO fapp_orders(user_mail_id , contact_number, order_no, meal_type, time_slot,order_by,"
-        						+ "delivery_date,final_price,payment_name, user_type)"
-    							+" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        						+ "delivery_date,final_price,payment_name, user_type,promo_code)"
+    							+" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         				try {
     	    					preparedStatement = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
     	    					preparedStatement.setString(1, userMailId);
@@ -3411,6 +3411,11 @@ public class DBConnection {
     	        					preparedStatement.setString(10, "GUEST USER");
     	        				}else{
     	        					preparedStatement.setString(10, "REGISTERED USER");
+    	        				}
+    	        				if(promoCode!=null && promoCode.trim().length()>0){
+    	        					preparedStatement.setString(11, promoCode.trim());
+    	        				}else{
+    	        					preparedStatement.setNull(11, Types.NULL);
     	        				}
     	        				System.out.println(preparedStatement);
     	        				//preparedStatement.setDate(7, current_tim);

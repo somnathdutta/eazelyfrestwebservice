@@ -79,17 +79,20 @@ public class PromoCodeDAO {
 				discountedValue = -0.0;
 			}*/
 			if(promoTypeId==1){//FLAT
-				System.out.println("FLAT DISCOUNT::");
+				
 				discountedValue = promoValue;
+				System.out.println("FLAT DISCOUNT::"+discountedValue);
 			}else if(promoTypeId == 2){//Percentage
-				System.out.println("PERCENTAGE DISCOUNT::");
+				
 				finalTotal = ( finalTotal * promoValue/100);
 				discountedValue = finalTotal;
+				System.out.println("PERCENTAGE DISCOUNT::"+discountedValue);
 			}else{
-				System.out.println("DABBA DISCOUNT::");
 				if(totalQuantity>1){
 					discountedValue = (totalQuantity - 1) * promoValue;
 				}
+				System.out.println("DABBA DISCOUNT::"+discountedValue);
+				
 			}
 			promoCodeValidJson.put("status","200");
 			promoCodeValidJson.put("message", "Valid PromoCode");
@@ -99,7 +102,7 @@ public class PromoCodeDAO {
 			promoCodeValidJson.put("status","200");
 			promoCodeValidJson.put("message", "InValid PromoCode");
 			promoCodeValidJson.put("isValid", false);
-			promoCodeValidJson.put("promoValue", (- discountedValue) );
+			promoCodeValidJson.put("promoValue", ( discountedValue) );
 		}
 		System.out.println(promoCodeValidJson.toString());
 		return promoCodeValidJson;
@@ -148,5 +151,39 @@ public class PromoCodeDAO {
 		}else{
 			return code.getUserValue() - ( code.getUserValue() * (code.getPromoValue()/100) );
 		}
+	}
+	
+	public static boolean isUsedPromoCode(String promoCode, String mobileNo){
+		boolean isUsedPromoCode = false;
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql = "select count(promo_code)AS promo_code from fapp_orders where contact_number = ? and "
+							+ " promo_code = ?";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, mobileNo);
+						preparedStatement.setString(2, promoCode);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next() ) {
+							int count = resultSet.getInt("promo_code");
+							if(count > 0)
+								isUsedPromoCode = true;
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}if(preparedStatement!=null){
+						preparedStatement.close();
+					}if(connection!=null){
+						connection.close();
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}	
+		return isUsedPromoCode;
 	}
 }

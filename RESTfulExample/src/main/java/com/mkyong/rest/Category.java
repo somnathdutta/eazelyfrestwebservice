@@ -843,7 +843,7 @@ public class Category {
 		return notifyObject;
 	}
 
-	@POST
+	/*@POST
 	@Path("/apitest")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject apiTest() throws JSONException{
@@ -858,7 +858,7 @@ public class Category {
 	        System.out.println("end main thread!!");
 		System.out.println("API TEST web service JSON Object - - "+testJsonObject);
 		return testJsonObject;
-	}
+	}*/
 
 
 	@POST
@@ -924,7 +924,8 @@ public class Category {
 			@FormParam("deliveryaddress")String deliveryAddress,
 			@FormParam("instruction")String instruction,
 			@FormParam("deliverydate")String deliveryDay,
-			@FormParam("slotdetails[]")List<String> timeSlotDetails
+			@FormParam("slotdetails[]")List<String> timeSlotDetails,
+			@FormParam("promoCode")String promoCode
 			) throws Exception{
 
 		System.out.println("placeOrder webservice is called * * * * * * * * *");
@@ -945,6 +946,7 @@ public class Category {
 		System.out.println("deliery zone-->"+deliveryZone);
 		System.out.println("delivery address-->"+deliveryAddress);
 		System.out.println("instruction-->"+instruction);
+		System.out.println("Promo code--> "+promoCode);
 
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
 		JSONObject orderPlaced = new JSONObject();
@@ -1300,7 +1302,7 @@ public class Category {
 		orderPlaced = DBConnection.placeOrder(userType, mailid, contactNumber, guestName,
 				city, location,pincode, getLocationId(location, city),mealType,timeslot, orderItemList,
 				deliveryZone,deliveryAddress,instruction,deliveryDay,payAmount,credit, payType , totalNoOfQuantity, 
-				mealTypePojo , dealingTimeSlots, servingKitchenIds );
+				mealTypePojo , dealingTimeSlots, servingKitchenIds, promoCode );
 		return orderPlaced;
 	}
 
@@ -2020,11 +2022,14 @@ public class Category {
 	@Path("/isPromoCodeValid")
 	@Produces(MediaType.APPLICATION_JSON)
 	public static JSONObject checkValidPromoCode(@FormParam("promoCode")String promoCode,
-			@FormParam("fooddetails[]")List<String> orderDetails) throws JSONException{
+			@FormParam("fooddetails[]")List<String> orderDetails,
+			@FormParam("mobileNo")String mobileNo) throws JSONException{
 		System.out.println("************************************************************");
 		System.out.println("***** isPromoCodeValid webservice "+promoCode+" * * * * * * * * * * * * *");
 		System.out.println("food details:: "+orderDetails);
+		System.out.println("Mobile no:: "+mobileNo);
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
+		JSONObject queryTypeJsonObject = new JSONObject();
 		for(String str : orderDetails){	
 			OrderItems items = new OrderItems();
 			String[] order = str.split("\\$");
@@ -2042,7 +2047,22 @@ public class Category {
 			orderItemList.add(items);
 		}
 		
-		JSONObject queryTypeJsonObject = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList);
+		if(mobileNo!=null){
+			if(!PromoCodeDAO.isUsedPromoCode(promoCode, mobileNo)){
+				queryTypeJsonObject = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList);
+				System.out.println("***** getQueryTypelist webservice  ends* * * * * * * * * *  *");
+				return queryTypeJsonObject;
+			}else{
+				JSONObject promoCodeValidJson = new JSONObject();
+				promoCodeValidJson.put("status","200");
+				promoCodeValidJson.put("message", "InValid PromoCode");
+				promoCodeValidJson.put("isValid", false);
+				promoCodeValidJson.put("promoValue", ( 0.0) );
+			}
+		}else{
+				queryTypeJsonObject = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList);
+		}
+		
 		System.out.println("***** getQueryTypelist webservice  ends* * * * * * * * * *  *");
 		return queryTypeJsonObject;
 	}

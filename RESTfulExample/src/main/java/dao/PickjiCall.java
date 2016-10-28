@@ -27,14 +27,15 @@ import com.mkyong.rest.OrderItems;
 
 public class PickjiCall implements Runnable {
 
-	String orderNo,kitchenName;
+	String orderNo,kitchenName,externalOrderID;
 	private volatile boolean exit = false;
 	
-	public PickjiCall(String kitchenName, String orderNo) {
+	public PickjiCall(String kitchenName, String orderNo, String externalOrderID) {
 		super();
 		System.out.println("New thread calling. . .");
 		this.orderNo = orderNo;
 		this.kitchenName = kitchenName;
+		this.externalOrderID = externalOrderID;
 	}
 
 	@Override
@@ -78,7 +79,7 @@ public class PickjiCall implements Runnable {
 					 System.out.println("Delivery time:: "+orderDetails.getString("deliveryTime"));
 					 if(!orderDetails.getString("deliveryTime").equals("null")){
 						 saveOrderDeliveryTime(kitchenName, orderNo, orderDetails.getString("deliveryTime")+".012345");
-						 
+						// freePickJiBoy(externalOrderID);
 						 if( DBConnection.makeOrderCompleted(orderNo) ){
 				    			
 				    			if(SendMessageDAO.isDeliveryMessageSend(orderNo)){
@@ -237,4 +238,84 @@ public class PickjiCall implements Runnable {
 			// TODO: handle exception
 		}
 	}
+	
+	public static void freePickJiBoy( String externalOrderId){
+		String userId = null;
+		try {
+				Connection connection = DBConnection.createConnection();
+				SQL:{
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet =null;
+					String sql = "SELECT driver_boy_user_id FROM fapp_order_tracking "
+							+ " WHERE external_order_id=?";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, externalOrderId);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							userId = resultSet.getString("driver_boy_user_id");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+					}
+				}
+				
+				SQL:{
+					PreparedStatement preparedStatement = null;
+					String sql = "UPDATE fapp_delivery_boy set delivery_boy_status_id =2 where delivery_boy_user_id=?";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						if(userId!=null)
+						preparedStatement.setString(1, userId);
+						int count = preparedStatement.executeUpdate();
+						if(count>0){
+							System.out.println(userId+" freed successfully!");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+
+	public String getOrderNo() {
+		return orderNo;
+	}
+
+	public void setOrderNo(String orderNo) {
+		this.orderNo = orderNo;
+	}
+
+	public String getKitchenName() {
+		return kitchenName;
+	}
+
+	public void setKitchenName(String kitchenName) {
+		this.kitchenName = kitchenName;
+	}
+
+	public String getExternalOrderID() {
+		return externalOrderID;
+	}
+
+	public void setExternalOrderID(String externalOrderID) {
+		this.externalOrderID = externalOrderID;
+	}
+
+	
 }
