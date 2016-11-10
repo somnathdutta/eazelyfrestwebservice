@@ -17,14 +17,14 @@ public class PromoCodeDAO {
 
 	public static JSONObject isPromoCodeValid(String promoCode,ArrayList<OrderItems> orderItems ) throws JSONException{
 		JSONObject promoCodeValidJson = new JSONObject();
-		int count = 0,totalQuantity = 0,promoTypeId = 0,promoCodeApplicationTypeId =0 ;
+		int count = 0,totalQuantity = 0,promoTypeId = 0,promoCodeApplicationTypeId =0,volumeQuantity=0 ;
 		double promoValue = 0, discountedValue =0, totalValue = 0,finalTotal = 0;
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
-					String sql = "select promo_code,promo_value,promo_type_id,promo_code_application_type_id "
+					String sql = "select promo_code,promo_value,promo_type_id,promo_code_application_type_id,volume_quantity "
 							+ "from vw_promo_code_details where promo_code_is_active='Y'"
 							+ " and promo_code = ? and current_date>=from_date AND current_date<=to_date";
 					try {
@@ -36,6 +36,7 @@ public class PromoCodeDAO {
 							count++;
 							promoValue = resultSet.getDouble("promo_value");
 							promoTypeId = resultSet.getInt("promo_type_id");
+							volumeQuantity = resultSet.getInt("volume_quantity");		
 							promoCodeApplicationTypeId = resultSet.getInt("promo_code_application_type_id");
 						}
 						///System.out.println("PROMO CODE VALUE -- >> " + promoValue );
@@ -93,11 +94,11 @@ public class PromoCodeDAO {
 				discountedValue = finalTotal;
 				System.out.println("PERCENTAGE DISCOUNT -- >> "+discountedValue);
 			}else{
-				if(totalQuantity>1){
-					discountedValue = (totalQuantity - 1) * promoValue;
+				if(totalQuantity >= volumeQuantity){
+					//discountedValue = (totalQuantity - 1) * promoValue;
+					discountedValue = (totalQuantity  - volumeQuantity) * promoValue;
 				}
-				System.out.println("DABBA DISCOUNT -- >> "+discountedValue);
-				
+				System.out.println("VOLUME DISCOUNT -- >> "+discountedValue);
 			}
 			promoCodeValidJson.put("status","200");
 			promoCodeValidJson.put("message", "Valid promoCode");

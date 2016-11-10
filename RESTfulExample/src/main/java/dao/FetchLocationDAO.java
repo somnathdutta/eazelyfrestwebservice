@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -54,16 +55,16 @@ public class FetchLocationDAO {
 		return servingMap;
 	}
 	
-	public static Map<String, String> kitchenServingAreas(){
+	public static TreeMap<String, String> kitchenServingAreas(){
 		ArrayList<String> servingAreas = new ArrayList<String>();
-		Map<String, String> servingMap = new HashMap<String, String>();
+		TreeMap<String, String> servingMap = new TreeMap<String, String>();
 		System.out.println("Kitchen areas finding...");
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
-					String sql = "select serving_areas from fapp_kitchen where is_active= 'Y'";
+					String sql = "select serving_areas from fapp_kitchen where is_active= 'Y' order by kitchen_id";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						resultSet = preparedStatement.executeQuery();

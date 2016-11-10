@@ -18,7 +18,7 @@ public class FetchBannersDAO {
 					Connection connection = DBConnection.createConnection();
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
-					String sql = "select banner_details_id,banner_image from fapp_banner_details";
+					String sql = "select banner_details_id,banner_image from fapp_banner_details where is_active='Y'";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						resultSet = preparedStatement.executeQuery();

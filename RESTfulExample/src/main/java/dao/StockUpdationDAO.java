@@ -33,6 +33,7 @@ public class StockUpdationDAO {
 						preparedStatement.setInt(1, itemQty);
 						preparedStatement.setInt(2, kitchenId);
 						preparedStatement.setString(3, itemCode);
+						System.out.println(preparedStatement);
 						updatedRows = preparedStatement.executeUpdate();
 								
 					} catch (Exception e) {
@@ -50,6 +51,41 @@ public class StockUpdationDAO {
 			// TODO: handle exception
 		}
 		System.out.println("*** Stock updation ends with ****"+updatedRows);
+		return updatedRows;
+	}
+	
+	public static int updateSingleOrder(int kitchenId){
+		int updatedRows = 0;
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					String sql = "";
+						sql = "UPDATE fapp_kitchen_items set no_of_single_order = (no_of_single_order - 1)"
+								+ " where kitchen_id = ? and no_of_single_order > 0";
+					
+					System.out.println("*** Stock updation start with ****"+updatedRows);
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setInt(1, kitchenId);
+						System.out.println(preparedStatement);
+						updatedRows = preparedStatement.executeUpdate();
+								
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}if(connection!=null){
+							connection.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		System.out.println("*** Single Order updation ends with ****"+updatedRows);
 		return updatedRows;
 	}
 }

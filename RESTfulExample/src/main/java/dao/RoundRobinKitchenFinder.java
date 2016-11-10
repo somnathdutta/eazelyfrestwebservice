@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.logging.impl.AvalonLogger;
 
+import pojo.KitchenStock;
 import pojo.MealTypePojo;
 import utility.ValueComparator;
 
@@ -715,6 +716,76 @@ public class RoundRobinKitchenFinder {
 				return dealingIds;
 			}	
 	}
+	
+	
+	public static ArrayList<Integer> findDealingKitchenIds(ArrayList<OrderItems> orderList , String pincode,
+			String mealType, String deliveryDay, String area ){
+		ArrayList<Integer> dealingKitchenIds = new ArrayList<Integer>();
+		ArrayList<OrderItems> niCuisineItemList = new ArrayList<OrderItems>();
+		ArrayList<OrderItems> bengCuisineItemList = new ArrayList<OrderItems>();
+		ArrayList<KitchenStock> kitchenItemStockList = new ArrayList<KitchenStock>();
+		Set<Integer> kitchenIds = new HashSet<Integer>();
+		int kitchenItemStock = 0;
+		ArrayList<Integer> freeBikerKitchenIds = new ArrayList<Integer>();
+		
+		MealTypePojo mealTypePojo = new MealTypePojo();
+		if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
+			mealTypePojo.setLunchToday(true);
+		}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY") ){
+			mealTypePojo.setDinnerToday(true);
+		}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW") ){
+			mealTypePojo.setLunchTomorrow(true);
+		}else{
+			mealTypePojo.setDinnerTomorrow(true);
+		}
+		/**************** SEPARATING BENGALI AND NI ITEMS ************************/
+		for(int i=0;i<orderList.size();i++){
+			if(orderList.get(i).cuisineId==2){
+				niCuisineItemList.add(new OrderItems(orderList.get(i).cuisineId, orderList.get(i).categoryId, 
+						orderList.get(i).itemCode,orderList.get(i).quantity, orderList.get(i).price) );
+			}
+			if(orderList.get(i).cuisineId==1){
+				bengCuisineItemList.add(new OrderItems(orderList.get(i).cuisineId, orderList.get(i).categoryId, 
+						orderList.get(i).itemCode,orderList.get(i).quantity, orderList.get(i).price) );
+			}
+		}
+		
+		if(orderList.size() == niCuisineItemList.size()){
+			System.out.println("****** ONLY NI ITEMS ************");
+		}else if(orderList.size() == bengCuisineItemList.size()){
+			System.out.println("****** ONLY BENGALI ITEMS ************");
+			for(OrderItems orderItems : bengCuisineItemList){
+				/********** GET kitchen id and stock of the item code **************/
+				kitchenItemStockList = OrderDAO.getKitchenItemStock(orderItems.itemCode, deliveryDay, mealType, area);
+				for(KitchenStock kitchenItem : kitchenItemStockList){
+					if(kitchenItem.stock >= orderItems.quantity){
+						kitchenIds.add(kitchenItem.kitchenId);
+						break;
+					}else{
+						kitchenItemStock += kitchenItem.stock ;
+					}
+				}
+				if(kitchenItemStock ==  orderItems.quantity){
+					for(KitchenStock kitchen : kitchenItemStockList){
+						kitchenIds.add(kitchen.kitchenId);
+					}
+				}
+			}
+		}else{
+			System.out.println("****** ALL ITEMS ************");
+		}
+		for(Integer sortedIds : kitchenIds){
+			if(isKitchenHavingFreeBikers(sortedIds, mealTypePojo)){
+					freeBikerKitchenIds.add(sortedIds);	
+			}
+		}
+		
+		
+		
+		return dealingKitchenIds;
+	}
+	
+	
 	
 	public static Set<Integer> findDuplicates(ArrayList<Integer> listContainingDuplicates) {
 		 

@@ -95,7 +95,7 @@ public class OrderSummaryDAO {
 								JSONObject orderItem = new JSONObject();
 								String itemCode = resultSet.getString("item_code");
 								orderItem.put("itemName", resultSet.getString("item_name"));
-								orderItem.put("quantity", getItemQuanity(kitchenName,deliveryDate,itemCode));
+								orderItem.put("quantity", getItemQuanity(kitchenName,deliveryDate,itemCode, mealType));
 								orderSummaryArray.put(orderItem);
 							}
 						} catch (Exception e) {
@@ -125,7 +125,7 @@ public class OrderSummaryDAO {
 		return orderSummaryJson;
 	}
 	
-	public static String getItemQuanity(String kitchenName, Date deliveryDate, String itemCode){
+	public static String getItemQuanity(String kitchenName, Date deliveryDate, String itemCode, String mealType){
 		String itemQuantity = null;
 		try {
 			SQL:{
@@ -134,12 +134,13 @@ public class OrderSummaryDAO {
 					ResultSet resultSet = null;
 					String sql= "select SUM(qty)As no_of_item from "
 							+ " vw_order_items_of_kitchen where  "
-							+ " kitchen_name = ? and delivery_date=? and item_code=?";
+							+ " kitchen_name = ? and delivery_date=? and item_code=? and meal_type = ?";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, kitchenName);
 						preparedStatement.setDate(2, new java.sql.Date(deliveryDate.getTime()));
 						preparedStatement.setString(3, itemCode);
+						preparedStatement.setString(4, mealType.toUpperCase());
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
 							itemQuantity = resultSet.getString("no_of_item");

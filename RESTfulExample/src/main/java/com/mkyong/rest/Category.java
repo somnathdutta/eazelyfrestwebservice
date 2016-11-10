@@ -57,6 +57,7 @@ import dao.ForgotPassword;
 import dao.ItemDAO;
 import dao.KitchenDeliverOrderDAO;
 import dao.KitchenNotifyOrderDAO;
+import dao.KitchenOrdersDAO;
 import dao.KitchenReceiveOrderDAO;
 import dao.LoginDAO;
 import dao.OrderSummaryDAO;
@@ -723,7 +724,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject kitchenorders(@FormParam("kitchenid")String kitchenid) throws JSONException{
 		System.out.println(" kitchenorders web service is called...");
-		JSONObject kitchenorders = DBConnection.getKitchenOrders(kitchenid);
+		JSONObject kitchenorders = KitchenOrdersDAO.getKitchenOrders(kitchenid);
 		System.out.println("kitchenorders web service is end here:");
 		return kitchenorders;
 	}
@@ -2066,7 +2067,7 @@ public class Category {
 			if(!PromoCodeDAO.isUsedPromoCode(promoCode, mobileNo)){
 				queryTypeJsonObject = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList);
 				//System.out.println("1 N ------------------- >>> >> > " + queryTypeJsonObject);
-				System.out.println("***** getQueryTypelist webservice  ends* * * * * * * * * *  *");
+				System.out.println("***** isPromoCodeValid webservice  ends* * * * * * * * * *  *");
 				return queryTypeJsonObject;
 			}else{
 				JSONObject promoCodeValidJson = new JSONObject();
