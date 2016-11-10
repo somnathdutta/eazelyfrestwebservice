@@ -23,7 +23,7 @@ import com.mkyong.rest.OrderItems;
 public class RoundRobinKitchenFinder {
 
 	public static ArrayList<Integer> getUniqueKitchen(ArrayList<OrderItems> orderList , String pincode,
-			String mealType, String deliveryDay ){
+			String mealType, String deliveryDay, String area ){
 		System.out.println("***************************************************************************");
 		System.out.println(" APPLYING ROUND ROBIN ALGORITHM FOR KITCHEN******");
 		System.out.println("***************************************************************************");
@@ -80,12 +80,12 @@ public class RoundRobinKitchenFinder {
 		
 		if(niCuisineIdList.size()>0 && niCuisineIdList.size()<orderList.size()){
 			System.out.println("*** *** *** ORDER is going to split*** * *** *** ");
-			niKitchenidList = findNIKitchenIds(niCuisineIdList, pincode, mealType , deliveryDay);
+			niKitchenidList = findNIKitchenIds(niCuisineIdList, pincode, mealType , deliveryDay, area);
 		}
 	
 		if(orderList.size() == niCuisineIdList.size()){
 				System.out.println("- - - -  Only NI cuisines found on ordered items- - - ");
-				dealingKitchenIds = findNIKitchenIds(niCuisineIdList, pincode, mealType , deliveryDay);
+				dealingKitchenIds = findNIKitchenIds(niCuisineIdList, pincode, mealType , deliveryDay, area);
 				return dealingKitchenIds;
 		}else{
 				ArrayList<String> iemcode = new ArrayList<String>();
@@ -119,42 +119,62 @@ public class RoundRobinKitchenFinder {
 									+" and fk.serving_zipcodes LIKE ? and fki.stock <>0 "
 									+ " and fk.is_active='Y' and fki.is_active='Y'";*/
 							if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
-								sql = "select  fki.kitchen_id,fki.stock AS stock "
+								/*sql = "select  fki.kitchen_id,fki.stock AS stock "
 										+" from fapp_kitchen_items fki "
 										+" join fapp_kitchen fk on "
 										+" fki.kitchen_id = fk.kitchen_id "
 										+" where fki.item_code IN "+itemcodes
 										+" and fk.serving_zipcodes LIKE ? and fki.stock > 0 "
-										+ " and fk.is_active='Y' and fki.is_active='Y'";
+										+ " and fk.is_active='Y' and fki.is_active='Y'";*/
+								sql = "select kitchen_id,stock AS stock "
+										+" from vw_active_kitchen_items "
+										+" where item_code IN "+itemcodes
+										+" and serving_areas LIKE ? "
+										+" and is_active='Y'";
 							}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW")){
-								sql = "select  fki.kitchen_id,fki.stock_tomorrow AS stock "
+								/*sql = "select  fki.kitchen_id,fki.stock_tomorrow AS stock "
 										+" from fapp_kitchen_items fki "
 										+" join fapp_kitchen fk on "
 										+" fki.kitchen_id = fk.kitchen_id "
 										+" where fki.item_code IN "+itemcodes
 										+" and fk.serving_zipcodes LIKE ? and fki.stock_tomorrow >0 "
-										+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";
+										+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";*/
+								sql = "select kitchen_id,stock_tomorrow AS stock "
+										+" from vw_active_kitchen_items "
+										+" where item_code IN "+itemcodes
+										+" and serving_areas LIKE ? "
+										+" and is_active_tomorrow = 'Y'";
 							}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY")){
-								sql = "select  fki.kitchen_id,fki.dinner_stock AS stock "
+								/*sql = "select  fki.kitchen_id,fki.dinner_stock AS stock "
 										+" from fapp_kitchen_items fki "
 										+" join fapp_kitchen fk on "
 										+" fki.kitchen_id = fk.kitchen_id "
 										+" where fki.item_code IN "+itemcodes
 										+" and fk.serving_zipcodes LIKE ? and fki.dinner_stock >0 "
-										+ " and fk.is_active='Y' and fki.is_active='Y'";
+										+ " and fk.is_active='Y' and fki.is_active='Y'";*/
+								sql = "select kitchen_id,dinner_stock AS stock "
+										+" from vw_active_kitchen_items "
+										+" where item_code IN "+itemcodes
+										+" and serving_areas LIKE ? "
+										+" and is_active='Y'";
 							}else{
-								sql = "select  fki.kitchen_id,fki.dinner_stock_tomorrow AS stock "
+								/*sql = "select  fki.kitchen_id,fki.dinner_stock_tomorrow AS stock "
 										+" from fapp_kitchen_items fki "
 										+" join fapp_kitchen fk on "
 										+" fki.kitchen_id = fk.kitchen_id "
 										+" where fki.item_code IN "+itemcodes
 										+" and fk.serving_zipcodes LIKE ? and fki.dinner_stock_tomorrow >0 "
-										+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";
+										+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";*/
+								sql = "select kitchen_id,dinner_stock_tomorrow AS stock "
+										+" from vw_active_kitchen_items "
+										+" where item_code IN "+itemcodes
+										+" and serving_areas LIKE ? "
+										+" and is_active_tomorrow='Y'";
 							}
 							
 							try {
 								preparedStatement = connection.prepareStatement(sql);
-								preparedStatement.setString(1, "%"+pincode+"%");
+								preparedStatement.setString(1, "%"+area+"%");
 								resultSet = preparedStatement.executeQuery();
 								while (resultSet.next()) {
 								kitchenFoundFromPincode = true;
@@ -249,12 +269,14 @@ public class RoundRobinKitchenFinder {
 					totalAvailableStock = getTotalAvailableStock(itemcodes,mealTypePojo,totalOrderedItems);
 					
 					for(Integer sortedIds : sortedKitchenIds){
-						if(SameUserPlaceOrder.isKitchenCapable(sortedIds, mealTypePojo, totalOrderedQuantity, itemcodes)){
+					/*********** NO NEED FOR ALL STOCK *********************/
+					/*********** NEW LOGIC ********************************/
+					/************ STOCK NOT REQUIRED *********************/
+						//	if(SameUserPlaceOrder.isKitchenCapable(sortedIds, mealTypePojo, totalOrderedQuantity, itemcodes)){
 							if(isKitchenHavingFreeBikers(sortedIds, mealTypePojo)){
-								freeBikerKitchenIds.add(sortedIds);
-								
+								freeBikerKitchenIds.add(sortedIds);	
 							}
-						}
+					//	}
 					}
 					System.out.println("After first calculation freeBikerKitchenIds:: "+freeBikerKitchenIds);
 					boolean sameCuisineSpilt = false;
@@ -389,7 +411,7 @@ public class RoundRobinKitchenFinder {
 	}
 	
 	public static ArrayList<Integer> findNIKitchenIds(ArrayList<OrderItems> orderList,String pincode,
-			String mealType,  String deliveryDay){
+			String mealType,  String deliveryDay, String area){
 		ArrayList<Integer> dealingIds = new ArrayList<Integer>();
 		ArrayList<Integer> selectedKitchenIds = new ArrayList<Integer>();
 		boolean kitchenFoundFromPincode= false;
@@ -436,41 +458,61 @@ public class RoundRobinKitchenFinder {
 								+" and fk.serving_zipcodes LIKE ? and fki.stock <>0"
 								+" and fk.is_active='Y' and fki.is_active='Y'";*/
 						if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
-							sql = "select  fki.kitchen_id,fki.stock AS stock "
+							/*sql = "select  fki.kitchen_id,fki.stock AS stock "
 									+" from fapp_kitchen_items fki "
 									+" join fapp_kitchen fk on "
 									+" fki.kitchen_id = fk.kitchen_id "
 									+" where fki.item_code IN "+itemcodes
 									+" and fk.serving_zipcodes LIKE ? and fki.stock > 0 "
-									+ " and fk.is_active='Y' and fki.is_active='Y'";
+									+ " and fk.is_active='Y' and fki.is_active='Y'";*/
+							sql = "select kitchen_id,stock AS stock "
+									+" from vw_active_kitchen_items "
+									+" where item_code IN "+itemcodes
+									+" and serving_areas LIKE ? and stock > 0 "
+									+" and is_active='Y'";
 						}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW")){
-							sql = "select  fki.kitchen_id,fki.stock_tomorrow AS stock "
+							/*sql = "select  fki.kitchen_id,fki.stock_tomorrow AS stock "
 									+" from fapp_kitchen_items fki "
 									+" join fapp_kitchen fk on "
 									+" fki.kitchen_id = fk.kitchen_id "
 									+" where fki.item_code IN "+itemcodes
 									+" and fk.serving_zipcodes LIKE ? and fki.stock_tomorrow >0 "
-									+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";
+									+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";*/
+							sql = "select kitchen_id,stock_tomorrow AS stock "
+									+" from vw_active_kitchen_items "
+									+" where item_code IN "+itemcodes
+									+" and serving_areas LIKE ? and stock_tomorrow > 0 "
+									+" and is_active_tomorrow ='Y'";
 						}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY")){
-							sql = "select  fki.kitchen_id,fki.dinner_stock AS stock "
+							/*sql = "select  fki.kitchen_id,fki.dinner_stock AS stock "
 									+" from fapp_kitchen_items fki "
 									+" join fapp_kitchen fk on "
 									+" fki.kitchen_id = fk.kitchen_id "
 									+" where fki.item_code IN "+itemcodes
 									+" and fk.serving_zipcodes LIKE ? and fki.dinner_stock >0 "
-									+ " and fk.is_active='Y' and fki.is_active='Y'";
+									+ " and fk.is_active='Y' and fki.is_active='Y'";*/
+							sql = "select kitchen_id,dinner_stock AS stock "
+									+" from vw_active_kitchen_items "
+									+" where item_code IN "+itemcodes
+									+" and serving_areas LIKE ? and dinner_stock > 0 "
+									+" and is_active='Y'";
 						}else{
-							sql = "select  fki.kitchen_id,fki.dinner_stock_tomorrow AS stock "
+							/*sql = "select  fki.kitchen_id,fki.dinner_stock_tomorrow AS stock "
 									+" from fapp_kitchen_items fki "
 									+" join fapp_kitchen fk on "
 									+" fki.kitchen_id = fk.kitchen_id "
 									+" where fki.item_code IN "+itemcodes
 									+" and fk.serving_zipcodes LIKE ? and fki.dinner_stock_tomorrow >0 "
-									+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";
+									+ " and fk.is_active='Y' and fki.is_active_tomorrow='Y'";*/
+							sql = "select kitchen_id,dinner_stock_tomorrow AS stock "
+									+" from vw_active_kitchen_items "
+									+" where item_code IN "+itemcodes
+									+" and serving_areas LIKE ? and dinner_stock_tomorrow > 0 "
+									+" and is_active_tomorrow='Y'";
 						}
 						try {
 							preparedStatement = connection.prepareStatement(sql);
-							preparedStatement.setString(1, "%"+pincode+"%");
+							preparedStatement.setString(1, "%"+area+"%");
 							resultSet = preparedStatement.executeQuery();
 							while (resultSet.next()) {
 						     kitchenFoundFromPincode = true;
@@ -738,32 +780,56 @@ public class RoundRobinKitchenFinder {
 					ResultSet resultSet = null;
 					String sql = "";
 					if(mealTypePojo.isLunchToday()){
-						sql = "select count(time_slot_id) "
+						/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id <4 "
+								+" and (quantity<10 or no_of_orders <2)" ; */
+						sql = "select count(time_slot_id) "
+								+" as no_of_free_slots from  "
+								+" vw_driver_today_status " 
+								+" where driver_user_id= ? "
+								+" and is_slot_locked = 'N' and is_lunch='Y' "
 								+" and (quantity<10 or no_of_orders <2)" ; 
 					}else if(mealTypePojo.isLunchTomorrow()){
-						sql = "select count(time_slot_id) "
+						/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status_tommorrow " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id <4 "
-								+" and (quantity<10 or no_of_orders <2)" ; 
-					}else if(mealTypePojo.isDinnerToday()){
+								+" and (quantity<10 or no_of_orders <2)" ;*/ 
 						sql = "select count(time_slot_id) "
+								+" as no_of_free_slots from  "
+								+" vw_driver_tomorrow_status " 
+								+" where driver_user_id= ? "
+								+" and is_slot_locked = 'N'  and is_lunch='Y' "
+								+" and (quantity<10 or no_of_orders <2)" ;
+					}else if(mealTypePojo.isDinnerToday()){
+						/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id > 3 "
+								+" and (quantity<10 or no_of_orders <2)" ; */
+						sql = "select count(time_slot_id) "
+								+" as no_of_free_slots from  "
+								+" vw_driver_today_status " 
+								+" where driver_user_id= ? "
+								+" and is_slot_locked = 'N' and is_lunch='N' "
 								+" and (quantity<10 or no_of_orders <2)" ; 
 					}else{
-						sql = "select count(time_slot_id) "
+						/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" fapp_timeslot_driver_status_tommorrow " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and time_slot_id > 3 "
+								+" and (quantity<10 or no_of_orders <2)" ;*/
+						sql = "select count(time_slot_id) "
+								+" as no_of_free_slots from  "
+								+" vw_driver_tomorrow_status " 
+								+" where driver_user_id= ? "
+								+" and is_slot_locked = 'N' and is_lunch='N' "
 								+" and (quantity<10 or no_of_orders <2)" ;
 					}
 					

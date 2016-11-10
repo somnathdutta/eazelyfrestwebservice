@@ -30,6 +30,7 @@ public class PromoCodeDAO {
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, promoCode);
+						//System.out.println("PROMO CODE VALIDATION CHECKING QRY -- >> " + preparedStatement);
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
 							count++;
@@ -37,6 +38,9 @@ public class PromoCodeDAO {
 							promoTypeId = resultSet.getInt("promo_type_id");
 							promoCodeApplicationTypeId = resultSet.getInt("promo_code_application_type_id");
 						}
+						///System.out.println("PROMO CODE VALUE -- >> " + promoValue );
+						//System.out.println("PROMO TYPE ID -- >> " + promoTypeId);
+						//System.out.println("PROMO CODE APPLICATON TYPE ID -- >> " + promoCodeApplicationTypeId);
 						
 					} catch (Exception e) {
 						// TODO: handle exception
@@ -63,7 +67,8 @@ public class PromoCodeDAO {
 					totalQuantity += items.quantity;
 				//}
 			}
-			System.out.println("Total: "+finalTotal);
+			//System.out.println("Total -- >>  "+finalTotal);
+			//System.out.println("Total QUANTITY -- >>  "+totalQuantity);
 			/*if(totalQuantity>1){
 				if( promoCodeApplicationTypeId == 1 ){//ON volume
 					if((promoTypeId == 1)){	//FLAT
@@ -81,30 +86,36 @@ public class PromoCodeDAO {
 			if(promoTypeId==1){//FLAT
 				
 				discountedValue = promoValue;
-				System.out.println("FLAT DISCOUNT::"+discountedValue);
+				System.out.println("FLAT DISCOUNT -- >> "+discountedValue);
 			}else if(promoTypeId == 2){//Percentage
 				
 				finalTotal = ( finalTotal * promoValue/100);
 				discountedValue = finalTotal;
-				System.out.println("PERCENTAGE DISCOUNT::"+discountedValue);
+				System.out.println("PERCENTAGE DISCOUNT -- >> "+discountedValue);
 			}else{
 				if(totalQuantity>1){
 					discountedValue = (totalQuantity - 1) * promoValue;
 				}
-				System.out.println("DABBA DISCOUNT::"+discountedValue);
+				System.out.println("DABBA DISCOUNT -- >> "+discountedValue);
 				
 			}
 			promoCodeValidJson.put("status","200");
-			promoCodeValidJson.put("message", "Valid PromoCode");
+			promoCodeValidJson.put("message", "Valid promoCode");
 			promoCodeValidJson.put("isValid", true);
 			promoCodeValidJson.put("promoValue",(- discountedValue) );
+			
+			//System.out.println("---------------- >>>>>>>>>>> 11");
+			//System.out.println("1 PROMO CODE VALID JSON DAO -- >> " + promoCodeValidJson );
 		}else{
+			//System.out.println("---------------- >>>>>>>>>>> 22");
 			promoCodeValidJson.put("status","200");
-			promoCodeValidJson.put("message", "InValid PromoCode");
+			promoCodeValidJson.put("message", "InValid promoCode");
 			promoCodeValidJson.put("isValid", false);
 			promoCodeValidJson.put("promoValue", ( discountedValue) );
+			
+			//System.out.println("2 PROMO CODE VALID JSON DAO -- >> " + promoCodeValidJson );
 		}
-		System.out.println(promoCodeValidJson.toString());
+		//System.out.println("3 PROMO CODE VALID JSON DAO -- >> " + promoCodeValidJson );
 		return promoCodeValidJson;
 	}
 	
@@ -166,11 +177,17 @@ public class PromoCodeDAO {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, mobileNo);
 						preparedStatement.setString(2, promoCode);
+						//System.out.println("IS USER PROMO CODE QRY -- >> " + preparedStatement);
 						resultSet = preparedStatement.executeQuery();
+						
 						while (resultSet.next() ) {
 							int count = resultSet.getInt("promo_code");
-							if(count > 0)
+							if(count > 0){
+								System.out.println("PROMO CODE COUNT -- >> " + count );
 								isUsedPromoCode = true;
+							}else{
+								isUsedPromoCode = false;
+							}
 						}
 					} catch (Exception e) {
 						// TODO: handle exception
@@ -183,7 +200,8 @@ public class PromoCodeDAO {
 				}
 		} catch (Exception e) {
 			// TODO: handle exception
-		}	
+		}
+		//System.out.println("IS USER PROMO CODE -- >> " + isUsedPromoCode);
 		return isUsedPromoCode;
 	}
 }

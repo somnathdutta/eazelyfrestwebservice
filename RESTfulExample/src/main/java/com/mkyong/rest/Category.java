@@ -92,7 +92,7 @@ public class Category {
 	@Path("/chklogin")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject chklogin(@QueryParam("username") String uname,@QueryParam("password")String pwd) throws Exception{
-
+		
 		JSONObject jobjChklogin = new JSONObject();
 
 		jobjChklogin = DBConnection.checkLogin(uname, pwd);
@@ -106,7 +106,7 @@ public class Category {
 	public JSONObject checkKitchenLogin(@FormParam("username") String uname,@FormParam("password")String pwd) throws Exception{
 
 		System.out.println("checkKitchenLogin webservice is called...");
-
+		
 		JSONObject jobjChkKitchenlogin = new JSONObject();
 
 		jobjChkKitchenlogin = DBConnection.checkKitchenLogin(uname, pwd);
@@ -963,6 +963,7 @@ public class Category {
 					items.price = Double.valueOf(order[3]);
 					items.quantity = Integer.valueOf(order[4]);
 					items.packing = "Meal Tray";
+					//System.out.println("PACKING 1 ------ >>> >> > " + items.packing);
 					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
 				}else if(order.length==6){
 					items.cuisineId = Integer.valueOf(order[0]);
@@ -971,6 +972,7 @@ public class Category {
 					items.price = Double.valueOf(order[3]);
 					items.quantity = Integer.valueOf(order[4]);
 					items.packing = order[5].toUpperCase();
+					//System.out.println("PACKING 2 ------ >>> >> > " + items.packing);
 					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
 				}
 				else if(order.length==7){
@@ -982,6 +984,8 @@ public class Category {
 					items.packing = order[5].toUpperCase();
 					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
 					items.mealType = order[6].trim().toUpperCase();
+					//System.out.println("PACKING 3 ----------------------------------------- >>> >> > " + items.packing);
+					//System.out.println("MEAL TYPE 1 ------ >>> >> > " + items.mealType);
 					//sub = true;
 					/*items.cuisineId = Integer.valueOf(order[0]);
 					items.categoryId = Integer.valueOf(order[1]);
@@ -1020,7 +1024,7 @@ public class Category {
 	    	    	items.endDate = new java.sql.Date(endate.getTime());*/
 
 				}else{
-
+					//System.out.println("MMMMMMMMMMMM " + order[0] + "//" + order[1] + "//" + order[2]+ order[3] + "//" + order[4] + "//" + order[5] + order[6] + "//" + order[7] + "//" + order[8]);
 					sub = true;
 					items.cuisineId = Integer.valueOf(order[0]);
 					items.categoryId = Integer.valueOf(order[1]);
@@ -1320,7 +1324,8 @@ public class Category {
 			@FormParam("fooddetails[]")List<String> orderDetails,
 			@FormParam("mealtype")String mealtype,
 			@FormParam("deliveryaddress")String deliveryAddress,
-			@FormParam("deliverydate")String deliveryDay
+			@FormParam("deliverydate")String deliveryDay,
+			@FormParam("area")String area
 			) throws Exception{
 		System.out.println("******************************************************");
 		System.out.println("** FINDSLOT webservice is called** ** ** ** ");
@@ -1330,6 +1335,7 @@ public class Category {
 		System.out.println("fooddetails[]-->"+orderDetails.toString());
 		System.out.println("deliverypincode -->"+pincode);
 		System.out.println("Meal type-->"+mealtype);
+		System.out.println("Area - - >"+area);
 		//System.out.println("delivery address-->"+deliveryAddress);
 	
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
@@ -1373,7 +1379,7 @@ public class Category {
 		}
 	
 		timeSlot = TimeSlotFinder.getFreeSlots(contactNumber, deliveryAddress, orderItemList,
-				mealtype, deliveryDay, pincode, mealType);
+				mealtype, deliveryDay, pincode, mealType, area);
 		//System.out.println(timeSlot);
 		System.out.println(timeSlot);
 		System.out.println("******************************************************");
@@ -1808,20 +1814,25 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchCuisineList(@FormParam("pincode")String pincode,
 			@FormParam("deliveryday")String deliveryDay,
-			@FormParam("mobileNo")String mobileNo) throws Exception{
+			@FormParam("mobileNo")String mobileNo,
+			@FormParam("area")String area) throws Exception{
 		System.out.println("***********************************************");
 		System.out.println("***** fetchcuisine webservice called ***************");
-		System.out.println(" Pincode: "+pincode+" Day: "+deliveryDay);
-		if(mobileNo!=null){
-			System.out.println("Mobile no: "+mobileNo+" length :: "+mobileNo.length());
-		}
+		System.out.println(" Pincode: "+pincode+" Day: "+deliveryDay+" Area: "+area);
 		JSONObject jsonObject = new JSONObject();
+		jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode, deliveryDay, mobileNo,area);
+		System.out.println("********** fetchcuisine ended here ***************");
+		return jsonObject;
+		/*if(mobileNo!=null){
+			System.out.println("Mobile no: "+mobileNo+" length :: "+mobileNo.length());
+		}*/
+		
 		//System.out.println(pincode.trim().length());
 		//String mobileNo = "9934170084";
-		if(pincode!=null && pincode.trim().length()>0){
+		/*if(pincode!=null && pincode.trim().length()>0){
 			//System.out.println("Pincode given!");
 			if(PincodeDAO.isPincodeAvailable(pincode)){
-				jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode, deliveryDay, mobileNo);
+				jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode, deliveryDay, mobileNo,area);
 			}else{
 				jsonObject.put("status", "204");
 				jsonObject.put("message", "Currently we are not serving in this zip code!");
@@ -1836,7 +1847,7 @@ public class Category {
 			jsonObject.put("message", "Currently we are not serving in this zip code!");
 			System.out.println("********** fetchcuisine ended here ***************");
 			return jsonObject.put("cuisinelist", new JSONArray());
-		}
+		}*/
 	}
 	
 	
@@ -1846,7 +1857,8 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public static JSONObject fetchAlaCarteItems(@FormParam("pincode")String pincode,
 			@FormParam("categoryId")String categoryId,
-			@FormParam("deliveryday")String deliveryDay) throws JSONException{
+			@FormParam("deliveryday")String deliveryDay,
+			@FormParam("area")String area) throws JSONException{
 		
 		System.out.println("***************************");
 		System.out.println("** fetchAlacarteItems WEB SERVICE CALLED ********");
@@ -1863,7 +1875,7 @@ public class Category {
 			alacarteItemJson.put("status", "400");
 			alacarteItemJson.put("message", "Delivery day required!");
 		}else{
-			alacarteItemJson = FetchAlaCarteItemDAO.fetchAlacarteItem(pincode, categoryId, deliveryDay);
+			alacarteItemJson = FetchAlaCarteItemDAO.fetchAlacarteItem(pincode, categoryId, deliveryDay,area);
 		}
 		return alacarteItemJson;
 	}
@@ -2025,7 +2037,7 @@ public class Category {
 			@FormParam("fooddetails[]")List<String> orderDetails,
 			@FormParam("mobileNo")String mobileNo) throws JSONException{
 		System.out.println("************************************************************");
-		System.out.println("***** isPromoCodeValid webservice "+promoCode+" * * * * * * * * * * * * *");
+		System.out.println("***** isPromoCodeValid webservice >> "+promoCode+" << * * * * * * * * * * * * *");
 		System.out.println("food details:: "+orderDetails);
 		System.out.println("Mobile no:: "+mobileNo);
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
@@ -2042,28 +2054,36 @@ public class Category {
 					items.quantity = Integer.valueOf(order[4]);
 					items.packing = order[5].trim().toUpperCase();
 					items.mealType = order[6].trim().toUpperCase();
+					//System.out.println("M E A L T Y P E >>> >> > " + items.mealType);
 				}
 			}
 			orderItemList.add(items);
 		}
 		
 		if(mobileNo!=null){
+			
+			//System.out.println("MOBILE NO AVIAIL -- >> ");
 			if(!PromoCodeDAO.isUsedPromoCode(promoCode, mobileNo)){
 				queryTypeJsonObject = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList);
+				//System.out.println("1 N ------------------- >>> >> > " + queryTypeJsonObject);
 				System.out.println("***** getQueryTypelist webservice  ends* * * * * * * * * *  *");
 				return queryTypeJsonObject;
 			}else{
 				JSONObject promoCodeValidJson = new JSONObject();
 				promoCodeValidJson.put("status","200");
-				promoCodeValidJson.put("message", "InValid PromoCode");
+				promoCodeValidJson.put("message", "InValid promoCode");
 				promoCodeValidJson.put("isValid", false);
 				promoCodeValidJson.put("promoValue", ( 0.0) );
+				queryTypeJsonObject.put("JSON", promoCodeValidJson);
+				//System.out.println("2 N ------------------- >>> >> > " + queryTypeJsonObject);
 			}
 		}else{
 				queryTypeJsonObject = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList);
+				//System.out.println("3 N ------------------- >>> >> > " + queryTypeJsonObject);
 		}
 		
-		System.out.println("***** getQueryTypelist webservice  ends* * * * * * * * * *  *");
+		System.out.println("***** isPromoCodeValid webservice  ends* * * * * * * * * *  *");
+		//System.out.println("4 IS VALID PROMO CODE ------- >>> >> >  " + queryTypeJsonObject);
 		return queryTypeJsonObject;
 	}
 	

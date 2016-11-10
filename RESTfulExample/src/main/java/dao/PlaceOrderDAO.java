@@ -51,14 +51,14 @@ public class PlaceOrderDAO {
 	}
 	
 	public static String findBikerAvailableKitchens(String itemCode, Connection connection, 
-			String deliveryDay, boolean isLunch){
+			String deliveryDay, boolean isLunch, String area){
 		ArrayList<Integer> bikerAvailableKitchenIds = new ArrayList<Integer>();
 		String freeKitchens = "";
 		ArrayList<Integer> servableKitchenIds = new ArrayList<Integer>();
 		if(isLunch){
-			servableKitchenIds = findServableKitchens(itemCode, connection, deliveryDay, true);
+			servableKitchenIds = findServableKitchens(itemCode, connection, deliveryDay, true, area);
 		}else{
-			servableKitchenIds = findServableKitchens(itemCode, connection, deliveryDay, false);
+			servableKitchenIds = findServableKitchens(itemCode, connection, deliveryDay, false, area);
 		}
 		for(Integer kitchenId : servableKitchenIds){
 			if(isKitchenHavingFreeBikers(kitchenId, connection, deliveryDay, isLunch)){
@@ -91,10 +91,10 @@ public class PlaceOrderDAO {
 	}
 	
 	public static boolean isServable(String itemCode, Connection connection, 
-			String deliveryDay, boolean isLunch){
+			String deliveryDay, boolean isLunch, String area){
 		boolean isServable = false;
 		int totalNoOfBikers = 0,bikerSlot = 0; 
-		ArrayList<Integer> servableKitchenIds = findServableKitchens(itemCode, connection, deliveryDay, isLunch);
+		ArrayList<Integer> servableKitchenIds = findServableKitchens(itemCode, connection, deliveryDay, isLunch, area);
 		
 		for(Integer kitchenId : servableKitchenIds){
 			ArrayList<String> bikerList = findBikerOfKitchen(kitchenId,connection);
@@ -125,7 +125,7 @@ public class PlaceOrderDAO {
 	 * @return
 	 */
 	public static ArrayList<Integer> findServableKitchens(String itemCode, Connection connection, 
-			String deliveryDay, boolean isLunch){
+			String deliveryDay, boolean isLunch, String area){
 		ArrayList<Integer> kitchenIds = new ArrayList<Integer>();
 		try {
 			SQL:{
@@ -138,33 +138,34 @@ public class PlaceOrderDAO {
 						  + " and fki.stock >0 and fki.is_active='Y'";*/
 					 sql = "select kitchen_id from"
 							  + " vw_active_kitchen_items where item_code = ? "
-							  + " and stock >0 and is_active='Y'";
+							  + " and stock >0 and is_active='Y' and serving_areas LIKE ?";
 				 }else if(deliveryDay.equalsIgnoreCase("TODAY") && (isLunch==false)){
 					 /*sql = "select fki.kitchen_id from"
 							  + " fapp_kitchen_items fki where fki.item_code = ? "
 							  + " and fki.dinner_stock >0 and fki.is_active='Y'";*/
 					 sql = "select kitchen_id from"
 							  + " vw_active_kitchen_items where item_code = ? "
-							  + " and dinner_stock >0 and is_active='Y'";
+							  + " and dinner_stock >0 and is_active='Y' and serving_areas LIKE ?";
 				 }else if(deliveryDay.equalsIgnoreCase("TOMORROW") && isLunch){
 					/* sql = "select fki.kitchen_id from"
 							  + " fapp_kitchen_items fki where fki.item_code = ? "
 							  + " and fki.stock_tomorrow >0 and fki.is_active_tomorrow='Y'";*/
 					 sql = "select kitchen_id from"
 							  + " vw_active_kitchen_items where item_code = ? "
-							  + " and stock_tomorrow >0 and is_active_tomorrow='Y'";
+							  + " and stock_tomorrow >0 and is_active_tomorrow='Y' and serving_areas LIKE ?";
 				 }else{
 					/* sql = "select fki.kitchen_id from"
 							  + " fapp_kitchen_items fki where fki.item_code = ? "
 							  + " and fki.dinner_stock_tomorrow > 0 and fki.is_active_tomorrow='Y'";*/
 					 sql = "select kitchen_id from"
 							  + " vw_active_kitchen_items where item_code = ? "
-							  + " and dinner_stock_tomorrow > 0 and is_active_tomorrow='Y'";
+							  + " and dinner_stock_tomorrow > 0 and is_active_tomorrow='Y' and serving_areas LIKE ?";
 				 }
 				 
 				 try {
 					preparedStatement = connection.prepareStatement(sql);
 					preparedStatement.setString(1, itemCode);
+					preparedStatement.setString(2, "%"+area+"%");
 					resultSet = preparedStatement.executeQuery();
 					while (resultSet.next()) {
 						kitchenIds.add(resultSet.getInt("kitchen_id"));

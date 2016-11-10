@@ -3,6 +3,7 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -136,5 +137,89 @@ public class BikerDAO {
 		}
 		return reachedJson;
 		
+	}
+	
+	/**
+	 * This method returns the bikers of kitchen
+	 * @param kicthenId
+	 * @return
+	 */
+	public static ArrayList<String> findBikerOfKitchen(int kicthenId,boolean isSingleOrder){
+		ArrayList<String> bikerList = new ArrayList<String>();
+		try {
+			SQL:{
+			Connection connection = DBConnection.createConnection();
+			PreparedStatement preparedStatement = null;
+			ResultSet resultSet = null;
+			String sql = "";
+			if(isSingleOrder){
+				sql ="select delivery_boy_user_id"
+					+ " from fapp_delivery_boy where kitchen_id = ? and is_active = 'Y' "
+					+ " and is_single_order_biker='Y'";
+			}else{
+				sql ="select delivery_boy_user_id"
+						+ " from fapp_delivery_boy where kitchen_id = ? and is_active = 'Y'"
+						+ " and is_single_order_biker='N'";
+			}
+					
+			try {
+				preparedStatement = connection.prepareStatement(sql);
+				preparedStatement.setInt(1, kicthenId);
+				resultSet = preparedStatement.executeQuery();
+				while (resultSet.next()) {
+					bikerList.add(resultSet.getString("delivery_boy_user_id"));
+				}
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}finally{
+				if(preparedStatement!=null){
+					preparedStatement.close();
+				}
+				if(connection!=null){
+					connection.close();
+				}
+			}
+		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		System.out.println(bikerList);
+		return bikerList;
+	}
+	
+	public static int[] getBikerCapacityAndOrders(){
+		int[] bikerCapa =  new int[2];
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql = "select biker_capacity,serving_location_per_slot from fapp_biker_capacity"
+							+ " where is_active='Y' and is_delete='N'";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							bikerCapa[0] = resultSet.getInt("biker_capacity");
+							bikerCapa[1] = resultSet.getInt("serving_location_per_slot");
+						}
+								
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return bikerCapa;
 	}
 }

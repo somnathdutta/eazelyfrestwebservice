@@ -12,9 +12,10 @@ import com.mkyong.rest.DBConnection;
 
 public class FetchAlaCarteItemDAO {
 
-	public static JSONObject fetchAlacarteItem(String pincode, String categoryId, String deliveryDay) throws JSONException{
+	public static JSONObject fetchAlacarteItem(String pincode, String categoryId, String deliveryDay,
+			String area) throws JSONException{
 		JSONObject alacarteJSonObject = new JSONObject();
-		JSONArray itemArray = fetchItems(pincode, Integer.valueOf(categoryId), deliveryDay);
+		JSONArray itemArray = fetchItems(pincode, Integer.valueOf(categoryId), deliveryDay, area);
 		System.out.println("Item list size: "+itemArray.length());
 		if(itemArray.length()>0){
 			alacarteJSonObject.put("status", "200");
@@ -29,7 +30,7 @@ public class FetchAlaCarteItemDAO {
 		return alacarteJSonObject;
 	}
 	
-	public static JSONArray fetchItems(String pincode, int categoryId, String deliveryDay){
+	public static JSONArray fetchItems(String pincode, int categoryId, String deliveryDay,String area){
 		JSONArray itemJSonArray = new JSONArray();
 		try {
 			SQL:{
@@ -73,11 +74,13 @@ public class FetchAlaCarteItemDAO {
 								alaImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
 							}
 							alaItem.put("itemImage", alaImage);
-							String bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true);
-					    	String bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false);
+							String bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true, area);
+					    	String bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false, area);
 					    	
-					    	String lunchStock = DBConnection.getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,bikerAvailableKitchensForLunch);
-					    	String dinnerStock = DBConnection.getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,bikerAvailableKitchensForDinner);
+					    	String lunchStock = DBConnection.getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,
+					    			bikerAvailableKitchensForLunch,area);
+					    	String dinnerStock = DBConnection.getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,
+					    			bikerAvailableKitchensForDinner,area);
 					    	
 							//int lunchStock = 20;
 							//int dinnerStock = 20;

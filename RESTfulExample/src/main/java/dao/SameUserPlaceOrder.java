@@ -22,9 +22,9 @@ public class SameUserPlaceOrder {
 
 	
 	public static ArrayList<Integer> getLastKitchenId(ArrayList<OrderItems> orderItemList, String contactNumber,
-			String deliveryAddress, MealTypePojo mealTypePojo, String pincode){
+			String deliveryAddress, MealTypePojo mealTypePojo, String pincode,String area){
 		System.out.println("*** *** *** SAME USER ORDER PLACEMENT CODE **** * ****");
-		System.out.println("PINCODE: "+pincode+" CONTACT:: "+contactNumber);
+		System.out.println("AREA: "+area+" CONTACT:: "+contactNumber);
 		ArrayList<Integer> dealingKitchenIds = new ArrayList<Integer>();
 		Set<Integer> oldServedKitchenSet = new HashSet<Integer>();
 		Set<Integer> kitchenSet = new HashSet<Integer>();
@@ -54,25 +54,41 @@ public class SameUserPlaceOrder {
 					 +" and order_ =(select created_date from vw_last_order_user where contact_number = ?"
 					 +" and pincode = ? "
 					 +" order by created_date desc limit 1) and stock >0 order by cuisine_id ";*/
-			sqlQuery = "select distinct kitchen_id,cuisine_id from vw_last_order_user where contact_number = ? and is_active='Y' " 
+			/*sqlQuery = "select distinct kitchen_id,cuisine_id from vw_last_order_user where contact_number = ? and is_active='Y' " 
 					 +" and pincode= ? and stock >0 and kitchen_active='Y' and cuisine_id in "+cuisineIds+" and "
 					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
-					 +" and pincode= ?  ) order by cuisine_id ";
-		}else if(mealTypePojo.isLunchTomorrow()){
-			sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? and is_active_tomorrow='Y' " 
-					 +" and pincode= ?  and stock_tomorrow >0 and kitchen_active='Y'   and cuisine_id in "+cuisineIds+" and "
-					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
-					 +" and pincode= ?  ) order by cuisine_id ";
-		}else if(mealTypePojo.isDinnerToday()){
+					 +" and pincode= ?  ) order by cuisine_id ";*/
 			sqlQuery = "select distinct kitchen_id,cuisine_id from vw_last_order_user where contact_number = ? and is_active='Y' " 
+					 +" and delivery_zone = ? and stock >0 and kitchen_active='Y' and cuisine_id in "+cuisineIds+" and "
+					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
+					 +" and delivery_zone = ?  ) order by cuisine_id ";
+		}else if(mealTypePojo.isLunchTomorrow()){
+			/*sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? and is_active_tomorrow='Y' " 
+					 +" and pincode = ?  and stock_tomorrow >0 and kitchen_active='Y'   and cuisine_id in "+cuisineIds+" and "
+					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
+					 +" and pincode= ?  ) order by cuisine_id ";*/
+			sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? and is_active_tomorrow='Y' " 
+					 +" and delivery_zone= ?  and stock_tomorrow >0 and kitchen_active='Y'   and cuisine_id in "+cuisineIds+" and "
+					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
+					 +" and delivery_zone = ?  ) order by cuisine_id ";
+		}else if(mealTypePojo.isDinnerToday()){
+			/*sqlQuery = "select distinct kitchen_id,cuisine_id from vw_last_order_user where contact_number = ? and is_active='Y' " 
 					 +" and pincode= ? and dinner_stock >0 and kitchen_active='Y'   and cuisine_id in "+cuisineIds+" and "
 					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
-					 +" and pincode= ?  ) order by cuisine_id ";
+					 +" and pincode= ?  ) order by cuisine_id ";*/
+			sqlQuery = "select distinct kitchen_id,cuisine_id from vw_last_order_user where contact_number = ? and is_active='Y' " 
+					 +" and delivery_zone = ? and dinner_stock >0 and kitchen_active='Y'   and cuisine_id in "+cuisineIds+" and "
+					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
+					 +" and delivery_zone = ?  ) order by cuisine_id ";
 		}else{
-			sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? and is_active_tomorrow='Y' " 
+			/*sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? and is_active_tomorrow='Y' " 
 					 +" and pincode= ? and dinner_stock_tomorrow >0 and kitchen_active='Y'  and cuisine_id in "+cuisineIds+" and "
 					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
-					 +" and pincode= ?  ) order by cuisine_id ";
+					 +" and pincode= ?  ) order by cuisine_id ";*/
+			sqlQuery = "select distinct kitchen_id,cuisine_id  from vw_last_order_user where contact_number = ? and is_active_tomorrow='Y' " 
+					 +" and delivery_zone = ? and dinner_stock_tomorrow >0 and kitchen_active='Y'  and cuisine_id in "+cuisineIds+" and "
+					 +" order_id=(select max(order_id) from vw_last_order_user where contact_number =? "  
+					 +" and delivery_zone = ?  ) order by cuisine_id ";
 		}
 		
 		try {
@@ -83,10 +99,12 @@ public class SameUserPlaceOrder {
 					try {
 						preparedStatement = connection.prepareStatement(sqlQuery);
 						preparedStatement.setString(1, contactNumber);
-						preparedStatement.setString(2, pincode);
+						//preparedStatement.setString(2, pincode);
+						preparedStatement.setString(2, area);
 						preparedStatement.setString(3, contactNumber);
-						preparedStatement.setString(4, pincode);
-					
+						//preparedStatement.setString(4, pincode);
+						preparedStatement.setString(4, area);
+						
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
 							int kitchenId = resultSet.getInt("kitchen_id");

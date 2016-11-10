@@ -3,8 +3,11 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -27,7 +30,7 @@ import com.mkyong.rest.OrderItems;
 public class TimeSlotFinder {
 
 	public static JSONObject getFreeSlots(String contactNumber, String deliveryAddress, ArrayList<OrderItems>
-	orderItemList, String mealtype,String deliveryDay, String pincode,  MealTypePojo mealTypePojo) throws JSONException{
+	orderItemList, String mealtype,String deliveryDay, String pincode,  MealTypePojo mealTypePojo, String area) throws JSONException, ParseException{
 		int totalQty = 0;
 		for(OrderItems items : orderItemList){
 			totalQty += items.quantity;
@@ -35,13 +38,13 @@ public class TimeSlotFinder {
 		System.out.println("Total qty: "+totalQty);
 		JSONObject timsSlotObject = new JSONObject();
 		JSONArray kitchens = findServableKitchens(orderItemList, pincode, mealTypePojo,
-				contactNumber, deliveryAddress, mealtype, deliveryDay );
-		
+				contactNumber, deliveryAddress, mealtype, deliveryDay, area );
+
 		System.out.println("KITCHEN JSON ARRAY LENGTH:: "+kitchens.length());
 		if(kitchens.length() >0){
 			timsSlotObject.put("status", "200");
 			timsSlotObject.put("message", "Slot found successfully!");
-			if(kitchens.length()>1 || totalQty>10){
+			if(kitchens.length()>1 || totalQty>8){
 				System.out.println("##");
 				timsSlotObject.put("splitOrder", true);		
 			}else{
@@ -52,7 +55,7 @@ public class TimeSlotFinder {
 
 		}else{
 			timsSlotObject.put("status", "204");
-			timsSlotObject.put("message", "No slot!");
+			timsSlotObject.put("message", "Sorry!Items sold out at this time!");
 			timsSlotObject.put("splitOrder", false);
 			timsSlotObject.put("slotDetails", new JSONArray());
 		}
@@ -62,10 +65,11 @@ public class TimeSlotFinder {
 	/**
 	 * Function to find kitchen and deliveryList
 	 * @throws JSONException 
+	 * @throws ParseException 
 	 */
 	public static JSONArray findServableKitchens(ArrayList<OrderItems> orderItemList, String pincode, 
 			MealTypePojo mealTypePojo, String contactNumber, String deliveryAddress,
-			String mealType, String deliveryDay) throws JSONException{
+			String mealType, String deliveryDay, String area) throws JSONException, ParseException{
 		JSONArray servableKitchens = new JSONArray();
 		boolean  onlyBengCuisine = false, onlyNiCuisine = false, bengNiCuisine = false,isStaggeredDelivery=false;
 		int totalNoOfQuantity = 0, totalBengQty = 0,totalNIQty = 0;
@@ -114,25 +118,25 @@ public class TimeSlotFinder {
 
 		if(onlyBengCuisine){
 			System.out.println("** Order contains only bengali cuisine **");
-			dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress, mealTypePojo, pincode);
+			dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress, mealTypePojo, pincode, area);
 			if(dealingKitchenIds.size()==0){
-				dealingKitchenIds = RoundRobinKitchenFinder.getUniqueKitchen(orderItemList, pincode, mealType, deliveryDay);
+				dealingKitchenIds = RoundRobinKitchenFinder.getUniqueKitchen(orderItemList, pincode, mealType, deliveryDay, area);
 				//dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode, mealType, deliveryDay);
 			}
 		}
 		if(onlyNiCuisine){
 			System.out.println("** Order contains only ni cuisine **");
-			dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress,mealTypePojo, pincode);
+			dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress,mealTypePojo, pincode, area);
 			if(dealingKitchenIds.size()==0){
-				dealingKitchenIds = RoundRobinKitchenFinder.getUniqueKitchen(orderItemList, pincode, mealType, deliveryDay);
+				dealingKitchenIds = RoundRobinKitchenFinder.getUniqueKitchen(orderItemList, pincode, mealType, deliveryDay, area);
 				//dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode, mealType, deliveryDay);
 			}
 		}
 		if(bengNiCuisine){
 			System.out.println("** Order contains  bengali and ni cuisine **");
-			dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress,mealTypePojo, pincode);
+			dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress,mealTypePojo, pincode, area);
 			if(dealingKitchenIds.size()==0){
-				dealingKitchenIds = RoundRobinKitchenFinder.getUniqueKitchen(orderItemList, pincode, mealType, deliveryDay);
+				dealingKitchenIds = RoundRobinKitchenFinder.getUniqueKitchen(orderItemList, pincode, mealType, deliveryDay, area);
 				//dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode, mealType, deliveryDay);
 			}	
 		}
@@ -227,19 +231,30 @@ public class TimeSlotFinder {
 			System.out.println(" KITCHEN::"+kitchenItemsOrderList.get(i).kitchenId+"\n");
 
 		}	
-		if(totalNoOfQuantity>10 || totalBengQty>10 || totalNIQty>10 ){
+		if(totalNoOfQuantity>8 || totalBengQty>8 || totalNIQty>8 ){
 			isStaggeredDelivery = true;
 		}
 		System.out.println("IS sttaggered delivery:: "+isStaggeredDelivery);
 		System.out.println("IS ordder spilt::"+isOrdeSplit);
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
 
-
+		String[] slotTimings = new String[2];
+		slotTimings = SlotDAO.getSlotTimings();
+		String initialTimings = slotTimings[0];
+		String finalTimings = slotTimings[1];
+		
 		if(isOrdeSplit){
 			//isStaggeredDelivery = false;
 			int totalBengQtyOrig = totalBengQty;
 			int totalNIQtyOrig = totalNIQty;
 			for(Integer kitchenid : kitchenIds){
 				if(findKitchenType(kitchenid)==1){// 1 means bengali kitchen
+					/**************************************************************************************************/
+					/****************************** ORDER SPILT code for BENGALI KITCHEN ******************************/
+					/**************************************************************************************************/
 					int currentkitchenStock = RoundRobinKitchenFinder.getCurrentKitchenStock(kitchenid, mealTypePojo);
 					if(totalBengQtyOrig > currentkitchenStock){
 						totalBengQty = currentkitchenStock;
@@ -249,9 +264,11 @@ public class TimeSlotFinder {
 					kitchenJson.put("kitchenId", kitchenid );
 					ArrayList<String> bikerList = new ArrayList<String>();
 					if(totalNoOfQuantity>1){//If quantity >1
-						bikerList = findBikerOfKitchen(kitchenid);
+						//	bikerList = findBikerOfKitchen(kitchenid);
+						bikerList = BikerDAO.findBikerOfKitchen(kitchenid,false);//NEW LOGIC IF QTY>1 OUR ONE DEDICATED BIKER
 					}else{
-						bikerList.add("dummy");
+						//	bikerList.add("dummy");
+						bikerList = BikerDAO.findBikerOfKitchen(kitchenid,true);//NEW LOGIC IF QTY==1 OUR ONE DEDICATED BIKER
 					}
 					System.out.println("Final bikerlist : "+bikerList);
 
@@ -271,6 +288,7 @@ public class TimeSlotFinder {
 								items.put("cuisine", orders.getCuisinName());
 								items.put("itemName", orders.getItemName());
 								items.put("itemCode", orders.getItemCode());
+								items.put("stock", ItemDAO.itemCurrentStock(kitchenid, orders.itemCode, mealTypePojo));
 								items.put("quanity", orders.getQuantity());
 								itemsArrray.put(items);
 							}
@@ -282,83 +300,176 @@ public class TimeSlotFinder {
 							slotJSONArray = SlotDAO.findAllSlots(mealTypePojo);
 						}else{
 							ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
-							ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kitchenid, mealTypePojo);
-							Collections.sort(timeSlotList);
-							int Qty = 0;
-							for(TimeSlot slot : timeSlotList){
-								Qty = Qty + slot.quantity;
-							}
-							if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
-								if(totalBengQty > 30 - Qty){
-									continue;
-								}
-							}else{
-								if(totalBengQty > 20 - Qty){
-									continue;
-								}
-							}
-							/*if(totalBengQty > 30 - Qty){
-								continue;
-							}*/
-							if(isStaggeredDelivery){
+							Date date = new Date();
+							SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+							String currentTime = sdf.format(date);
+							System.out.println("Order time: "+currentTime);
+							
+							if(OrderTimeDAO.isTimeBetweenTwoTime(initialTimings, finalTimings, currentTime) //showing lunch slot 2-3 for order time 11-12 
+									&& ( mealTypePojo.isLunchToday() || mealTypePojo.isLunchTomorrow()) ){
+								/**************************************************************************************************/
+								/****************************** ORDER SPILT code for ORDER BETWEEN 11 to 12 ***********************/
+								/**************************************************************************************************/
+								ArrayList<TimeSlot> timeSlotList = SlotDAO.getSlotAfter11(bikerUserId, mealTypePojo);
+								Collections.sort(timeSlotList);
+								int Qty = 0;
 								for(TimeSlot slot : timeSlotList){
-									if(totalBengQty<=0){
+									Qty = Qty + slot.quantity;
+								}
+								if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
+									if(totalBengQty > 30 - Qty){
 										continue;
 									}
-									if(10-slot.quantity <= 10){
-										TimeSlot reslot = new TimeSlot();
-										reslot.slotId = slot.slotId;
-										reslot.timeSlot = slot.timeSlot;
-										reslot.quantity = slot.quantity;
-										reslot.noOfOrders = slot.noOfOrders;
-										returningTimeSlotList.add(reslot);
-										totalBengQty = totalBengQty -(10 - slot.quantity);
-										System.out.println(returningTimeSlotList);
-										System.out.println("remain qty :"+totalBengQty);
-									}
-								}
-							} else {
-								for(TimeSlot slot : timeSlotList){
-									if(totalBengQty + slot.quantity > 10){
+								}else{
+									if(totalBengQty > 20 - Qty){
 										continue;
-									} else {
-										TimeSlot reslot = new TimeSlot();
-										reslot.slotId = slot.slotId;
-										reslot.timeSlot = slot.timeSlot;
-										reslot.quantity = slot.quantity;
-										reslot.noOfOrders = slot.noOfOrders;
-										returningTimeSlotList.add(reslot);
 									}
 								}
-								if(returningTimeSlotList.size() == 0){
+								/*if(totalBengQty > 30 - Qty){
+									continue;
+								}*/
+								if(isStaggeredDelivery){
 									for(TimeSlot slot : timeSlotList){
 										if(totalBengQty<=0){
 											continue;
 										}
-										if(10-slot.quantity <= 10){
+										if(bikerCapacity - slot.quantity <= bikerCapacity){
 											TimeSlot reslot = new TimeSlot();
 											reslot.slotId = slot.slotId;
 											reslot.timeSlot = slot.timeSlot;
 											reslot.quantity = slot.quantity;
 											reslot.noOfOrders = slot.noOfOrders;
 											returningTimeSlotList.add(reslot);
-											totalBengQty = totalBengQty -(10 - slot.quantity);
+											totalBengQty = totalBengQty -(bikerCapacity - slot.quantity);
 											System.out.println(returningTimeSlotList);
 											System.out.println("remain qty :"+totalBengQty);
 										}
 									}
+								} else {
+									for(TimeSlot slot : timeSlotList){
+										if(totalBengQty + slot.quantity > bikerCapacity){
+											continue;
+										} else {
+											TimeSlot reslot = new TimeSlot();
+											reslot.slotId = slot.slotId;
+											reslot.timeSlot = slot.timeSlot;
+											reslot.quantity = slot.quantity;
+											reslot.noOfOrders = slot.noOfOrders;
+											returningTimeSlotList.add(reslot);
+										}
+									}
+									if(returningTimeSlotList.size() == 0){
+										for(TimeSlot slot : timeSlotList){
+											if(totalBengQty<=0){
+												continue;
+											}
+											if(bikerCapacity - slot.quantity <= bikerCapacity){
+												TimeSlot reslot = new TimeSlot();
+												reslot.slotId = slot.slotId;
+												reslot.timeSlot = slot.timeSlot;
+												reslot.quantity = slot.quantity;
+												reslot.noOfOrders = slot.noOfOrders;
+												returningTimeSlotList.add(reslot);
+												totalBengQty = totalBengQty -(bikerCapacity - slot.quantity);
+												System.out.println(returningTimeSlotList);
+												System.out.println("remain qty :"+totalBengQty);
+											}
+										}
+									}
 								}
+								for(TimeSlot tSlot : returningTimeSlotList){
+									JSONObject slotJson = new JSONObject();
+									slotJson.put("slotId", tSlot.slotId);
+									slotJson.put("timeSlot", tSlot.timeSlot);
+									slotJson.put("quantity", tSlot.quantity);
+									slotJson.put("noOfOrders", tSlot.noOfOrders);
+									slotJSONArray.put(slotJson);
+								}
+								System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
+								System.out.println("BENGALI"+returningTimeSlotList);
+							}else{
+								//code for order time before 11
+								/**************************************************************************************************/
+								/****************************** ORDER SPILT code for ORDER BEFORE 11 ******************************/
+								/**************************************************************************************************/
+								ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kitchenid, mealTypePojo);
+								Collections.sort(timeSlotList);
+								int Qty = 0;
+								for(TimeSlot slot : timeSlotList){
+									Qty = Qty + slot.quantity;
+								}
+								if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
+									if(totalBengQty > 30 - Qty){
+										continue;
+									}
+								}else{
+									if(totalBengQty > 20 - Qty){
+										continue;
+									}
+								}
+								/*if(totalBengQty > 30 - Qty){
+									continue;
+								}*/
+								if(isStaggeredDelivery){
+									for(TimeSlot slot : timeSlotList){
+										if(totalBengQty<=0){
+											continue;
+										}
+										if(bikerCapacity - slot.quantity <= bikerCapacity){
+											TimeSlot reslot = new TimeSlot();
+											reslot.slotId = slot.slotId;
+											reslot.timeSlot = slot.timeSlot;
+											reslot.quantity = slot.quantity;
+											reslot.noOfOrders = slot.noOfOrders;
+											returningTimeSlotList.add(reslot);
+											totalBengQty = totalBengQty -(bikerCapacity - slot.quantity);
+											System.out.println(returningTimeSlotList);
+											System.out.println("remain qty :"+totalBengQty);
+										}
+									}
+								} else {
+									for(TimeSlot slot : timeSlotList){
+										if(totalBengQty + slot.quantity > bikerCapacity){
+											continue;
+										} else {
+											TimeSlot reslot = new TimeSlot();
+											reslot.slotId = slot.slotId;
+											reslot.timeSlot = slot.timeSlot;
+											reslot.quantity = slot.quantity;
+											reslot.noOfOrders = slot.noOfOrders;
+											returningTimeSlotList.add(reslot);
+										}
+									}
+									if(returningTimeSlotList.size() == 0){
+										for(TimeSlot slot : timeSlotList){
+											if(totalBengQty<=0){
+												continue;
+											}
+											if(bikerCapacity - slot.quantity <= bikerCapacity){
+												TimeSlot reslot = new TimeSlot();
+												reslot.slotId = slot.slotId;
+												reslot.timeSlot = slot.timeSlot;
+												reslot.quantity = slot.quantity;
+												reslot.noOfOrders = slot.noOfOrders;
+												returningTimeSlotList.add(reslot);
+												totalBengQty = totalBengQty -(bikerCapacity - slot.quantity);
+												System.out.println(returningTimeSlotList);
+												System.out.println("remain qty :"+totalBengQty);
+											}
+										}
+									}
+								}
+								for(TimeSlot tSlot : returningTimeSlotList){
+									JSONObject slotJson = new JSONObject();
+									slotJson.put("slotId", tSlot.slotId);
+									slotJson.put("timeSlot", tSlot.timeSlot);
+									slotJson.put("quantity", tSlot.quantity);
+									slotJson.put("noOfOrders", tSlot.noOfOrders);
+									slotJSONArray.put(slotJson);
+								}
+								System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
+								System.out.println("BENGALI"+returningTimeSlotList);
 							}
-							for(TimeSlot tSlot : returningTimeSlotList){
-								JSONObject slotJson = new JSONObject();
-								slotJson.put("slotId", tSlot.slotId);
-								slotJson.put("timeSlot", tSlot.timeSlot);
-								slotJson.put("quantity", tSlot.quantity);
-								slotJson.put("noOfOrders", tSlot.noOfOrders);
-								slotJSONArray.put(slotJson);
-							}
-							System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
-							System.out.println("BENGALI"+returningTimeSlotList);
 						}
 						bikerJson.put("slotlist", slotJSONArray);
 						bikersArray.put(bikerJson);
@@ -366,23 +477,27 @@ public class TimeSlotFinder {
 					kitchenJson.put("bikerList", bikersArray);
 					servableKitchens.put(kitchenJson);
 				}else{
-					//NI KITCHEN
+				/**************************************************************************************************/
+				/******************************ORDER SPILT code for NI KITCHEN ************************************/
+				/**************************************************************************************************/
 					int currentkitchenStockNI = RoundRobinKitchenFinder.getCurrentKitchenStock(kitchenid, mealTypePojo);
 					if(totalNIQtyOrig > currentkitchenStockNI){
 						totalNIQty = currentkitchenStockNI;
 					}
-					
+
 					JSONObject kitchenJson = new JSONObject();
 					JSONArray bikersArray = new JSONArray();
 					kitchenJson.put("kitchenId", kitchenid );
 					ArrayList<String> bikerList = new ArrayList<String>();
 					if(totalNoOfQuantity>1){//If quantity >1
-						bikerList = findBikerOfKitchen(kitchenid);
+						//	bikerList = findBikerOfKitchen(kitchenid);
+						bikerList = BikerDAO.findBikerOfKitchen(kitchenid, false);//NEW LOGIC IF QTY>1 OUR ONE DEDICATED BIKER
 					}else{
-						bikerList.add("dummy");
+						//	bikerList.add("dummy");
+						bikerList = BikerDAO.findBikerOfKitchen(kitchenid, true);//NEW LOGIC IF QTY==1 OUR ONE DEDICATED BIKER
 					}
 					System.out.println("Final bikerlist : "+bikerList);
-					
+
 					for(String bikerUserId : bikerList){
 						if(totalNIQty < 1){
 							continue;
@@ -399,6 +514,7 @@ public class TimeSlotFinder {
 								items.put("cuisine", orders.getCuisinName());
 								items.put("itemName", orders.getItemName());
 								items.put("itemCode", orders.getItemCode());
+								items.put("stock", ItemDAO.itemCurrentStock(kitchenid, orders.itemCode, mealTypePojo));
 								items.put("quanity", orders.getQuantity());
 								itemsArrray.put(items);
 							}
@@ -409,45 +525,286 @@ public class TimeSlotFinder {
 						if(bikerUserId.equalsIgnoreCase("dummy")){
 							slotJSONArray = SlotDAO.findAllSlots(mealTypePojo);
 						}else{
+							Date date = new Date();
+							SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+							String currentTime = sdf.format(date);
+							System.out.println("Order time: "+currentTime);
+							
+							if(OrderTimeDAO.isTimeBetweenTwoTime(initialTimings, finalTimings, currentTime) //showing lunch slot 2-3 for order time 11-12 
+									&& ( mealTypePojo.isLunchToday() || mealTypePojo.isLunchTomorrow()) ){
+								/**************************************************************************************************/
+								/****************************** ORDER SPILT  CODE FOR NI KITCHEN **********************************/
+								/******************************* ORDER BETWEEN 11 AND 12 ******************************************/
+								/**************************************************************************************************/
+								System.out.println("Order time: "+currentTime);
+								ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
+								ArrayList<TimeSlot> timeSlotList = SlotDAO.getSlotAfter11(bikerUserId, mealTypePojo);
+								Collections.sort(timeSlotList);
+								int Qty = 0;
+								for(TimeSlot slot : timeSlotList){
+									Qty = Qty + slot.quantity;
+								}
+								if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
+									if(totalNIQty > 30 - Qty){
+										continue;
+									}
+								}else{
+									if(totalNIQty > 20 - Qty){
+										continue;
+									}
+								}
+								/*if(totalNIQty > 30 - Qty){
+									continue;
+								}*/
+								if(isStaggeredDelivery){
+									for(TimeSlot slot : timeSlotList){
+										if(totalNIQty<=0){
+											continue;
+										}
+										if(8-slot.quantity <= bikerCapacity){
+											TimeSlot reslot = new TimeSlot();
+											reslot.slotId = slot.slotId;
+											reslot.timeSlot = slot.timeSlot;
+											reslot.quantity = slot.quantity;
+											reslot.noOfOrders = slot.noOfOrders;
+											returningTimeSlotList.add(reslot);
+											totalNIQty = totalNIQty -(bikerCapacity - slot.quantity);
+											System.out.println(returningTimeSlotList);
+											System.out.println("remain qty :"+totalNIQty);
+										}
+									}
+								} else {
+									for(TimeSlot slot : timeSlotList){
+										if(totalNIQty + slot.quantity > bikerCapacity){
+											continue;
+										} else {
+											TimeSlot reslot = new TimeSlot();
+											reslot.slotId = slot.slotId;
+											reslot.timeSlot = slot.timeSlot;
+											reslot.quantity = slot.quantity;
+											reslot.noOfOrders = slot.noOfOrders;
+											returningTimeSlotList.add(reslot);
+										}
+									}
+									if(returningTimeSlotList.size() == 0){
+										for(TimeSlot slot : timeSlotList){
+											if(totalNIQty<=0){
+												continue;
+											}
+											if(bikerCapacity -slot.quantity <= bikerCapacity){
+												TimeSlot reslot = new TimeSlot();
+												reslot.slotId = slot.slotId;
+												reslot.timeSlot = slot.timeSlot;
+												reslot.quantity = slot.quantity;
+												reslot.noOfOrders = slot.noOfOrders;
+												returningTimeSlotList.add(reslot);
+												totalNIQty = totalNIQty -(bikerCapacity - slot.quantity);
+												System.out.println(returningTimeSlotList);
+												System.out.println("remain qty :"+totalNIQty);
+											}
+										}
+									}
+								}
+								for(TimeSlot tSlot : returningTimeSlotList){
+									JSONObject slotJson = new JSONObject();
+									slotJson.put("slotId", tSlot.slotId);
+									slotJson.put("timeSlot", tSlot.timeSlot);
+									slotJson.put("quantity", tSlot.quantity);
+									slotJson.put("noOfOrders", tSlot.noOfOrders);
+									slotJSONArray.put(slotJson);
+								}
+								System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
+								System.out.println("NORTH "+returningTimeSlotList);
+							}else{
+								/**************************************************************************************************/
+								/******************************ORDER SPLIT CODE FOR NI KITCHEN ************************************/
+								/******************************* ORDER BEFORE 11 **************************************************/
+								/**************************************************************************************************/
+								ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
+								ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kitchenid, mealTypePojo);
+								Collections.sort(timeSlotList);
+								int Qty = 0;
+								for(TimeSlot slot : timeSlotList){
+									Qty = Qty + slot.quantity;
+								}
+								if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
+									if(totalNIQty > 30 - Qty){
+										continue;
+									}
+								}else{
+									if(totalNIQty > 20 - Qty){
+										continue;
+									}
+								}
+								/*if(totalNIQty > 30 - Qty){
+									continue;
+								}*/
+								if(isStaggeredDelivery){
+									for(TimeSlot slot : timeSlotList){
+										if(totalNIQty<=0){
+											continue;
+										}
+										if(bikerCapacity -slot.quantity <= bikerCapacity){
+											TimeSlot reslot = new TimeSlot();
+											reslot.slotId = slot.slotId;
+											reslot.timeSlot = slot.timeSlot;
+											reslot.quantity = slot.quantity;
+											reslot.noOfOrders = slot.noOfOrders;
+											returningTimeSlotList.add(reslot);
+											totalNIQty = totalNIQty -(bikerCapacity - slot.quantity);
+											System.out.println(returningTimeSlotList);
+											System.out.println("remain qty :"+totalNIQty);
+										}
+									}
+								} else {
+									for(TimeSlot slot : timeSlotList){
+										if(totalNIQty + slot.quantity > bikerCapacity){
+											continue;
+										} else {
+											TimeSlot reslot = new TimeSlot();
+											reslot.slotId = slot.slotId;
+											reslot.timeSlot = slot.timeSlot;
+											reslot.quantity = slot.quantity;
+											reslot.noOfOrders = slot.noOfOrders;
+											returningTimeSlotList.add(reslot);
+										}
+									}
+									if(returningTimeSlotList.size() == 0){
+										for(TimeSlot slot : timeSlotList){
+											if(totalNIQty<=0){
+												continue;
+											}
+											if(bikerCapacity -slot.quantity <= bikerCapacity){
+												TimeSlot reslot = new TimeSlot();
+												reslot.slotId = slot.slotId;
+												reslot.timeSlot = slot.timeSlot;
+												reslot.quantity = slot.quantity;
+												reslot.noOfOrders = slot.noOfOrders;
+												returningTimeSlotList.add(reslot);
+												totalNIQty = totalNIQty -(bikerCapacity - slot.quantity);
+												System.out.println(returningTimeSlotList);
+												System.out.println("remain qty :"+totalNIQty);
+											}
+										}
+									}
+								}
+								for(TimeSlot tSlot : returningTimeSlotList){
+									JSONObject slotJson = new JSONObject();
+									slotJson.put("slotId", tSlot.slotId);
+									slotJson.put("timeSlot", tSlot.timeSlot);
+									slotJson.put("quantity", tSlot.quantity);
+									slotJson.put("noOfOrders", tSlot.noOfOrders);
+									slotJSONArray.put(slotJson);
+								}
+								System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
+								System.out.println("NORTH "+returningTimeSlotList);
+							}
+						}
+						bikerJson.put("slotlist", slotJSONArray);
+						bikersArray.put(bikerJson);
+					}
+					kitchenJson.put("bikerList", bikersArray);
+					servableKitchens.put(kitchenJson);
+				}
+			}
+
+		}else{
+			System.out.println("Not spilt::::::::::::::::::::::tot qty:"+totalNoOfQuantity);
+			/**************************************************************************************************/
+			/****************************** SIMPLE ORDER WITHOUT SPLIT CODE ***********************************/
+			/**************************************************************************************************/
+			for(Integer kitchenid : kitchenIds){
+				JSONObject kitchenJson = new JSONObject();
+				JSONArray bikersArray = new JSONArray();
+				kitchenJson.put("kitchenId", kitchenid );
+
+				ArrayList<String> bikerList = new ArrayList<String>();
+				if(totalNoOfQuantity>1){//If quantity >1
+					//	bikerList = findBikerOfKitchen(kitchenid);
+					bikerList = BikerDAO.findBikerOfKitchen(kitchenid, false);//NEW LOGIC IF QTY>1 OUR ONE DEDICATED BIKER
+				}else{
+					//	bikerList.add("dummy");
+					bikerList = BikerDAO.findBikerOfKitchen(kitchenid, true);//NEW LOGIC IF QTY==1 OUR ONE DEDICATED BIKER
+				}
+				System.out.println("Final bikerlist : "+bikerList);
+
+				for(String bikerUserId : bikerList){
+					if(totalNoOfQuantity < 1){
+						break;
+					}
+					JSONObject bikerJson = new JSONObject();
+					JSONArray itemsArrray = new JSONArray();
+					bikerJson.put("bikerUserId", bikerUserId);
+					for(OrderItems orders : kitchenOrderItems){
+						System.out.println("Orders kitchen:: "+orders.kitchenId);
+						System.out.println("kicthenid:: "+kitchenid);
+						if(orders.kitchenId==kitchenid){
+							JSONObject items = new JSONObject();
+							items.put("cuisineid", orders.cuisineId);
+							items.put("cuisine", orders.getCuisinName());
+							items.put("itemName", orders.getItemName());
+							items.put("itemCode", orders.getItemCode());
+							items.put("stock", ItemDAO.itemCurrentStock(kitchenid, orders.itemCode, mealTypePojo));
+							items.put("quanity", orders.getQuantity());
+							itemsArrray.put(items);
+						}
+					}
+					bikerJson.put("itemDetails", itemsArrray );
+
+					JSONArray slotJSONArray = new JSONArray();
+					if(bikerUserId.equalsIgnoreCase("dummy")){
+						slotJSONArray = SlotDAO.findAllSlots(mealTypePojo);
+					}else{
+						Date date = new Date();
+						SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+						String currentTime = sdf.format(date);
+						System.out.println("Order time: "+currentTime);
+						if(OrderTimeDAO.isTimeBetweenTwoTime(initialTimings, finalTimings, currentTime) //showing lunch slot 2-3 for order time 11-12 
+								&& ( mealTypePojo.isLunchToday() || mealTypePojo.isLunchTomorrow()) ){
+							// code for order between 11 and 12 lunch today and
+							/**************************************************************************************************/
+							/****************************** SIMPLE ORDER WITHOUT SPLIT CODE ***********************************/
+							/****************************** ORDER BETWEEN 11 TO 12 ********************************************/
+							/**************************************************************************************************/
 							ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
-							ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kitchenid, mealTypePojo);
+							ArrayList<TimeSlot> timeSlotList = SlotDAO.getSlotAfter11(bikerUserId, mealTypePojo);
 							Collections.sort(timeSlotList);
 							int Qty = 0;
 							for(TimeSlot slot : timeSlotList){
 								Qty = Qty + slot.quantity;
 							}
 							if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
-								if(totalNIQty > 30 - Qty){
+								if(totalNoOfQuantity > 30 - Qty){
 									continue;
 								}
 							}else{
-								if(totalNIQty > 20 - Qty){
+								if(totalNoOfQuantity > 20 - Qty){
 									continue;
 								}
 							}
-							/*if(totalNIQty > 30 - Qty){
+							/*if(totalNoOfQuantity > 30 - Qty){
 								continue;
 							}*/
 							if(isStaggeredDelivery){
 								for(TimeSlot slot : timeSlotList){
-									if(totalNIQty<=0){
+									if(totalNoOfQuantity<=0){
 										continue;
 									}
-									if(10-slot.quantity <= 10){
+									if(bikerCapacity -slot.quantity <= bikerCapacity){
 										TimeSlot reslot = new TimeSlot();
 										reslot.slotId = slot.slotId;
 										reslot.timeSlot = slot.timeSlot;
 										reslot.quantity = slot.quantity;
 										reslot.noOfOrders = slot.noOfOrders;
 										returningTimeSlotList.add(reslot);
-										totalNIQty = totalNIQty -(10 - slot.quantity);
+										totalNoOfQuantity = totalNoOfQuantity -(bikerCapacity - slot.quantity);
 										System.out.println(returningTimeSlotList);
-										System.out.println("remain qty :"+totalNIQty);
+										System.out.println("remain qty :"+totalNoOfQuantity);
 									}
 								}
 							} else {
 								for(TimeSlot slot : timeSlotList){
-									if(totalNIQty + slot.quantity > 10){
+									if(totalNoOfQuantity + slot.quantity > bikerCapacity){
 										continue;
 									} else {
 										TimeSlot reslot = new TimeSlot();
@@ -460,19 +817,19 @@ public class TimeSlotFinder {
 								}
 								if(returningTimeSlotList.size() == 0){
 									for(TimeSlot slot : timeSlotList){
-										if(totalNIQty<=0){
+										if(totalNoOfQuantity<=0){
 											continue;
 										}
-										if(10-slot.quantity <= 10){
+										if(bikerCapacity-slot.quantity <= bikerCapacity){
 											TimeSlot reslot = new TimeSlot();
 											reslot.slotId = slot.slotId;
 											reslot.timeSlot = slot.timeSlot;
 											reslot.quantity = slot.quantity;
 											reslot.noOfOrders = slot.noOfOrders;
 											returningTimeSlotList.add(reslot);
-											totalNIQty = totalNIQty -(10 - slot.quantity);
+											totalNoOfQuantity = totalNoOfQuantity -(bikerCapacity - slot.quantity);
 											System.out.println(returningTimeSlotList);
-											System.out.println("remain qty :"+totalNIQty);
+											System.out.println("remain qty :"+totalNoOfQuantity);
 										}
 									}
 								}
@@ -486,136 +843,91 @@ public class TimeSlotFinder {
 								slotJSONArray.put(slotJson);
 							}
 							System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
-							System.out.println("NORTH "+returningTimeSlotList);
-						}
-						bikerJson.put("slotlist", slotJSONArray);
-						bikersArray.put(bikerJson);
-					}
-					kitchenJson.put("bikerList", bikersArray);
-					servableKitchens.put(kitchenJson);
-				}
-				
-			}
-			
-		}else{
-			System.out.println("Not spilt::::::::::::::::::::::tot qty:"+totalNoOfQuantity);
-			for(Integer kicthenid : kitchenIds){
-				JSONObject kitchenJson = new JSONObject();
-				JSONArray bikersArray = new JSONArray();
-				kitchenJson.put("kitchenId", kicthenid );
-
-				ArrayList<String> bikerList = new ArrayList<String>();
-				if(totalNoOfQuantity>1){//If quantity >1
-					bikerList = findBikerOfKitchen(kicthenid);
-				}else{
-					bikerList.add("dummy");
-				}
-				System.out.println("Final bikerlist : "+bikerList);
-
-				for(String bikerUserId : bikerList){
-					if(totalNoOfQuantity < 1){
-						break;
-					}
-					JSONObject bikerJson = new JSONObject();
-					JSONArray itemsArrray = new JSONArray();
-					bikerJson.put("bikerUserId", bikerUserId);
-					for(OrderItems orders : kitchenOrderItems){
-						System.out.println("Orders kitchen:: "+orders.kitchenId);
-						System.out.println("kicthenid:: "+kicthenid);
-						if(orders.kitchenId==kicthenid){
-							JSONObject items = new JSONObject();
-							items.put("cuisineid", orders.cuisineId);
-							items.put("cuisine", orders.getCuisinName());
-							items.put("itemName", orders.getItemName());
-							items.put("itemCode", orders.getItemCode());
-							items.put("quanity", orders.getQuantity());
-							itemsArrray.put(items);
-						}
-					}
-					bikerJson.put("itemDetails", itemsArrray );
-
-					JSONArray slotJSONArray = new JSONArray();
-					if(bikerUserId.equalsIgnoreCase("dummy")){
-						slotJSONArray = SlotDAO.findAllSlots(mealTypePojo);
-					}else{
-						ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
-						ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kicthenid, mealTypePojo);
-						Collections.sort(timeSlotList);
-						int Qty = 0;
-						for(TimeSlot slot : timeSlotList){
-							Qty = Qty + slot.quantity;
-						}
-						if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
-							if(totalNoOfQuantity > 30 - Qty){
-								continue;
-							}
+							System.out.println("SLOTS "+returningTimeSlotList);
 						}else{
-							if(totalNoOfQuantity > 20 - Qty){
-								continue;
+							/**************************************************************************************************/
+							/****************************** SIMPLE ORDER WITHOUT SPLIT CODE ***********************************/
+							/****************************** ORDER BEFORE 11  *************************************************/
+							/**************************************************************************************************/
+							ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
+							ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kitchenid, mealTypePojo);
+							Collections.sort(timeSlotList);
+							int Qty = 0;
+							for(TimeSlot slot : timeSlotList){
+								Qty = Qty + slot.quantity;
 							}
-						}
-						/*if(totalNoOfQuantity > 30 - Qty){
+							if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
+								if(totalNoOfQuantity > 30 - Qty){
+									continue;
+								}
+							}else{
+								if(totalNoOfQuantity > 20 - Qty){
+									continue;
+								}
+							}
+							/*if(totalNoOfQuantity > 30 - Qty){
 							continue;
 						}*/
-						if(isStaggeredDelivery){
-							for(TimeSlot slot : timeSlotList){
-								if(totalNoOfQuantity<=0){
-									continue;
-								}
-								if(10-slot.quantity <= 10){
-									TimeSlot reslot = new TimeSlot();
-									reslot.slotId = slot.slotId;
-									reslot.timeSlot = slot.timeSlot;
-									reslot.quantity = slot.quantity;
-									reslot.noOfOrders = slot.noOfOrders;
-									returningTimeSlotList.add(reslot);
-									totalNoOfQuantity = totalNoOfQuantity -(10 - slot.quantity);
-									System.out.println(returningTimeSlotList);
-									System.out.println("remain qty :"+totalNoOfQuantity);
-								}
-							}
-						} else {
-							for(TimeSlot slot : timeSlotList){
-								if(totalNoOfQuantity + slot.quantity > 10){
-									continue;
-								} else {
-									TimeSlot reslot = new TimeSlot();
-									reslot.slotId = slot.slotId;
-									reslot.timeSlot = slot.timeSlot;
-									reslot.quantity = slot.quantity;
-									reslot.noOfOrders = slot.noOfOrders;
-									returningTimeSlotList.add(reslot);
-								}
-							}
-							if(returningTimeSlotList.size() == 0){
+							if(isStaggeredDelivery){
 								for(TimeSlot slot : timeSlotList){
 									if(totalNoOfQuantity<=0){
 										continue;
 									}
-									if(10-slot.quantity <= 10){
+									if(bikerCapacity-slot.quantity <= bikerCapacity){
 										TimeSlot reslot = new TimeSlot();
 										reslot.slotId = slot.slotId;
 										reslot.timeSlot = slot.timeSlot;
 										reslot.quantity = slot.quantity;
 										reslot.noOfOrders = slot.noOfOrders;
 										returningTimeSlotList.add(reslot);
-										totalNoOfQuantity = totalNoOfQuantity -(10 - slot.quantity);
+										totalNoOfQuantity = totalNoOfQuantity -(bikerCapacity - slot.quantity);
 										System.out.println(returningTimeSlotList);
 										System.out.println("remain qty :"+totalNoOfQuantity);
 									}
 								}
+							} else {
+								for(TimeSlot slot : timeSlotList){
+									if(totalNoOfQuantity + slot.quantity > 8){
+										continue;
+									} else {
+										TimeSlot reslot = new TimeSlot();
+										reslot.slotId = slot.slotId;
+										reslot.timeSlot = slot.timeSlot;
+										reslot.quantity = slot.quantity;
+										reslot.noOfOrders = slot.noOfOrders;
+										returningTimeSlotList.add(reslot);
+									}
+								}
+								if(returningTimeSlotList.size() == 0){
+									for(TimeSlot slot : timeSlotList){
+										if(totalNoOfQuantity<=0){
+											continue;
+										}
+										if(bikerCapacity - slot.quantity <= bikerCapacity){
+											TimeSlot reslot = new TimeSlot();
+											reslot.slotId = slot.slotId;
+											reslot.timeSlot = slot.timeSlot;
+											reslot.quantity = slot.quantity;
+											reslot.noOfOrders = slot.noOfOrders;
+											returningTimeSlotList.add(reslot);
+											totalNoOfQuantity = totalNoOfQuantity -(bikerCapacity - slot.quantity);
+											System.out.println(returningTimeSlotList);
+											System.out.println("remain qty :"+totalNoOfQuantity);
+										}
+									}
+								}
 							}
+							for(TimeSlot tSlot : returningTimeSlotList){
+								JSONObject slotJson = new JSONObject();
+								slotJson.put("slotId", tSlot.slotId);
+								slotJson.put("timeSlot", tSlot.timeSlot);
+								slotJson.put("quantity", tSlot.quantity);
+								slotJson.put("noOfOrders", tSlot.noOfOrders);
+								slotJSONArray.put(slotJson);
+							}
+							System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
+							System.out.println("SLOTS "+returningTimeSlotList);
 						}
-						for(TimeSlot tSlot : returningTimeSlotList){
-							JSONObject slotJson = new JSONObject();
-							slotJson.put("slotId", tSlot.slotId);
-							slotJson.put("timeSlot", tSlot.timeSlot);
-							slotJson.put("quantity", tSlot.quantity);
-							slotJson.put("noOfOrders", tSlot.noOfOrders);
-							slotJSONArray.put(slotJson);
-						}
-						System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
-						System.out.println("SLOTS "+returningTimeSlotList);
 					}
 					bikerJson.put("slotlist", slotJSONArray);
 					bikersArray.put(bikerJson);
@@ -627,7 +939,7 @@ public class TimeSlotFinder {
 
 		return servableKitchens;
 	}
-	
+
 	//********************old code****************************//
 	/*for(Integer kicthenid : kitchenIds){
 	JSONObject kitchenJson = new JSONObject();
@@ -706,6 +1018,55 @@ public class TimeSlotFinder {
 	kitchenJson.put("bikerList", bikersArray);
 	servableKitchens.put(kitchenJson);
 }*/
+
+	public static boolean isItemStockAvailable(int kitchenId, String itemCode,MealTypePojo mealTypePojo){
+		boolean isItemStockAvailable = false;
+		try {
+			SQL:{
+			Connection connection = DBConnection.createConnection();
+			PreparedStatement preparedStatement = null;
+			ResultSet resultSet = null;
+			String sql = "";
+			if(mealTypePojo.isLunchToday()){
+				sql = "select stock from vw_active_kitchen_items where kitchen_id = ? and item_code = ?"
+						+ " and is_active = 'Y'";
+			}else if(mealTypePojo.isLunchTomorrow()){
+				sql = "select stock_tomorrow from vw_active_kitchen_items where kitchen_id = ? and item_code = ?"
+						+ " and is_active_tomorrow = 'Y'";
+			}else if(mealTypePojo.isDinnerToday()){
+				sql = "select dinner_stock from vw_active_kitchen_items where kitchen_id = ? and item_code = ?"
+						+ " and is_active = 'Y'";
+			}else{
+				sql = "select dinner_stock_tomorrow from vw_active_kitchen_items where kitchen_id = ? and item_code = ?"
+						+ " and is_active_tomorrow = 'Y'";
+			}
+			preparedStatement = connection.prepareStatement(sql);
+			try {
+				resultSet = preparedStatement.executeQuery();
+				while (resultSet.next()) {
+					int stock = resultSet.getInt("stock");
+					if(stock>0){
+						isItemStockAvailable = true;
+					}else{
+						isItemStockAvailable = false;
+					}
+				}
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}finally{
+				if(preparedStatement!=null){
+					preparedStatement.close();
+				}if(connection!=null){
+					connection.close();
+				}
+			}
+		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return isItemStockAvailable;
+	}
 
 	/**
 	 * Find eligible kitchens
@@ -1074,7 +1435,7 @@ public class TimeSlotFinder {
 		return bikerList;
 	}
 
-	
+
 
 	public static ArrayList<TimeSlot> findTimeSlot(String boyUserId, int kitchenId, MealTypePojo mealTypePojo,
 			int totalNoOfQuantity){
@@ -1306,7 +1667,7 @@ public class TimeSlotFinder {
 		return timeSlotList;
 	}
 
-	
+
 
 	public static boolean isDifferentCuisineKitchen(ArrayList<Integer> dealingKitchenIds){
 		boolean differentCuisineKitchen = false;
@@ -1392,51 +1753,51 @@ public class TimeSlotFinder {
 		}
 		return slotId;
 	}
-	
+
 	public static int getBikerStock(String boyUserId, int slotID, MealTypePojo mealTypePojo){
 		int currentAvailability=0;
 		try {
 			SQL:{
-					Connection connection = DBConnection.createConnection();
-					PreparedStatement preparedStatement = null;
-					ResultSet resultSet = null;
-					String sql = "";
-					if(mealTypePojo.isLunchToday()){
-						sql= "select ftds.quantity from fapp_timeslot_driver_status ftds "
-							+ " where driver_user_id = ? and time_slot_id = ? and is_lunch='Y' ";
-								
-					}else if(mealTypePojo.isDinnerToday() ){
-						sql= "select ftds.quantity from fapp_timeslot_driver_status ftds "
-								+ " where driver_user_id = ? and time_slot_id = ? and is_lunch='N' ";
-					}else if(mealTypePojo.isLunchTomorrow() ){
-						sql= "select ftds.quantity from fapp_timeslot_driver_status_tommorrow ftds "
-								+ " where driver_user_id = ? and time_slot_id = ? and is_lunch='Y' ";
-					}else{
-						sql= "select ftds.quantity from fapp_timeslot_driver_status_tommorrow ftds "
-								+ " where driver_user_id = ? and time_slot_id = ? and is_lunch='N' ";
-					}
-					try {
-						preparedStatement = connection.prepareStatement(sql);
-						preparedStatement.setString(1, boyUserId);
-						preparedStatement.setInt(2, slotID);
-						resultSet = preparedStatement.executeQuery();
-						while (resultSet.next()) {
-							currentAvailability = resultSet.getInt("quantity");
-						}
-					} catch (Exception e) {
-						System.out.println(e);
-						e.printStackTrace();
-					}finally{
-						if(preparedStatement!=null){
-							preparedStatement.close();
-						}if(connection!=null){
-							connection.close(); 
-						}
-					}
+			Connection connection = DBConnection.createConnection();
+			PreparedStatement preparedStatement = null;
+			ResultSet resultSet = null;
+			String sql = "";
+			if(mealTypePojo.isLunchToday()){
+				sql= "select ftds.quantity from fapp_timeslot_driver_status ftds "
+						+ " where driver_user_id = ? and time_slot_id = ? and is_lunch='Y' ";
+
+			}else if(mealTypePojo.isDinnerToday() ){
+				sql= "select ftds.quantity from fapp_timeslot_driver_status ftds "
+						+ " where driver_user_id = ? and time_slot_id = ? and is_lunch='N' ";
+			}else if(mealTypePojo.isLunchTomorrow() ){
+				sql= "select ftds.quantity from fapp_timeslot_driver_status_tommorrow ftds "
+						+ " where driver_user_id = ? and time_slot_id = ? and is_lunch='Y' ";
+			}else{
+				sql= "select ftds.quantity from fapp_timeslot_driver_status_tommorrow ftds "
+						+ " where driver_user_id = ? and time_slot_id = ? and is_lunch='N' ";
 			}
+			try {
+				preparedStatement = connection.prepareStatement(sql);
+				preparedStatement.setString(1, boyUserId);
+				preparedStatement.setInt(2, slotID);
+				resultSet = preparedStatement.executeQuery();
+				while (resultSet.next()) {
+					currentAvailability = resultSet.getInt("quantity");
+				}
+			} catch (Exception e) {
+				System.out.println(e);
+				e.printStackTrace();
+			}finally{
+				if(preparedStatement!=null){
+					preparedStatement.close();
+				}if(connection!=null){
+					connection.close(); 
+				}
+			}
+		}
 		} catch (Exception e) {
 			// TODO: handle exception
-			
+
 		}
 		return currentAvailability;
 	}

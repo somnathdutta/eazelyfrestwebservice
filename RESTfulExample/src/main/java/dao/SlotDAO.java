@@ -21,6 +21,10 @@ public class SlotDAO {
 		ArrayList<TimeSlot> timeSlotList = new ArrayList<TimeSlot>();
 		ArrayList<Integer> timeSlotIds = new ArrayList<Integer>();
 		boolean firstSlotToday=false;
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
 		try {
 			Connection connection = DBConnection.createConnection();
 			SQL:{
@@ -169,16 +173,16 @@ public class SlotDAO {
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
-							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders < 4 and quantity <11 "
-							/*+ " and assigned_date = current_date and ftds.time_slot_id <4 ";*/
-							+ " and ftds.time_slot_id <4 ";
+							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders <= ? and quantity <= ? ";
+							/*+ " and assigned_date = current_date and ftds.time_slot_id <4 ";
+							+ " and ftds.time_slot_id <4 ";*/
 				}else if(mealTypePojo.isDinnerToday() ){
 					sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders "
 							+ " from fapp_timeslot_driver_status ftds "
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
-							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders < 4 and quantity <11 "
+							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders <= ? and quantity <= ? ";
 							/*+ " and assigned_date = current_date and ftds.time_slot_id >3 ";
 							+ " and ftds.time_slot_id >3 "*/;
 				}else if(mealTypePojo.isLunchTomorrow() ){
@@ -187,23 +191,26 @@ public class SlotDAO {
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
-							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders < 4 and quantity <11 "
+							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders <= ? and quantity <= ? ";
 							/*+ " and assigned_date = current_date and ftds.time_slot_id <4 ";
-							+ " and ftds.time_slot_id <4 "*/;
+							+ " and ftds.time_slot_id <4 "*/
 				}else{
 					sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders "
 							+ " from fapp_timeslot_driver_status_tommorrow ftds "
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
-							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders < 4 and quantity <11 "
+							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders <= ? and quantity <= ? ";
 							/*+ " and assigned_date = current_date and ftds.time_slot_id >3 ";
-							+ " and ftds.time_slot_id >3 "*/;
+							+ " and ftds.time_slot_id >3 "*/
 
 				}
 				try {
 					preparedStatement = connection.prepareStatement(sql);
 					preparedStatement.setString(1, boyUserId);
+					preparedStatement.setInt(2, bikerOrders);
+					preparedStatement.setInt(3, bikerCapacity);
+					
 					resultSet = preparedStatement.executeQuery();
 					//	System.out.println("Not first:: "+preparedStatement);
 					while (resultSet.next()) {
@@ -239,6 +246,65 @@ public class SlotDAO {
 			// TODO: handle exception
 		}
 		System.out.println("Return Length of slot array :: "+timeSlotList.size());
+		return timeSlotList;
+	}
+	
+	public static ArrayList<TimeSlot> getSlotAfter11(String boyUserId, MealTypePojo mealTypePojo){
+		ArrayList<TimeSlot> timeSlotList = new ArrayList<TimeSlot>();
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
+		try {
+			SQL:{
+			Connection connection = DBConnection.createConnection();
+			PreparedStatement preparedStatement = null;
+			ResultSet resultSet = null;
+			String sql ="";
+			if(mealTypePojo.isLunchToday()){
+				sql= "select time_slot_id,time_slot,quantity,no_of_orders from vw_driver_today_status "
+						+" where driver_user_id =? and is_lunch='Y'"
+						+" and is_slot_locked ='N' and no_of_orders <= ? and quantity <= ?"
+						+" order by time_slot_id desc limit 1";
+						
+			}else if(mealTypePojo.isLunchTomorrow() ){
+				sql= "select time_slot_id,time_slot,quantity,no_of_orders from vw_driver_tomorrow_status "
+						+" where driver_user_id =? and is_lunch='Y'"
+						+" and is_slot_locked ='N' and no_of_orders <= ? and quantity <= ?"
+						+" order by time_slot_id desc limit 1";
+			}
+			try {
+				preparedStatement = connection.prepareStatement(sql);
+				preparedStatement.setString(1, boyUserId);
+				preparedStatement.setInt(2, bikerOrders);
+				preparedStatement.setInt(3, bikerCapacity);
+				resultSet = preparedStatement.executeQuery();
+				//	System.out.println("Not first:: "+preparedStatement);
+				while (resultSet.next()) {
+					TimeSlot timeSlot = new TimeSlot();
+					timeSlot.slotId = resultSet.getInt("time_slot_id");
+					timeSlot.timeSlot = resultSet.getString("time_slot");
+					timeSlot.quantity = resultSet.getInt("quantity");
+					timeSlot.noOfOrders = resultSet.getInt("no_of_orders");
+
+					timeSlotList.add(timeSlot);
+				}
+			} catch (Exception e) {
+				System.out.println(e);
+				e.printStackTrace();
+			}finally{
+				if(preparedStatement!=null){
+					preparedStatement.close();
+				}
+				if(connection!=null){
+					connection.close();
+				}
+			}
+		
+		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 		return timeSlotList;
 	}
 	
@@ -293,5 +359,38 @@ public class SlotDAO {
 			// TODO: handle exception
 		}
 		return timeSlotArray;
+	}
+
+	public static String[] getSlotTimings(){
+		String[] slotTimings = new String[2];
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet =null;
+					String sql = "select lunch_from,lunch_to from fapp_slot_timings ";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							slotTimings[0] = resultSet.getString("lunch_from");
+							slotTimings[1] = resultSet.getString("lunch_to");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return slotTimings;
 	}
 }

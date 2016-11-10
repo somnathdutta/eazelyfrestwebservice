@@ -1,5 +1,6 @@
 package com.mkyong.rest;
 
+import java.awt.geom.Area;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -101,6 +102,7 @@ import dao.RoundRobinKitchenFinder;
 import dao.SameUserPlaceOrder;
 import dao.SendMessageDAO;
 import dao.ShareDAO;
+import dao.StockUpdationDAO;
 import dao.TimeSlotFinder;
 import dao.UserDetailsDao;
 
@@ -3505,15 +3507,28 @@ public class DBConnection {
     			//for(int i=0 ; i < orderItemList.size() && i < dealingKitchenIds.size(); i++){
     			for(int i=0 ; i < orderItemList.size() ; i++){	
     			//kitchenQtyList.add(new KitchenStock(dealingKitchenIds.get(i) , orderItemList.get(i).quantity ));
-    				if(orderItemList.get(i).itemTypeId==1)
-    					continue;
+    				//if(orderItemList.get(i).itemTypeId==1)
+    					//continue;
     				kitchenQtyList.add(new KitchenStock(orderItemList.get(i).kitchenId , orderItemList.get(i).quantity ));
     	    	}
     			ArrayList<KitchenStock> updationKitchenStockList = new ArrayList<KitchenStock>();
     			
     			updationKitchenStockList = utility.Utility.findTotalItemsForStockUpdation(kitchenQtyList);
-    			System.out.println("Upadtion kitchen stock list size : "+updationKitchenStockList.size());
-    			updateNewStock(updationKitchenStockList, mealType, deliveryDay);
+    			//System.out.println("Upadtion kitchen stock list size : "+updationKitchenStockList.size());
+    			//updateNewStock(updationKitchenStockList, mealType, deliveryDay);
+    			/*****************************************************************/
+    			/*************************** update stock item wise  **********/
+    			/*****************************************************************/
+    			int updateRows = 0;
+    			for(OrderItems items : orderItemList){
+    				updateRows = StockUpdationDAO.updateKitchenItemStock(items.kitchenId, 
+    						items.itemCode, items.quantity, mealType, deliveryDay);
+    			}
+    			if(updateRows > 0){
+    				System.out.println("********************************");
+    				System.out.println("*** Stock updated ****"+updateRows);
+    				System.out.println("********************************");
+    			}
     			
     			if(!isGuestUser){
     				//updateMyCreditBalance(contactNumber);//Old logic for share and earn
@@ -4837,9 +4852,10 @@ public class DBConnection {
 			PreparedStatement preparedStatement = null;
 			SQL:{
 				String sql = "INSERT INTO fapp_order_item_details( "
-			            +" order_id, category_id, qty,category_price, total_price, cuisine_id,kitchen_id,sub_order_no,item_code,pack_type) "
-			            +" VALUES ( ?, ?, ?, ?, ?, ?, ? ,?,?,?)";
+			            +" order_id, category_id, qty,category_price, total_price, cuisine_id,kitchen_id,sub_order_no,item_code,pack_type, rice_roti) "
+			            +" VALUES ( ?, ?, ?, ?, ?, ?, ? ,?,?,?,?)";
 				try {
+					
 						preparedStatement = connection.prepareStatement(sql);
 						Collections.sort(orderItemList);
 						/*for(int i=0 ; i < orderItemList.size() && i < kitchenIdList.size(); i++){
@@ -4867,6 +4883,8 @@ public class DBConnection {
 				    		preparedStatement.setString(8, orderId.toString()+"/"+(i+1) );
 				    		preparedStatement.setString(9, items.itemCode);
 				    		preparedStatement.setString(10, items.packing);
+				    		preparedStatement.setString(11, items.mealType);
+				    		//System.out.println("KIT Ch ENSSSSSSSSSS ------------ " + preparedStatement);
 				    		preparedStatement.addBatch();
 				    		i++;
 						}
@@ -6516,7 +6534,7 @@ public class DBConnection {
     	return cuisineList;
     }*/
     
-    public static JSONObject fetchAllCuisineWithItemData(String pincode, String deliveryDay, String mobileNo) throws Exception{
+    public static JSONObject fetchAllCuisineWithItemData(String pincode, String deliveryDay, String mobileNo, String area) throws Exception{
     	Connection connection = null;
     	PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
@@ -6555,7 +6573,8 @@ public class DBConnection {
 						}
 						tempCuisine.put("cuisineimage", cuisineImage);
 						tempCuisine.put("cuisinename", resultSet.getString("cuisin_name"));
-						tempCuisine.put("categorylist", fetchCategoriesOfCuisineWithPincode(tempCuisine.getInt("cuisineid"),pincode,connection,deliveryDay,mobileNo));
+						tempCuisine.put("categorylist", fetchCategoriesOfCuisineWithPincode(tempCuisine.getInt("cuisineid"),pincode,
+								connection,deliveryDay,mobileNo,area));
 						//tempCuisine.put("categorylist", fetchCategoriesOfCuisine(tempCuisine.getInt("cuisineid")));
 						cuisinesarrayList.put(tempCuisine);
 					}
@@ -6564,7 +6583,7 @@ public class DBConnection {
 						//http://i.imgur.com/o0HO5pL.png
 			        	allcuisine.put("cuisineimage", "i.imgur.com/o0HO5pL.png");
 			        	allcuisine.put("cuisinename", "All");
-			        	allcuisine.put("categorylist", fetchCategoriesOfAllCuisineWithPincode(pincode,connection,deliveryDay,mobileNo));
+			        	allcuisine.put("categorylist", fetchCategoriesOfAllCuisineWithPincode(pincode,connection,deliveryDay,mobileNo,area));
 			        	cuisinesarrayList.put(allcuisine);
 					}
 					
@@ -6669,7 +6688,7 @@ public class DBConnection {
     }
     
     public static JSONArray fetchCategoriesOfCuisineWithPincode(int CuisineID, String pincode, Connection connection,
-    		String deliveryDay, String mobileNo){
+    		String deliveryDay, String mobileNo, String area){
     	JSONArray categoryJSONArray = new JSONArray();
     	try {
 			SQL:{
@@ -6677,13 +6696,15 @@ public class DBConnection {
     				PreparedStatement preparedStatement = null;
     				ResultSet resultSet = null;
     				String sql = "select distinct category_id,category_name,is_lunch,is_dinner from vw_category_kitchen "
-    						+ " where kitchen_cuisine_id = ? and serving_zipcodes like ? order by category_id ";
+    						+ " where kitchen_cuisine_id = ? and serving_areas like ? order by category_id ";
+    				/*String sql = "select distinct category_id,category_name,is_lunch,is_dinner from vw_category_kitchen "
+    						+ " where kitchen_cuisine_id = ? and serving_zipcodes like ? order by category_id ";*/
     				/*String sql = "select category_id,category_name from food_category "
     						+ " where category_price IS NULL AND cuisine_id = ?";*/
     				try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setInt(1, CuisineID);
-						preparedStatement.setString(2, "%"+pincode+"%");
+						preparedStatement.setString(2, "%"+area+"%");
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
 							JSONObject categoryObject = new JSONObject();
@@ -6703,7 +6724,7 @@ public class DBConnection {
 							if(mealTypeLunch.equalsIgnoreCase("Y") && mealTypeDinner.equalsIgnoreCase("Y")){
 								categoryObject.put("mealtype", "BOTH");
 							}
-							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode, connection,deliveryDay, mobileNo));
+							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode, connection,deliveryDay, mobileNo, area));
 							categoryJSONArray.put(categoryObject);
 						}
 					} catch (Exception e) {
@@ -6764,7 +6785,7 @@ public class DBConnection {
     }
     
     public static JSONArray fetchCategoriesOfAllCuisineWithPincode(String pincode,Connection connection,
-    		String deliveryDay,String mobileNo){
+    		String deliveryDay,String mobileNo, String area){
     	JSONArray categoryJSONArray = new JSONArray();
     	try {
 			SQL:{
@@ -6796,7 +6817,8 @@ public class DBConnection {
 							if(mealTypeLunch.equalsIgnoreCase("Y") && mealTypeDinner.equalsIgnoreCase("Y")){
 								categoryObject.put("mealtype", "BOTH");
 							}
-							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode ,connection, deliveryDay, mobileNo));
+							categoryObject.put("itemlist", fetchItemsWrtCategory( Integer.valueOf(categoryId), pincode ,connection, deliveryDay, 
+									mobileNo, area));
 							categoryJSONArray.put(categoryObject);
 						}
 					} catch (Exception e) {
@@ -7244,24 +7266,37 @@ public class DBConnection {
     public static JSONObject getLocationName() throws JSONException{
     	JSONObject locationNameObj = new JSONObject();
     	JSONArray locationArray = new JSONArray();
-    	Map<String, String> locationMap = new HashMap<String, String>();
-    	try {
+    	Map<String, String> kitchenServingAreas = FetchLocationDAO.kitchenServingAreas();
+    	for (Map.Entry<String, String> me : kitchenServingAreas.entrySet()){ 
+	        JSONObject zip = new JSONObject();
+    		zip.put("areaname", me.getKey());
+    		zip.put("zipcode", "");
+    		locationArray.put(zip);
+	}
+	
+	locationNameObj.put("arealist", locationArray);
+	
+	//locationNameObj.put("arealist", FetchLocationDAO.fetchZipWithKitchenListArray(locationMap));
+	return locationNameObj;
+    	/*try {
 			SQL:{
     			 Connection connection = DBConnection.createConnection();
     			 PreparedStatement preparedStatement = null;
     			 ResultSet resultSet = null;
-    			 String sql = "select locality_name,zip_code from sa_zipcode where is_delete='N' and is_active='Y'";
+    			 String sql = "select serving_areas from fapp_kitchen where is_active='Y'";
+    			// String sql = "select locality_name,zip_code from sa_zipcode where is_delete='N' and is_active='Y'";
     			 //String sql = "select locality_name,zip_code from sa_zipcode where locality_name ILIKE ?'n%' and is_delete='N' and is_active='Y'";
     			 try {
 					preparedStatement = connection.prepareStatement(sql);
 					resultSet = preparedStatement.executeQuery();
 					while (resultSet.next()) {
-						JSONObject name = new JSONObject();
+						/*JSONObject name = new JSONObject();
 						name.put("areaname", resultSet.getString("locality_name"));
 						name.put("zipcode", resultSet.getString("zip_code"));
 						locationArray.put(name);
 						locationMap.put(resultSet.getString("zip_code"), 
 								resultSet.getString("locality_name").toUpperCase());
+						servingAreas.add(resultSet.getString("serving_areas"));
 					}
 				} catch (Exception e) {
 					// TODO: handle exception
@@ -7275,10 +7310,20 @@ public class DBConnection {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-    	locationNameObj.put("arealist", locationArray);
     	
-    	//locationNameObj.put("arealist", FetchLocationDAO.fetchZipWithKitchenListArray(locationMap));
-    	return locationNameObj;
+    	for(String str : servingAreas){
+    		String[] slot = str.split("\\$");
+	    	System.out.println("Slot length:: "+slot.length);
+	    	for(int i=0;i<slot.length;i++){
+	    		System.out.println("SlOT:: "+slot[i]);
+	    		JSONObject name = new JSONObject();
+		    	name.put("areaname", slot[i]);
+				name.put("zipcode", "");
+				locationArray.put(name);
+				System.out.println(name);
+	    	}
+		}*/
+    	
     }
     
     public static JSONObject getLocationNames(String areaName) throws JSONException{
@@ -7703,7 +7748,7 @@ public class DBConnection {
 	}
 	
 	public static JSONArray fetchItemsWrtCategory(int categoryId,String pincode,Connection connection,
-			String deliveryDay, String mobileNo) throws JSONException{
+			String deliveryDay, String mobileNo, String area) throws JSONException{
 		//JSONObject fetchAllCategory = new JSONObject();
 		JSONArray jArray = new JSONArray();
 		/*if( !(categoryId == 78 || categoryId == 79) ){*/
@@ -7720,18 +7765,18 @@ public class DBConnection {
 							sql ="SELECT distinct kitchen_cuisine_id,category_id,item_name,item_code,"
 									+" item_price,item_description,item_image "
 									+" FROM vw_kitchen_items "
-									+" WHERE category_id=? and serving_zipcodes LIKE ? and is_active='Y' order by item_code"	;
+									+" WHERE category_id=? and serving_areas LIKE ? and is_active='Y' order by item_code"	;
 						}else{
 							sql ="SELECT distinct kitchen_cuisine_id,category_id,item_name,item_code,"
 									+" item_price,item_description,item_image "
 									+" FROM vw_kitchen_items "
-									+" WHERE category_id=? and serving_zipcodes LIKE ? and is_active_tomorrow='Y' order by item_code"	;
+									+" WHERE category_id=? and serving_areas LIKE ? and is_active_tomorrow='Y' order by item_code"	;
 						}
 							
 						try {
 							preparedStatement = connection.prepareStatement(sql);
 							preparedStatement.setInt(1, categoryId);
-							preparedStatement.setString(2, "%"+pincode+"%");
+							preparedStatement.setString(2, "%"+area+"%");
 							int serialNo = 0;
 							resultSet = preparedStatement.executeQuery();
 							while (resultSet.next()) {
@@ -7761,19 +7806,19 @@ public class DBConnection {
 							    	
 							    	//isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
 							    	//isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
-							    	 bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true);
-							    	 bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false);
+							    	 bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true, area);
+							    	 bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false, area);
 							    	
-							    	 stock = getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,bikerAvailableKitchensForLunch);
-							    	 dinnerStock = getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,bikerAvailableKitchensForDinner);
+							    	 stock = getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,bikerAvailableKitchensForLunch, area);
+							    	 dinnerStock = getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,bikerAvailableKitchensForDinner, area);
 							    	
 							    	jobject.put("stock", stock);
 							    	jobject.put("lunchstock", stock);
-							    	isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
+							    	isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true, area);
 							    	jobject.put("availableBikerForLunch", isBikerAvailableForLunch);
 							    	
 							    	jobject.put("dinnerstock", dinnerStock);
-							    	isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
+							    	isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false, area);
 							    	jobject.put("availableBikerForDinner", isBikerAvailableForDinner);
 							    	
 							    	if(isBikerAvailableForLunch && isBikerAvailableForDinner){
@@ -7808,19 +7853,21 @@ public class DBConnection {
 								    	
 								    	//isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
 								    	//isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
-								    	 bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true);
-								    	 bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false);
+								    	 bikerAvailableKitchensForLunch = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, true, area);
+								    	 bikerAvailableKitchensForDinner = PlaceOrderDAO.findBikerAvailableKitchens(itemCode, connection, deliveryDay, false, area);
 								    	
-								    	 stock = getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,bikerAvailableKitchensForLunch);
-								    	 dinnerStock = getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,bikerAvailableKitchensForDinner);
+								    	 stock = getItemStock(pincode, itemCode, connection, "LUNCH", deliveryDay,
+								    			 bikerAvailableKitchensForLunch,area);
+								    	 dinnerStock = getItemStock(pincode, itemCode, connection, "DINNER", deliveryDay,
+								    			 bikerAvailableKitchensForDinner,area);
 								    	
 								    	jobject.put("stock", stock);
 								    	jobject.put("lunchstock", stock);
-								    	isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true);
+								    	isBikerAvailableForLunch = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, true, area);
 								    	jobject.put("availableBikerForLunch", isBikerAvailableForLunch);
 								    	
 								    	jobject.put("dinnerstock", dinnerStock);
-								    	isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false);
+								    	isBikerAvailableForDinner = PlaceOrderDAO.isServable(itemCode, connection, deliveryDay, false, area);
 								    	jobject.put("availableBikerForDinner", isBikerAvailableForDinner);
 								    	
 								    	if(isBikerAvailableForLunch && isBikerAvailableForDinner){
@@ -7969,7 +8016,7 @@ public class DBConnection {
 	
 	/*public static Integer getItemStock(Integer itemId, Integer kitchenId){*/
 	public static String getItemStock(String pincode, String itemCode,Connection connection,
-			String mealType, String deliveryDay, String kitchenIds){
+			String mealType, String deliveryDay, String kitchenIds, String area){
     	Integer stock =0;
     	try {
 			SQL:{
@@ -7981,21 +8028,30 @@ public class DBConnection {
     				String sql = "";
     				if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
     					if( !kitchenIds.equalsIgnoreCase("()")){
-    						sql = "select sum(stock)AS stock "
+    						/*sql = "select sum(stock)AS stock "
     								+" from fapp_kitchen_items fki "
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
     								+" where fki.item_code= ? and fki.is_active='Y' "
-    								+" and fk.is_active='Y' and fki.kitchen_id IN "+kitchenIds;
+    								+" and fk.is_active='Y' and fki.kitchen_id IN "+kitchenIds;*/
+    						sql = "select sum(stock) AS stock  "
+	    						+" from vw_active_kitchen_items  "
+	    						+" where item_code = ? "
+	    						+" and is_active='Y' and serving_areas like ? "
+	    						+"  and  kitchen_id IN "+kitchenIds;
     					}else{
-    						sql = "select sum(stock)AS stock "
+    						/*sql = "select sum(stock)AS stock "
     								+" from fapp_kitchen_items fki "
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
     								+" where fki.item_code= ? and fki.is_active='Y' "
-    								+" and fk.is_active='Y' ";
+    								+" and fk.is_active='Y' ";*/
+    						sql = "select sum(stock)AS stock "
+    								+" from vw_active_kitchen_items "
+    								+" where item_code = ? "
+    	    						+" and is_active='Y' and serving_areas like ? ";
     					}
     					/*sql = "select sum(stock)AS stock "
 								+" from fapp_kitchen_items fki "
@@ -8006,21 +8062,31 @@ public class DBConnection {
 								+" and fk.is_active='Y' and fki.kitchen_id IN "+kitchenIds;*/
     				}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW")){
     					if( !kitchenIds.equalsIgnoreCase("()")){
-    						sql = "select sum(stock_tomorrow)AS stock "
+    						/*sql = "select sum(stock_tomorrow)AS stock "
     								+" from fapp_kitchen_items fki "
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
     								+" where fki.item_code= ? and fki.is_active_tomorrow='Y' "
-    								+" and fk.is_active='Y'and fki.kitchen_id IN "+kitchenIds;
+    								+" and fk.is_active='Y'and fki.kitchen_id IN "+kitchenIds;*/
+    						sql = "select sum(stock_tomorrow)AS stock "
+    								+" from vw_active_kitchen_items "
+    								+" where item_code= ? "
+    								+" and serving_areas like ? "
+    								+" and is_active_tomorrow='Y' "
+    								+" and kitchen_id IN "+kitchenIds;
     					}else{
-    						sql = "select sum(stock_tomorrow)AS stock "
+    						/*sql = "select sum(stock_tomorrow)AS stock "
     								+" from fapp_kitchen_items fki "
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
     								+" where fki.item_code= ? and fki.is_active_tomorrow='Y' "
-    								+" and fk.is_active='Y' ";
+    								+" and fk.is_active='Y' ";*/
+    						sql = "select sum(stock_tomorrow)AS stock "
+    								+" from vw_active_kitchen_items "
+    								+" where item_code= ? "
+    								+" and is_active_tomorrow='Y' and serving_areas like ? ";	
     					}
     					/*sql = "select sum(stock_tomorrow)AS stock "
 								+" from fapp_kitchen_items fki "
@@ -8031,21 +8097,31 @@ public class DBConnection {
 								+" and fk.is_active='Y'and fki.kitchen_id IN "+kitchenIds;*/
     				}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY")){
     					if( !kitchenIds.equalsIgnoreCase("()")){
-    						sql = "select sum(fki.dinner_stock)AS stock "
+    						/*sql = "select sum(fki.dinner_stock)AS stock "
     								+" from fapp_kitchen_items fki "
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
     								+" where fki.item_code= ? and fki.is_active='Y' "
-    								+" and fk.is_active='Y' and fki.kitchen_id IN "+kitchenIds;
+    								+" and fk.is_active='Y' and fki.kitchen_id IN "+kitchenIds;*/
+    						sql = "select sum(dinner_stock)AS stock "
+    								+" from vw_active_kitchen_items "
+    								+" where item_code= ? "
+    								+" and is_active='Y' "
+    								+" and serving_areas like ? and kitchen_id IN "+kitchenIds;
     					}else{
-    						sql = "select sum(fki.dinner_stock)AS stock "
+    						/*sql = "select sum(fki.dinner_stock)AS stock "
     								+" from fapp_kitchen_items fki "
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
     								+" where fki.item_code= ? and fki.is_active='Y' "
-    								+" and fk.is_active='Y' ";
+    								+" and fk.is_active='Y' ";*/
+    						sql = "select sum(dinner_stock)AS stock "
+    								+" from vw_active_kitchen_items "
+    								+" where item_code= ? "
+    								+" and is_active='Y' "
+    								+" and serving_areas like ? ";
     					}
     					
     					/*sql = "select sum(fki.dinner_stock)AS stock "
@@ -8058,21 +8134,30 @@ public class DBConnection {
     				}else{
     					
     					if( !kitchenIds.equalsIgnoreCase("()")){
-    						sql = "select sum(fki.dinner_stock_tomorrow)AS stock "
+    						/*sql = "select sum(fki.dinner_stock_tomorrow)AS stock "
     								+" from fapp_kitchen_items fki "
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
     								+" where fki.item_code= ? and fki.is_active_tomorrow='Y' "
-    								+" and fk.is_active='Y' and fki.kitchen_id IN "+kitchenIds;
+    								+" and fk.is_active='Y' and fki.kitchen_id IN "+kitchenIds;*/
+    						sql = "select sum(dinner_stock_tomorrow)AS stock "
+    								+" from vw_active_kitchen_items"
+    								+" where item_code= ? and is_active_tomorrow='Y' "
+    								+" and serving_areas like ? and kitchen_id IN "+kitchenIds;
     					}else{
-    						sql = "select sum(fki.dinner_stock_tomorrow)AS stock "
+    						/*sql = "select sum(fki.dinner_stock_tomorrow)AS stock "
     								+" from fapp_kitchen_items fki "
     								+" join fapp_kitchen fk "
     								+" on fki.kitchen_id = fk.kitchen_id "
     								+" and fk.serving_zipcodes like ? "
     								+" where fki.item_code= ? and fki.is_active_tomorrow='Y' "
-    								+" and fk.is_active='Y' ";
+    								+" and fk.is_active='Y' ";*/
+    						sql = "select sum(dinner_stock_tomorrow)AS stock "
+    								+" from vw_active_kitchen_items"
+    								+" where item_code= ?"
+    								+" and serving_areas like ? "
+    								+" and is_active_tomorrow='Y' ";
     					}
     					/*sql = "select sum(fki.dinner_stock_tomorrow)AS stock "
 								+" from fapp_kitchen_items fki "
@@ -8086,8 +8171,11 @@ public class DBConnection {
     				try {
 						preparedStatement = connection.prepareStatement(sql);
 						
-						preparedStatement.setString(1, "%"+pincode+"%");
-						preparedStatement.setString(2, itemCode);
+						preparedStatement.setString(1, itemCode);
+						//preparedStatement.setString(2, "%"+pincode+"%");
+						preparedStatement.setString(2, "%"+area+"%");
+						/*preparedStatement.setString(1, "%"+pincode+"%");
+						preparedStatement.setString(2, itemCode);*/
 						resultSet = preparedStatement.executeQuery();
 						if (resultSet.next()) {
 							stock = resultSet.getInt("stock");
@@ -9272,6 +9360,12 @@ public class DBConnection {
 								}else{
 									itemobject.put("packing", "");
 								}
+								String riceRoti = resultSet.getString("rice_roti");
+								if(riceRoti != null){
+									itemobject.put("riceRoti", riceRoti);
+								}else {
+									itemobject.put("riceRoti", "");
+								}
 							}else{
 								itemobject.put("quantity", resultSet.getInt("quantity"));
 								itemobject.put("price", resultSet.getDouble("meal_price"));
@@ -9301,6 +9395,8 @@ public class DBConnection {
 									itemobject.put("orderstatus", " ");
 								}
 								itemobject.put("packing", "");
+								
+								itemobject.put("riceRoti", "");
 							}
 							
 							itemsDetailArray.put(itemobject);
