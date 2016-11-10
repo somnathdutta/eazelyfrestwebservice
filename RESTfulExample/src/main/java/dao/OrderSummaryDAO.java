@@ -95,7 +95,12 @@ public class OrderSummaryDAO {
 								JSONObject orderItem = new JSONObject();
 								String itemCode = resultSet.getString("item_code");
 								orderItem.put("itemName", resultSet.getString("item_name"));
-								orderItem.put("quantity", getItemQuanity(kitchenName,deliveryDate,itemCode, mealType));
+								String qnty = getItemQuanity(kitchenName,deliveryDate,itemCode, mealType);
+								if(qnty!=null){
+									orderItem.put("quantity", getItemQuanity(kitchenName,deliveryDate,itemCode, mealType));
+								}else{
+									orderItem.put("quantity", "0");
+								}
 								orderSummaryArray.put(orderItem);
 							}
 						} catch (Exception e) {
