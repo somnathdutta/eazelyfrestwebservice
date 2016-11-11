@@ -48,7 +48,7 @@ public class OrderTimeDAO {
     }
 	
 	public static boolean isOrderTimeBetweenKitchenHours(String initialTime, String finalTime, String currentTime) throws ParseException {
-        String reg = "^([0-1][0-9]|2[0-3]):([0-5][0-9]))$";
+        String reg = "^([0-1][0-9]|2[0-3]):([0-5][0-9])$";
         if (initialTime.matches(reg) && finalTime.matches(reg) && currentTime.matches(reg)) {
             boolean valid = false;
             //Start Time

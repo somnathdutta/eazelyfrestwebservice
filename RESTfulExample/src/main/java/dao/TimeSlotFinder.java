@@ -31,11 +31,28 @@ public class TimeSlotFinder {
 
 	public static JSONObject getFreeSlots(String contactNumber, String deliveryAddress, ArrayList<OrderItems>
 	orderItemList, String mealtype,String deliveryDay, String pincode,  MealTypePojo mealTypePojo, String area) throws JSONException, ParseException{
-		int totalQty = 0;
+		int totalQty = 0;boolean isStaggeredDelivery=false;
+		int totalNoOfQuantity = 0, totalBengQty = 0,totalNIQty = 0;
 		for(OrderItems items : orderItemList){
 			totalQty += items.quantity;
+			if(items.cuisineId == 1){
+				totalBengQty += items.quantity;
+			}
+			if(items.cuisineId == 2){
+				totalNIQty += items.quantity;
+			}
 		}
+		
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
 		System.out.println("Total qty: "+totalQty);
+		
+		if(totalNoOfQuantity>bikerCapacity || totalBengQty>bikerCapacity || totalNIQty>bikerCapacity ){
+			isStaggeredDelivery = true;
+		}
+		
 		JSONObject timsSlotObject = new JSONObject();
 		JSONArray kitchens = findServableKitchens(orderItemList, pincode, mealTypePojo,
 				contactNumber, deliveryAddress, mealtype, deliveryDay, area );
@@ -43,18 +60,18 @@ public class TimeSlotFinder {
 		System.out.println("KITCHEN JSON ARRAY LENGTH:: "+kitchens.length());
 		if(kitchens.length() >0){
 			timsSlotObject.put("status", "200");
+			timsSlotObject.put("staggered", isStaggeredDelivery);
 			timsSlotObject.put("message", "Slot found successfully!");
-			if(kitchens.length()>1 || totalQty>8){
-				System.out.println("##");
+			if(kitchens.length()>1 || totalQty > bikerCapacity){
 				timsSlotObject.put("splitOrder", true);		
 			}else{
-				System.out.println("%%");
 				timsSlotObject.put("splitOrder", false);	
 			}
 			timsSlotObject.put("slotDetails", kitchens);
 
 		}else{
 			timsSlotObject.put("status", "204");
+			timsSlotObject.put("staggered", false);
 			timsSlotObject.put("message", "Sorry!Items sold out at this time!");
 			timsSlotObject.put("splitOrder", false);
 			timsSlotObject.put("slotDetails", new JSONArray());
@@ -73,7 +90,11 @@ public class TimeSlotFinder {
 		JSONArray servableKitchens = new JSONArray();
 		boolean  onlyBengCuisine = false, onlyNiCuisine = false, bengNiCuisine = false,isStaggeredDelivery=false;
 		int totalNoOfQuantity = 0, totalBengQty = 0,totalNIQty = 0;
-
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
+		
 		for(OrderItems items : orderItemList){
 			totalNoOfQuantity += items.quantity;
 		}
@@ -231,15 +252,12 @@ public class TimeSlotFinder {
 			System.out.println(" KITCHEN::"+kitchenItemsOrderList.get(i).kitchenId+"\n");
 
 		}	
-		if(totalNoOfQuantity>8 || totalBengQty>8 || totalNIQty>8 ){
+		if(totalNoOfQuantity>bikerCapacity || totalBengQty>bikerCapacity || totalNIQty>bikerCapacity ){
 			isStaggeredDelivery = true;
 		}
 		System.out.println("IS sttaggered delivery:: "+isStaggeredDelivery);
 		System.out.println("IS ordder spilt::"+isOrdeSplit);
-		int[] bikerCapa = new int[2];
-		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
-		int bikerCapacity = bikerCapa[0];
-		int bikerOrders = bikerCapa[1];
+		
 
 		String[] slotTimings = new String[2];
 		slotTimings = SlotDAO.getSlotTimings();
@@ -561,7 +579,7 @@ public class TimeSlotFinder {
 										if(totalNIQty<=0){
 											continue;
 										}
-										if(8-slot.quantity <= bikerCapacity){
+										if(bikerCapacity-slot.quantity <= bikerCapacity){
 											TimeSlot reslot = new TimeSlot();
 											reslot.slotId = slot.slotId;
 											reslot.timeSlot = slot.timeSlot;
@@ -843,7 +861,7 @@ public class TimeSlotFinder {
 								slotJSONArray.put(slotJson);
 							}
 							System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
-							System.out.println("SLOTS "+returningTimeSlotList);
+							//System.out.println("SLOTS "+returningTimeSlotList);
 						}else{
 							/**************************************************************************************************/
 							/****************************** SIMPLE ORDER WITHOUT SPLIT CODE ***********************************/
@@ -857,7 +875,7 @@ public class TimeSlotFinder {
 								Qty = Qty + slot.quantity;
 							}
 							if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
-								if(totalNoOfQuantity > 30 - Qty){
+								if(totalNoOfQuantity > 20 - Qty){
 									continue;
 								}
 							}else{
@@ -887,7 +905,7 @@ public class TimeSlotFinder {
 								}
 							} else {
 								for(TimeSlot slot : timeSlotList){
-									if(totalNoOfQuantity + slot.quantity > 8){
+									if(totalNoOfQuantity + slot.quantity > bikerCapacity){
 										continue;
 									} else {
 										TimeSlot reslot = new TimeSlot();
@@ -926,7 +944,7 @@ public class TimeSlotFinder {
 								slotJSONArray.put(slotJson);
 							}
 							System.out.println("::::::::::::::::::::Biker ends here:::::::::::::::::::::::::::::::::");
-							System.out.println("SLOTS "+returningTimeSlotList);
+							//System.out.println("SLOTS "+returningTimeSlotList);
 						}
 					}
 					bikerJson.put("slotlist", slotJSONArray);
@@ -1640,7 +1658,7 @@ public class TimeSlotFinder {
 							timeSlotJson.put("slotId", resultSet.getInt("time_slot_id"));
 							timeSlotJson.put("timeSlot", resultSet.getString("time_slot"));
 							timeSlotJson.put("quantity", resultSet.getInt("quantity"));
-							if( (timeSlotJson.getInt("quantity")+totalNoOfQuantity) > 8){
+							if( (timeSlotJson.getInt("quantity")+totalNoOfQuantity) > bikercapacity){
 								///Skip the slot
 							}else{
 								timeSlotArray.put(timeSlotJson);

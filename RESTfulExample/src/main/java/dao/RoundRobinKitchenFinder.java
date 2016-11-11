@@ -843,6 +843,10 @@ public class RoundRobinKitchenFinder {
 	
 	public static int totalFreeSlots(String bikerUserId, MealTypePojo mealTypePojo ){
 		int noOfFreeSlots = 0 ;
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
 		try {
 			SQL:{
 			
@@ -862,7 +866,7 @@ public class RoundRobinKitchenFinder {
 								+" vw_driver_today_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and is_lunch='Y' "
-								+" and (quantity<10 or no_of_orders <2)" ; 
+								+" and (quantity<? or no_of_orders <?)" ; 
 					}else if(mealTypePojo.isLunchTomorrow()){
 						/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
@@ -875,7 +879,7 @@ public class RoundRobinKitchenFinder {
 								+" vw_driver_tomorrow_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N'  and is_lunch='Y' "
-								+" and (quantity<10 or no_of_orders <2)" ;
+								+" and (quantity<? or no_of_orders <?)" ;
 					}else if(mealTypePojo.isDinnerToday()){
 						/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
@@ -888,7 +892,7 @@ public class RoundRobinKitchenFinder {
 								+" vw_driver_today_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and is_lunch='N' "
-								+" and (quantity<10 or no_of_orders <2)" ; 
+								+" and (quantity<? or no_of_orders <?)" ; 
 					}else{
 						/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
@@ -901,12 +905,14 @@ public class RoundRobinKitchenFinder {
 								+" vw_driver_tomorrow_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and is_lunch='N' "
-								+" and (quantity<10 or no_of_orders <2)" ;
+								+" and (quantity<? or no_of_orders <?)" ;
 					}
 					
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, bikerUserId);
+						preparedStatement.setInt(2, bikerCapacity);
+						preparedStatement.setInt(3, bikerOrders);
 						resultSet = preparedStatement.executeQuery();
 						if(resultSet.next())
 								noOfFreeSlots = resultSet.getInt("no_of_free_slots");
@@ -923,7 +929,6 @@ public class RoundRobinKitchenFinder {
 		} catch (Exception e) {
 			// TODO: handle exception
 		} 
-		System.out.println("Free slots for "+bikerUserId+" is :: "+noOfFreeSlots);
 		return noOfFreeSlots ;
 	}
 	

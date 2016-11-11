@@ -182,8 +182,8 @@ public class Category {
 			@FormParam("deliveryaddress")String deliveryAddress,
 			@FormParam("instruction")String instruction
 			/*@FormParam("email")String email*/) throws JSONException{
-
-		System.out.println("saveaddress webservice is called * * * * * * *with address type-->"+addressType+" and phone no--->"+phNumber+" user-->"+user);
+		System.out.println("---------------------------------------------");
+		System.out.println("saveaddress webservice is called * * * * * * *with address type-->"+addressType+" user-->"+user);
 		System.out.println("Mailid->"+mailId+" name->"+name+" location->"+location+" pincode->"+pincode);
 		//System.out.println("email-->"+email);
 		System.out.println("user length-->"+user.length());
@@ -198,7 +198,7 @@ public class Category {
 				pincode,user,deliveryZone.trim(),deliveryAddress.trim(),instruction.trim());
 
 		System.out.println("saveaddress webservice json response::"+saveAddress);
-
+		System.out.println("----------------------------------------------");
 		return saveAddress;
 	}
 
@@ -1829,12 +1829,18 @@ public class Category {
 			@FormParam("deliveryday")String deliveryDay,
 			@FormParam("mobileNo")String mobileNo,
 			@FormParam("area")String area) throws Exception{
-		System.out.println("***********************************************");
+		System.out.println("-------------------------------------------------------");
 		System.out.println("***** fetchcuisine webservice called ***************");
 		System.out.println(" Pincode: "+pincode+" Day: "+deliveryDay+" Area: "+area);
 		JSONObject jsonObject = new JSONObject();
-		jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode, deliveryDay, mobileNo,area);
-		System.out.println("********** fetchcuisine ended here ***************");
+		if(area!=null){
+			jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode, deliveryDay, mobileNo,area);
+		}else{
+			jsonObject.put("status", "204");
+			jsonObject.put("message", "Currently we are not serving in this zip code!");
+			jsonObject.put("cuisinelist", new JSONArray());
+		}
+		System.out.println("------------------------------------------------------");
 		return jsonObject;
 		/*if(mobileNo!=null){
 			System.out.println("Mobile no: "+mobileNo+" length :: "+mobileNo.length());

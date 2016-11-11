@@ -490,7 +490,6 @@ public class DBConnection {
     	String pincode,String user,
     	String deliveryZone,String deliveryAddress,String instruction) throws JSONException{
     	
-    	System.out.println("city - "+city+" location-"+location);
     	Boolean inserted = false;
     	JSONObject saveAddress =  new JSONObject();
     	String contactName = getUserName(user);
@@ -568,7 +567,7 @@ public class DBConnection {
     							preparedStatement.setNull(11, Types.NULL);
     						}*/
     						if(deliveryZone!=null){
-    							preparedStatement.setString(6, toCamelCase(deliveryZone) );
+    							preparedStatement.setString(6, deliveryZone.trim() );
     						}else{
     							preparedStatement.setNull(6, Types.NULL);
     						}
@@ -585,7 +584,6 @@ public class DBConnection {
     						preparedStatement.setString(9, user);
     						
     						preparedStatement.setString(10, addressType.toUpperCase() );
-    						System.out.println(preparedStatement);
     						int count  = preparedStatement.executeUpdate();
     						if(count>0){
     							inserted = true;
@@ -593,7 +591,7 @@ public class DBConnection {
     						}
     					} catch (Exception e) {
     						System.out.println(" - - - EXCEPTION AT UPDATE ADDRESS - -  - ");
-    						System.out.println(e);
+    						e.printStackTrace();
     					}finally{
     						if(preparedStatement!=null){
     							preparedStatement.close();
@@ -614,7 +612,7 @@ public class DBConnection {
 							System.out.println("Email updated in all addresses!");
 						}
 					} catch (Exception e) {
-						System.out.println(e);
+						e.printStackTrace();
 					}finally{
 						if(preparedStatement!=null){
 							preparedStatement.close();
@@ -1041,7 +1039,7 @@ public class DBConnection {
     				}
     			}else{
         			jsonObject.put("status", false);
-        			jsonObject.put("message", "User already exists");
+        			jsonObject.put("message", "The mobile number is already registered");
         		}
     		}else{
     			jsonObject.put("status", false);
@@ -1060,7 +1058,7 @@ public class DBConnection {
     			jsonObject.put("message", "Thank you for registration!");
     		}else{
     			jsonObject.put("status", false);
-    			jsonObject.put("message", "User already exists");
+    			jsonObject.put("message", "The mobile number is already registered");
     		}
     	}
     		/*try {

@@ -250,7 +250,7 @@ public class AddressDAO {
 						}
 					} catch (Exception e) {
 						// TODO: handle exception
-						System.out.println(e);
+						e.printStackTrace();
 					}finally{
 						if(preparedStatement!=null){
 							preparedStatement.close();
