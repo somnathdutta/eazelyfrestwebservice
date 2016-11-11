@@ -2654,7 +2654,10 @@ public class Category {
 	@Path("/setItemDetails")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject setItemDetails(@FormParam("kitchenId")String kitchenName) throws JSONException{
+		System.out.println("--------------------------------------");
+		System.out.println("setItemDetails api called for: "+kitchenName);
 		JSONObject setItemJson = SetItemDetailsDao.fetchSetDetails(kitchenName);
+		System.out.println("--------------------------------------");
 		return setItemJson;
 		
 	}
