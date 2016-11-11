@@ -53,6 +53,7 @@ import dao.ContactUsDAO;
 import dao.FaqDAO;
 import dao.FetchAlaCarteItemDAO;
 import dao.FetchBannersDAO;
+import dao.FetchLocationDAO;
 import dao.ForgotPassword;
 import dao.ItemDAO;
 import dao.KitchenDeliverOrderDAO;
@@ -1120,7 +1121,7 @@ public class Category {
 		ArrayList<TimeSlot> dealingTimeSlots = new ArrayList<TimeSlot>();
 		ArrayList<Integer> kids= new ArrayList<Integer>();
 		MealTypePojo mealTypePojo = new MealTypePojo();
-		
+
 		Set<Integer> servingKitchenIds = new HashSet<Integer>();
 
 		for(String str : timeSlotDetails){
@@ -1207,7 +1208,7 @@ public class Category {
 		}
 		System.out.println("TIME SLOT::::::::::"+dealingTimeSlots);
 		Set<Integer> kitchens = new HashSet<Integer>();
-		
+
 		if(dealingTimeSlots.size() ==0 ){
 			for(TimeSlot slot : timeSlotList){
 				if(!kitchens.contains(slot.kitchenID)){
@@ -1217,7 +1218,7 @@ public class Category {
 					mealTypePojo.setSlotId(slot.slotId);
 				}
 			}
-			
+
 			for(int i=0;i<orderItemList.size();i++){
 				TimeSlot slot = dealingTimeSlots.get(0);
 				TimeSlot newSlot = new TimeSlot();
@@ -1228,15 +1229,15 @@ public class Category {
 				newSlot.slotId = slot.slotId;
 				dealingTimeSlots.add(newSlot);
 			}
-			
+
 			System.out.println("New dealing slots:"+dealingTimeSlots);
 		}
-		
-		
+
+
 		//slot.setQuantity(slot.quantity);
 
-	
-	/*	
+
+		/*	
 			}else{
 				for(TimeSlot slot : timeSlotList){
 					    if(slot.quantity <1){
@@ -1259,59 +1260,59 @@ public class Category {
 
 			}*/
 
-	System.out.println("Total no of quantites:: "+	totalNoOfQuantity );
+		System.out.println("Total no of quantites:: "+	totalNoOfQuantity );
 
-	if(isSttagegredDelivery){
-		System.out.println("Staggred delivery Dealing time slotss: "+dealingTimeSlots);
-	}else{
-		System.out.println("Dealing time slotss: "+dealingTimeSlots);
-	}
+		if(isSttagegredDelivery){
+			System.out.println("Staggred delivery Dealing time slotss: "+dealingTimeSlots);
+		}else{
+			System.out.println("Dealing time slotss: "+dealingTimeSlots);
+		}
 
 
-	if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
-		mealTypePojo.setLunchToday(true);
-		mealTypePojo.setQuantity(totalNoOfQuantity);
-	}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY") ){
-		mealTypePojo.setDinnerToday(true);
-		mealTypePojo.setQuantity(totalNoOfQuantity);
-	}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW") ){
-		mealTypePojo.setLunchTomorrow(true);
-		mealTypePojo.setQuantity(totalNoOfQuantity);
-	}else{
-		mealTypePojo.setDinnerTomorrow(true);
-		mealTypePojo.setQuantity(totalNoOfQuantity);
-	}
-	System.out.println("It is subscription order: -"+sub);
-	/*if(orderType.equalsIgnoreCase("SUBSCRIPTION")){*/
-	if(sub){
-		//place subscription order
-		System.out.println("Subscription order. . .");
-		/*orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactName,
+		if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
+			mealTypePojo.setLunchToday(true);
+			mealTypePojo.setQuantity(totalNoOfQuantity);
+		}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY") ){
+			mealTypePojo.setDinnerToday(true);
+			mealTypePojo.setQuantity(totalNoOfQuantity);
+		}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW") ){
+			mealTypePojo.setLunchTomorrow(true);
+			mealTypePojo.setQuantity(totalNoOfQuantity);
+		}else{
+			mealTypePojo.setDinnerTomorrow(true);
+			mealTypePojo.setQuantity(totalNoOfQuantity);
+		}
+		System.out.println("It is subscription order: -"+sub);
+		/*if(orderType.equalsIgnoreCase("SUBSCRIPTION")){*/
+		if(sub){
+			//place subscription order
+			System.out.println("Subscription order. . .");
+			/*orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactName,
 					contactNumber, city, location, flatNumber,streetName,pincode,landmark , subscriptiontype,
 					getLocationId(location, city), day, orderItemList);*/
-		System.out.println("deliverypincode-"+pincode+" dZone--"+deliveryZone+" dAdd--"+deliveryAddress+" ins - -"+instruction);
-		//orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactNumber
-		//		, city, location,pincode, subscriptiontype , deliveryZone, deliveryAddress, instruction
-		//		, day, orderItemList);
-		/*orderPlaced.put("success", "subscription_success");*/
-		System.out.println("status send to app--"+orderPlaced);
-		return orderPlaced; 
-	}else{
-		//place regular order
-		System.out.println("Regular order. . .");
+			System.out.println("deliverypincode-"+pincode+" dZone--"+deliveryZone+" dAdd--"+deliveryAddress+" ins - -"+instruction);
+			//orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactNumber
+			//		, city, location,pincode, subscriptiontype , deliveryZone, deliveryAddress, instruction
+			//		, day, orderItemList);
+			/*orderPlaced.put("success", "subscription_success");*/
+			System.out.println("status send to app--"+orderPlaced);
+			return orderPlaced; 
+		}else{
+			//place regular order
+			System.out.println("Regular order. . .");
 
-		/*orderPlaced = DBConnection.placeOrder(mailid, contactName,
+			/*orderPlaced = DBConnection.placeOrder(mailid, contactName,
 			contactNumber, city, location, flatNumber,streetName,pincode,landmark , 
 			getLocationId(location, city),mealtype,timeslot, orderItemList,
 			deliveryZone,deliveryAddress,instruction);*/
-		orderPlaced = DBConnection.placeOrder(userType, mailid, contactNumber, guestName,
-				city, location,pincode, getLocationId(location, city),mealType,timeslot, orderItemList,
-				deliveryZone,deliveryAddress,instruction,deliveryDay,payAmount,credit, payType , totalNoOfQuantity, 
-				mealTypePojo , dealingTimeSlots, servingKitchenIds, promoCode );
-		return orderPlaced;
-	}
+			orderPlaced = DBConnection.placeOrder(userType, mailid, contactNumber, guestName,
+					city, location,pincode, getLocationId(location, city),mealType,timeslot, orderItemList,
+					deliveryZone,deliveryAddress,instruction,deliveryDay,payAmount,credit, payType , totalNoOfQuantity, 
+					mealTypePojo , dealingTimeSlots, servingKitchenIds, promoCode );
+			return orderPlaced;
+		}
 
-}
+	}
 
 
 
@@ -1786,10 +1787,21 @@ public class Category {
 	}
 	
 	@POST
+	@Path("/fetchlocationname")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchLocationList() throws JSONException{
+		System.out.println("---------------------------------------------------------");
+		System.out.println("* * * fetchlocationname webservice is called * * * * * * ");
+		JSONObject jobjLocation= FetchLocationDAO.fetchLocationOfKitchen();
+		System.out.println("---------------------------------------------------------");
+		return jobjLocation;
+	}
+	
+	@POST
 	@Path("/fetchBanners")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchBanners() throws Exception{
-	   System.out.println("***************************************");
+		System.out.println("---------------------------------------------------------");
 		System.out.println("fetchBanners webservice is called...");
 	
 		JSONObject jobjBanner = new JSONObject();
@@ -1806,7 +1818,7 @@ public class Category {
 			jobjBanner.put("bannerList", bannerList);
 		}
 		System.out.println("fetchBanners webservice end..."+bannerList.length());
-		System.out.println("***************************************");
+		System.out.println("---------------------------------------------------------");
 		return jobjBanner;
 	}
 	
@@ -1914,17 +1926,6 @@ public class Category {
 		return jobjLocation;
 	}
 	
-	@POST
-	@Path("/fetchlocationname")
-	@Produces(MediaType.APPLICATION_JSON)
-	public JSONObject fetchLocationList() throws JSONException{
-		System.out.println("*** fetchlocationnames webservice is called * * * * * * * ");
-	
-		JSONObject jobjLocation= DBConnection.getLocationName();
-	
-		//System.out.println("End of fetchservinglocation webservice * * * * * * * * * * * * *");
-		return jobjLocation;
-	}
 	
 	@POST
 	@Path("/fetchlocationnamelist")
@@ -2649,7 +2650,6 @@ public class Category {
 	 * @throws JSONException 
 	 * 
 	 * */
-	
 	@POST
 	@Path("/setItemDetails")
 	@Produces(MediaType.APPLICATION_JSON)

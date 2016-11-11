@@ -1,6 +1,5 @@
 package com.mkyong.rest;
 
-import java.awt.geom.Area;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
