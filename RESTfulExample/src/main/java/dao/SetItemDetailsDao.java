@@ -12,17 +12,20 @@ import com.mkyong.rest.DBConnection;
 
 public class SetItemDetailsDao {
 
-	public static JSONObject fetchSetDetails() throws JSONException{
+	public static JSONObject fetchSetDetails(String kitchenName) throws JSONException{
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
 		JSONObject jsonObject = new JSONObject();
 		JSONArray setItems = new JSONArray();
-		String sql = "select item_code, item_name, item_description, set_name, set_id from vw_set_item_food_details where item_active = 'Y' ";
+		String sql = "select item_code, item_name, item_description, set_name, set_id from vw_set_item_food_details_with_kitchen"
+				+ " where item_active = 'Y' and kitchen_id=(select kitchen_id from fapp_kitchen where kitchen_name = ?)";
+		//String sql = "select item_code, item_name, item_description,is_active,is_active_tomorrow from vw_all_kitchen_items where kitchen_name = ?";
 		try {
 			connection = DBConnection.createConnection();
 			try {
 				preparedStatement = connection.prepareStatement(sql);
+				preparedStatement.setString(1, kitchenName);
 				resultSet = preparedStatement.executeQuery();
 				while (resultSet.next()) {
 					JSONObject itemjson = new JSONObject();

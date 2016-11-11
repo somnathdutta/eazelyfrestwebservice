@@ -299,14 +299,14 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject userLogin(@FormParam("mobileNumber")String mobileNo,
 			@FormParam("password")String password ) throws JSONException{
-		System.out.println("*** userlogin ** "+mobileNo+" is trying for logging with password "+password+" * * * *");
+		System.out.println("-----------------------------------------");
+		System.out.println(" userlogin api called ");
+		System.out.println(" MobileNo "+mobileNo+" Password "+password);
 		JSONObject object ; 
-
 		/*object = DBConnection.checkUserlogin(mobNo, password);*/
 		object = LoginDAO.checkUserlogin(mobileNo, password);
-
-		System.out.println("User login webservice json response status::"+object);
-
+		System.out.println(object);
+		System.out.println("-----------------------------------------");
 		return object;
 
 	}
@@ -2653,8 +2653,8 @@ public class Category {
 	@POST
 	@Path("/setItemDetails")
 	@Produces(MediaType.APPLICATION_JSON)
-	public JSONObject setItemDetails() throws JSONException{
-		JSONObject setItemJson = SetItemDetailsDao.fetchSetDetails();
+	public JSONObject setItemDetails(@FormParam("kitchenId")String kitchenName) throws JSONException{
+		JSONObject setItemJson = SetItemDetailsDao.fetchSetDetails(kitchenName);
 		return setItemJson;
 		
 	}

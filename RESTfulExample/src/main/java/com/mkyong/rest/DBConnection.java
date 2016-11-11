@@ -98,11 +98,13 @@ import dao.FindKitchensByRoundRobin;
 import dao.Invoice;
 import dao.OrderDetailsDAO;
 import dao.OrderItemDAO;
+import dao.OrderTimeDAO;
 import dao.PlaceOrderDAO;
 import dao.RoundRobinKitchenFinder;
 import dao.SameUserPlaceOrder;
 import dao.SendMessageDAO;
 import dao.ShareDAO;
+import dao.SlotDAO;
 import dao.StockUpdationDAO;
 import dao.TimeSlotFinder;
 import dao.UserDetailsDao;
@@ -3550,7 +3552,19 @@ public class DBConnection {
     				}
     			}
     			isOrderPlaced.put("status", true);
-    			isOrderPlaced.put("message", "Your order placed successfully!");
+    			java.util.Date date = new java.util.Date();
+    			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+				String currentTime = sdf.format(date);
+				System.out.println("Order time: "+currentTime);
+				String[] orderTimings = new String[2];
+				orderTimings = OrderTimeDAO.getOrderTimings();
+				String initialTimings = orderTimings[0];
+				String finalTimings = orderTimings[1];
+				if(!OrderTimeDAO.isOrderTimeBetweenKitchenHours(initialTimings, finalTimings, currentTime) ){
+					isOrderPlaced.put("message", "Our kitchen is closed now,when it will open the order will be accepted!");
+				}else{
+					isOrderPlaced.put("message", "Your order placed successfully!");
+				}
     			isOrderPlaced.put("success", getRecentlyPlacedRegularOrderDetails(orderId));
     			//return isOrderPlaced;
     		}else{
