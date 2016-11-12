@@ -14,6 +14,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +50,7 @@ import dao.AllItemsDAO;
 import dao.BikerDAO;
 import dao.BookDriver;
 import dao.CallPickJiBikerDAO;
+import dao.ChangePasswordDAO;
 import dao.ContactUsDAO;
 import dao.FaqDAO;
 import dao.FetchAlaCarteItemDAO;
@@ -322,13 +324,17 @@ public class Category {
 		System.out.println("Sign up webservice is called...");
 		System.out.println("name--"+name+" email-"+email+"  number-"+contactNumber+" password-"+password+
 				"Referel code: "+referalCode);
-		JSONObject object ; 
-
-		object = DBConnection.signUp(name, email, contactNumber,  password, referalCode);
+		JSONObject jsonObject = new JSONObject(); 
+		if(contactNumber.trim().length()==0){
+			jsonObject.put("status", false);
+			jsonObject.put("message", "Contact number required!");
+		}else{
+			jsonObject = DBConnection.signUp(name, email, contactNumber,  password, referalCode);
 		//object = DBConnection.signUp(name,  contactNumber, password);
-		System.out.println("Sign up status::"+object);
+		}
+		System.out.println("Sign up status::"+jsonObject);
 
-		return object;
+		return jsonObject;
 	}
 
 	@POST
@@ -347,14 +353,17 @@ public class Category {
 	@Path("/forgotPassword")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject forgotPassword(@FormParam("email")String email) throws Exception{
+		System.out.println("-----------------------------------------------------------");
 		System.out.println("forgotPassword webservice is called...with mail id-->"+email);
 		JSONObject object = new JSONObject() ; 
 		if(ForgotPassword.emailExists(email)){
 			object = DBConnection.forgotPassword(email);
 		}else{
-			object.put("status", false);
+			object.put("status", "204");
+			object.put("message", "Email id is not registered!");
 		}
 		System.out.println("forgotPassword status::"+object);
+		System.out.println("-----------------------------------------------------------");
 		return object;
 	}
 
@@ -365,12 +374,15 @@ public class Category {
 			@FormParam("phonenumber")String phoneNumber,
 			@FormParam("oldpassword")String oldPassword,
 			@FormParam("newpassword")String newPassword) throws JSONException{
-		System.out.println("Phnumber--->"+phoneNumber);
-		System.out.println("Old password---->"+oldPassword);
+		System.out.println("------------------------------------------------------");
+		System.out.println(" changepassword api called ");
+		System.out.println("Phnumber--->"+phoneNumber+" Old password---->"+oldPassword);
 		System.out.println("New password--->"+newPassword);
 		JSONObject changepasswordObject ; 
-		changepasswordObject = DBConnection.changePassword(phoneNumber, oldPassword, newPassword);
-		System.out.println("change password json response::"+changepasswordObject);
+		changepasswordObject = ChangePasswordDAO.changePassword(phoneNumber, oldPassword, newPassword);
+		System.out.println(changepasswordObject);
+		System.out.println("------------------------------------------------------");
+		
 		return changepasswordObject;
 	}
 
@@ -1961,10 +1973,10 @@ public class Category {
 	@Path("/fetchFaq")
 	@Produces(MediaType.APPLICATION_JSON)
 	public static JSONObject fetchFaqList() throws JSONException{
-		System.out.println("************************************************************");
+		System.out.println("-----------------------------------------------------");
 		System.out.println("***** fetchFaq webservice  * * * * * * * * * * * * *");
 		JSONObject faqJsonObject = FaqDAO.fetchAllFaqs();
-		System.out.println("***** fetchFaq webservice  ends* * * * * * * * * *  *");
+		System.out.println("-----------------------------------------------------");
 		return faqJsonObject;
 	}
 	
@@ -1972,10 +1984,10 @@ public class Category {
 	@Path("/fetchShareEarn")
 	@Produces(MediaType.APPLICATION_JSON)
 	public static JSONObject fetchShareEarn() throws JSONException{
-		System.out.println("************************************************************");
+		System.out.println("-----------------------------------------------------------");
 		System.out.println("***** fetchShareEarn webservice  * * * * * * * * * * * * *");
 		JSONObject faqJsonObject = ShareDAO.fetchShareEarn();
-		System.out.println("***** fetchShareEarn webservice  ends* * * * * * * * * *  *");
+		System.out.println("-----------------------------------------------------------");
 		return faqJsonObject;
 	}
 	
@@ -2016,10 +2028,16 @@ public class Category {
 	@Path("/privacyPolicy")
 	@Produces(MediaType.APPLICATION_JSON)
 	public static JSONObject privacyPolicy() throws JSONException{
-		System.out.println("************************************************************");
-		System.out.println("***** privacyPolicy webservice  * * * * * * * * * * * * *");
+		System.out.println("---------------------------------------------------------");
+		Date date = new Date();
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		String currentTime = sdf.format(date);
+		
+		System.out.println("***** privacyPolicy webservice  * * * * * * * * * * * * *"+currentTime);
 		JSONObject faqJsonObject = PrivacyPolicyDAO.getPrivacyPolicy();
-		System.out.println("***** privacyPolicy webservice  ends* * * * * * * * * *  *");
+		Date endate = new Date();
+		String rcurrentTime = sdf.format(endate);
+		System.out.println("------- privacyPolicy webservice ends------------------*"+rcurrentTime);
 		return faqJsonObject;
 	}
 	

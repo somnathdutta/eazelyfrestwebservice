@@ -197,7 +197,7 @@ public class DBConnection {
 		
 	}
     
-    private static String getPasswordFromDB(String emailId){
+    public static String getPasswordFromDB(String emailId){
     	String password = "";
     	try {
     			Connection connection = DBConnection.createConnection();
@@ -234,27 +234,28 @@ public class DBConnection {
     }
     
     public static JSONObject forgotPassword(String receiverEmailID) throws IOException{
-    	
+    	JSONObject jsonObject = new JSONObject();
     	if(mailSender (receiverEmailID, "Regarding forgot password from eazelyf app", getPasswordFromDB(receiverEmailID) )){
-    		JSONObject jsonObject = new JSONObject();
     		try {
-				jsonObject.put("status", true);
+				jsonObject.put("status", "200");
+				jsonObject.put("message", "Password sent to your mailId "+receiverEmailID);
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-    		return jsonObject;
+    		
     	}else{
-    		JSONObject jsonObject = new JSONObject();
+    		//JSONObject jsonObject = new JSONObject();
     		try {
-				jsonObject.put("status", false);
+				jsonObject.put("status", "204");
+				jsonObject.put("message", "Invalid email Id given");
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-    		return jsonObject;
+    		//return jsonObject;
     	}
-    	
+    	return jsonObject;
     }
     
     public static boolean mailSender(String receiverEmailID, String emailSubject,
@@ -1288,7 +1289,7 @@ public class DBConnection {
     	return balanceObject;
     }
     
-    private static Boolean isValidPassword(String oldPassword,  String mobNo){
+    public static Boolean isValidPassword(String oldPassword,  String mobNo){
     	Boolean isValid = false;
     	try {
 			SQL:{
