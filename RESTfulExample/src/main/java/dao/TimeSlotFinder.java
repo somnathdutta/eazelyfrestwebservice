@@ -195,7 +195,7 @@ public class TimeSlotFinder {
 		for(Integer kitchen : kitchenIds){
 			KitchenStock kitchenStock = new KitchenStock();
 			kitchenStock.kitchenId = kitchen;
-			kitchenStock.stock = SameUserPlaceOrder.getKitchenCurrentStock(kitchen, mealTypePojo);
+			kitchenStock.stock = SameUserPlaceOrder.getKitchenCurrentStock(kitchen, mealTypePojo, orderItemList);
 			kitchenStockList.add(kitchenStock);
 		}
 		Collections.sort(orderItemList);
@@ -747,13 +747,31 @@ public class TimeSlotFinder {
 				System.out.println("Final bikerlist : "+bikerList);
 
 				for(String bikerUserId : bikerList){
+					System.out.println("Inside biker list loop . . . ");
 					if(totalNoOfQuantity < 1){
 						break;
 					}
 					JSONObject bikerJson = new JSONObject();
 					JSONArray itemsArrray = new JSONArray();
 					bikerJson.put("bikerUserId", bikerUserId);
-					for(OrderItems orders : kitchenOrderItems){
+					System.out.println("kitchenOrderItems:: "+kitchenOrderItems.size());
+					for(OrderItems orders : orderItemList){
+						//System.out.println("kicthenid:: "+kitchenid);
+						System.out.println("* * * * ");
+						System.out.println(orders.cuisinName+" "+orders.cuisineId+" "+orders.itemName+" "+orders.itemCode);
+						
+						JSONObject items = new JSONObject();
+						items.put("cuisineid", orders.getCuisineId());
+						items.put("cuisine", orders.getCuisinName());
+						items.put("itemName", orders.getItemName());
+						items.put("itemCode", orders.getItemCode());
+						items.put("stock", ItemDAO.itemCurrentStock(kitchenid, orders.getItemCode(), mealTypePojo));
+						items.put("quanity", orders.getQuantity());
+						itemsArrray.put(items);
+					}
+					System.out.println("- - -Item array size: "+itemsArrray.length());
+					//old code
+					/*for(OrderItems orders : kitchenOrderItems){
 						System.out.println("Orders kitchen:: "+orders.kitchenId);
 						System.out.println("kicthenid:: "+kitchenid);
 						if(orders.kitchenId==kitchenid){
@@ -766,7 +784,7 @@ public class TimeSlotFinder {
 							items.put("quanity", orders.getQuantity());
 							itemsArrray.put(items);
 						}
-					}
+					}*/
 					bikerJson.put("itemDetails", itemsArrray );
 
 					JSONArray slotJSONArray = new JSONArray();
@@ -780,6 +798,8 @@ public class TimeSlotFinder {
 						if(OrderTimeDAO.isTimeBetweenTwoTime(initialTimings, finalTimings, currentTime) //showing lunch slot 2-3 for order time 11-12 
 								&& ( mealTypePojo.isLunchToday() || mealTypePojo.isLunchTomorrow()) ){
 							// code for order between 11 and 12 lunch today and
+							System.out.println("---- ORDER BETWEEN 11 to 12 ----");
+							
 							/**************************************************************************************************/
 							/****************************** SIMPLE ORDER WITHOUT SPLIT CODE ***********************************/
 							/****************************** ORDER BETWEEN 11 TO 12 ********************************************/
@@ -867,6 +887,7 @@ public class TimeSlotFinder {
 							/****************************** SIMPLE ORDER WITHOUT SPLIT CODE ***********************************/
 							/****************************** ORDER BEFORE 11  *************************************************/
 							/**************************************************************************************************/
+							System.out.println("- - - - Order NOT between 11-12 - - - - ");
 							ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
 							ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kitchenid, mealTypePojo);
 							Collections.sort(timeSlotList);
@@ -874,7 +895,8 @@ public class TimeSlotFinder {
 							for(TimeSlot slot : timeSlotList){
 								Qty = Qty + slot.quantity;
 							}
-							if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
+							System.out.println("Total slot qty - - ->"+Qty);
+							/*if(mealTypePojo.isLunchToday()||mealTypePojo.isLunchTomorrow()){
 								if(totalNoOfQuantity > 20 - Qty){
 									continue;
 								}
@@ -883,10 +905,11 @@ public class TimeSlotFinder {
 									continue;
 								}
 							}
-							/*if(totalNoOfQuantity > 30 - Qty){
+							if(totalNoOfQuantity > 30 - Qty){
 							continue;
 						}*/
 							if(isStaggeredDelivery){
+								System.out.println("- - -It is a staggered delivery - - - ");
 								for(TimeSlot slot : timeSlotList){
 									if(totalNoOfQuantity<=0){
 										continue;

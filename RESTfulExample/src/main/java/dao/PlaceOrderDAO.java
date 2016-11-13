@@ -93,7 +93,7 @@ public class PlaceOrderDAO {
 	public static boolean isServable(String itemCode, Connection connection, 
 			String deliveryDay, boolean isLunch, String area){
 		boolean isServable = false;
-		int totalNoOfBikers = 0,bikerSlot = 0; 
+		int totalNoOfBikers = 0,noFreeBikerSlot = 0; 
 		ArrayList<Integer> servableKitchenIds = findServableKitchens(itemCode, connection, deliveryDay, isLunch, area);
 		
 		for(Integer kitchenId : servableKitchenIds){
@@ -101,12 +101,12 @@ public class PlaceOrderDAO {
 			for(String bikerUserId : bikerList){
 				totalNoOfBikers ++;
 				int totalFreeSlotsForBiker = totalFreeSlots(bikerUserId, connection, deliveryDay, isLunch);
-				if(totalFreeSlotsForBiker == 0){
-					bikerSlot++;
+				if(totalFreeSlotsForBiker == 0){//NO SLOT FOR BIKER
+					noFreeBikerSlot++;
 				}
 			}
 		}
-		if(totalNoOfBikers == bikerSlot){
+		if(totalNoOfBikers == noFreeBikerSlot){
 			isServable = false;
 		}else{
 			isServable = true;
@@ -286,6 +286,10 @@ public class PlaceOrderDAO {
 	public static int totalFreeSlots(String bikerUserId , Connection connection, 
 			String deliverDay, boolean isLunch){
 		int noOfFreeSlots = 0 ;
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
 		try {
 			SQL:{
 					PreparedStatement preparedStatement = null;
@@ -294,32 +298,32 @@ public class PlaceOrderDAO {
 					if(deliverDay.equalsIgnoreCase("TODAY") && isLunch){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
-								+" fapp_timeslot_driver_status " 
+								+" vw_driver_today_status " 
 								+" where driver_user_id= ? "
-								+" and is_slot_locked = 'N' and time_slot_id<4"
-								+" and (quantity<10 or no_of_orders <2)" ; 
+								+" and is_slot_locked = 'N' and is_lunch='Y'"
+								+" and (quantity<? or no_of_orders <?)" ; 
 					}else if(deliverDay.equalsIgnoreCase("TODAY") && !isLunch){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
-								+" fapp_timeslot_driver_status " 
+								+" vw_driver_today_status " 
 								+" where driver_user_id= ? "
-								+" and is_slot_locked = 'N' and time_slot_id > 3"
-								+" and (quantity<10 or no_of_orders <2)" ;
+								+" and is_slot_locked = 'N' and is_lunch='N'"
+								+" and (quantity<? or no_of_orders <?)" ;
 					}else if(deliverDay.equalsIgnoreCase("TOMORROW") && isLunch){
 						//System.out.println("target - - ");
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
-								+" fapp_timeslot_driver_status_tommorrow " 
+								+" vw_driver_tomorrow_status " 
 								+" where driver_user_id= ? "
-								+" and is_slot_locked = 'N' and time_slot_id < 4"
-								+" and (quantity<10 or no_of_orders <2)" ;
+								+" and is_slot_locked = 'N' and is_lunch='Y'"
+								+" and (quantity<? or no_of_orders <?)" ;
 					}else if(deliverDay.equalsIgnoreCase("TOMORROW") && !isLunch){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
-								+" fapp_timeslot_driver_status_tommorrow " 
+								+" vw_driver_tomorrow_status " 
 								+" where driver_user_id= ? "
-								+" and is_slot_locked = 'N' and time_slot_id > 3"
-								+" and (quantity<10 or no_of_orders <2)" ;
+								+" and is_slot_locked = 'N' and is_lunch='N'"
+								+" and (quantity<? or no_of_orders <?)" ;
 					}
 					/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
@@ -330,6 +334,8 @@ public class PlaceOrderDAO {
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, bikerUserId);
+						preparedStatement.setInt(2, bikerCapacity);
+						preparedStatement.setInt(3, bikerOrders);
 						resultSet = preparedStatement.executeQuery();
 						if(resultSet.next())
 								noOfFreeSlots = resultSet.getInt("no_of_free_slots");

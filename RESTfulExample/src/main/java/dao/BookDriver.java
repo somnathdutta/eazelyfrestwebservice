@@ -166,6 +166,10 @@ public class BookDriver {
 	 */
 	public static boolean isSlotFull(MealTypePojo mealTypePojo,TimeSlot timeSlot ){
 		boolean isSlotFull = false;
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
@@ -174,21 +178,23 @@ public class BookDriver {
 					String sql ="";
 					if(mealTypePojo.isLunchToday()){
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
-								+ " (no_of_orders = 3 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = ? or quantity = ?) and driver_user_id = ? and time_slot_id = ?";
 					}else if(mealTypePojo.isDinnerToday()){
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
-								+ " (no_of_orders = 3 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = ? or quantity = ?) and driver_user_id = ? and time_slot_id = ?";
 					}else if(mealTypePojo.isLunchTomorrow()){
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
-								+ " (no_of_orders = 3 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = ? or quantity = ?) and driver_user_id = ? and time_slot_id = ?";
 					}else{
 						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
-								+ " (no_of_orders = 3 or quantity = 10) and driver_user_id = ? and time_slot_id = ?";
+								+ " (no_of_orders = ? or quantity = ?) and driver_user_id = ? and time_slot_id = ?";
 					}	
 					try {
 						preparedStatement = connection.prepareStatement(sql);
-						preparedStatement.setString(1, timeSlot.bikerUserId);
-						preparedStatement.setInt(2, timeSlot.getSlotId());
+						preparedStatement.setInt(1, bikerOrders);
+						preparedStatement.setInt(2, bikerCapacity);
+						preparedStatement.setString(3, timeSlot.bikerUserId);
+						preparedStatement.setInt(4, timeSlot.getSlotId());
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
 							int timeSlotId = resultSet.getInt("time_slot_id");
@@ -227,6 +233,10 @@ public class BookDriver {
 	 */
 	public static boolean makeSlotLocked(MealTypePojo mealTypePojo , TimeSlot timeSlot){
 		boolean slotInactivation  = false;
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
 		try {
 			SQL:{
 				Connection connection = DBConnection.createConnection();
@@ -234,22 +244,24 @@ public class BookDriver {
 				String sql ="";
 				if(mealTypePojo.isLunchToday()){
 					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=3 or quantity>=10)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=? or quantity>=?)";
 				}else if(mealTypePojo.isDinnerToday()){
 					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=3 or quantity>=10)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=? or quantity>=?)";
 				}else if(mealTypePojo.isLunchTomorrow()){
 					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=3 or quantity>=10)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=? or quantity>=?)";
 				}else{
 					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
-							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=3 or quantity>=10)";
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=? or quantity>=?)";
 				}
 				
 				try {
 					preparedStatement = connection.prepareStatement(sql);
 					preparedStatement.setString(1, timeSlot.bikerUserId);
 					preparedStatement.setInt(2, timeSlot.getSlotId());
+					preparedStatement.setInt(3, bikerOrders);
+					preparedStatement.setInt(4, bikerCapacity);
 					int countUpdate = preparedStatement.executeUpdate();
 					if(countUpdate>0){
 							slotInactivation = true;

@@ -201,8 +201,15 @@ public class SameUserPlaceOrder {
 		//return dealingKitchenIds;
 	}
 	
-	public static int getKitchenCurrentStock(int kitchenId, MealTypePojo mealTypePojo){
+	public static int getKitchenCurrentStock(int kitchenId, MealTypePojo mealTypePojo, ArrayList<OrderItems> orderItemList){
 		int stockAvailable = 0;
+		ArrayList<String> iemcode = new ArrayList<String>();
+		for(OrderItems order : orderItemList){
+			iemcode.add("'"+order.itemCode+"'");
+		}
+		String a = iemcode.toString();
+		String fb = a.replace("[", "(");
+		String itemCodes = fb.replace("]", ")");
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
@@ -210,14 +217,26 @@ public class SameUserPlaceOrder {
 					ResultSet resultSet = null;
 					String sql = "";
 					if(mealTypePojo.isLunchToday()){
-						sql = "select distinct (stock) AS stock from fapp_kitchen_items where kitchen_id= ?";
+						sql = "select sum (stock) AS stock from vw_active_kitchen_items where kitchen_id= ? and item_code IN"+itemCodes;
 					}else if(mealTypePojo.isLunchTomorrow()){
-						sql = "select distinct(stock_tomorrow)As stock from fapp_kitchen_items where kitchen_id = ?";
+						sql = "select sum(stock_tomorrow)As stock from vw_active_kitchen_items where kitchen_id = ? and item_code IN"+itemCodes;
 					}else if(mealTypePojo.isDinnerToday()){
-						sql = "select distinct(dinner_stock)As stock from fapp_kitchen_items where kitchen_id = ?";
+						sql = "select sum(dinner_stock)As stock from vw_active_kitchen_items where kitchen_id = ? and item_code IN"+itemCodes;
 					}else{
-						sql = "select distinct(dinner_stock_tomorrow)As stock from fapp_kitchen_items where kitchen_id = ?";
+						sql = "select sum(dinner_stock_tomorrow)As stock from vw_active_kitchen_items where kitchen_id = ? and item_code IN"+itemCodes;
 					}
+					/**
+					 * OLD CODE
+					 * if(mealTypePojo.isLunchToday()){
+					      sql = "select distinct (stock) AS stock from fapp_kitchen_items where kitchen_id= ?";
+					     }else if(mealTypePojo.isLunchTomorrow()){
+					      sql = "select distinct(stock_tomorrow)As stock from fapp_kitchen_items where kitchen_id = ?";
+					     }else if(mealTypePojo.isDinnerToday()){
+					      sql = "select distinct(dinner_stock)As stock from fapp_kitchen_items where kitchen_id = ?";
+					     }else{
+					      sql = "select distinct(dinner_stock_tomorrow)As stock from fapp_kitchen_items where kitchen_id = ?";
+					     }
+					 */
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setInt(1, kitchenId);

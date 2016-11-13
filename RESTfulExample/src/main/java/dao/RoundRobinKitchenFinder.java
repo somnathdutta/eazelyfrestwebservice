@@ -802,6 +802,7 @@ public class RoundRobinKitchenFinder {
 	
 	public static boolean isKitchenHavingFreeBikers(int kitchenId, MealTypePojo mealTypePojo){
 		boolean isFreeBikerAvailable = false;
+		int totalNoOfBikers=0,noFreeBikerSlot=0;
 		ArrayList<String> bikerList = new ArrayList<String>();
 		try {
 				Connection connection = DBConnection.createConnection();
@@ -830,11 +831,26 @@ public class RoundRobinKitchenFinder {
 					}
 			}
 				
-			for(String biker : bikerList){
+			/*OLd code
+			 * for(String biker : bikerList){
 				if(totalFreeSlots(biker,mealTypePojo) > 0 ){
 					isFreeBikerAvailable = true;
 				}
+			}*/
+			
+			for(String bikerUserId : bikerList){
+				totalNoOfBikers ++;
+				int totalFreeSlotsForBiker = totalFreeSlots(bikerUserId, mealTypePojo);
+				if(totalFreeSlotsForBiker == 0){
+					noFreeBikerSlot++;
+				}
 			}
+			if(totalNoOfBikers == noFreeBikerSlot){
+				isFreeBikerAvailable = false;
+			}else{
+				isFreeBikerAvailable = true;
+			}
+			
 		} catch (Exception e) {
 			// TODO: handle exception
 		}

@@ -2062,12 +2062,12 @@ public class Category {
 	public static JSONObject checkValidPromoCode(@FormParam("promoCode")String promoCode,
 			@FormParam("fooddetails[]")List<String> orderDetails,
 			@FormParam("mobileNo")String mobileNo) throws JSONException{
-		System.out.println("************************************************************");
+		System.out.println("--------------------------------------------------------*");
 		System.out.println("***** isPromoCodeValid webservice >> "+promoCode+" << * * * * * * * * * * * * *");
 		System.out.println("food details:: "+orderDetails);
 		System.out.println("Mobile no:: "+mobileNo);
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
-		JSONObject queryTypeJsonObject = new JSONObject();
+		JSONObject promoCodeValidJson = new JSONObject();
 		for(String str : orderDetails){	
 			OrderItems items = new OrderItems();
 			String[] order = str.split("\\$");
@@ -2090,27 +2090,27 @@ public class Category {
 			
 			//System.out.println("MOBILE NO AVIAIL -- >> ");
 			if(!PromoCodeDAO.isUsedPromoCode(promoCode, mobileNo)){
-				queryTypeJsonObject = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList);
+				promoCodeValidJson = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList,mobileNo);
 				//System.out.println("1 N ------------------- >>> >> > " + queryTypeJsonObject);
-				System.out.println("***** isPromoCodeValid webservice  ends* * * * * * * * * *  *");
-				return queryTypeJsonObject;
+				//System.out.println("***** isPromoCodeValid webservice  ends* * * * * * * * * *  *");
+				//return queryTypeJsonObject;
 			}else{
-				JSONObject promoCodeValidJson = new JSONObject();
+				//JSONObject promoCodeValidJson = new JSONObject();
 				promoCodeValidJson.put("status","200");
-				promoCodeValidJson.put("message", "InValid promoCode");
+				promoCodeValidJson.put("message", "PromoCode already used by you!");
 				promoCodeValidJson.put("isValid", false);
 				promoCodeValidJson.put("promoValue", ( 0.0) );
-				queryTypeJsonObject.put("JSON", promoCodeValidJson);
+				//queryTypeJsonObject.put("JSON", promoCodeValidJson);
 				//System.out.println("2 N ------------------- >>> >> > " + queryTypeJsonObject);
 			}
 		}else{
-				queryTypeJsonObject = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList);
+			    promoCodeValidJson = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList,mobileNo);
 				//System.out.println("3 N ------------------- >>> >> > " + queryTypeJsonObject);
 		}
-		
-		System.out.println("***** isPromoCodeValid webservice  ends* * * * * * * * * *  *");
+		System.out.println(promoCodeValidJson);
+		System.out.println("----- isPromoCodeValid webservice  ends -----");
 		//System.out.println("4 IS VALID PROMO CODE ------- >>> >> >  " + queryTypeJsonObject);
-		return queryTypeJsonObject;
+		return promoCodeValidJson;
 	}
 	
 	@POST

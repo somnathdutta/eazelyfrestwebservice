@@ -7797,13 +7797,13 @@ public class DBConnection {
 			    				   +" (select city_id from sa_city where city_name ILIKE ?))";*/
 						if(deliveryDay.equalsIgnoreCase("TODAY")){
 							sql ="SELECT distinct kitchen_cuisine_id,category_id,item_name,item_code,"
-									+" item_price,item_description,item_image, no_of_single_order "
+									+" item_price,item_description,item_image "
 									+" FROM vw_kitchen_items "
 									+" WHERE category_id=? and serving_areas LIKE ? and is_active='Y' "
 									+" order by item_code"	;
 						}else{
 							sql ="SELECT distinct kitchen_cuisine_id,category_id,item_name,item_code,"
-									+" item_price,item_description,item_image, no_of_single_order "
+									+" item_price,item_description,item_image "
 									+" FROM vw_kitchen_items "
 									+" WHERE category_id=? and serving_areas LIKE ? and is_active_tomorrow='Y' "
 									+" order by item_code"	;
@@ -7824,7 +7824,7 @@ public class DBConnection {
 								if(!isNewUser){
 									//do as usual show all items
 									jobject.put("itemcode", itemCode);
-									jobject.put("singleOrders", resultSet.getInt("no_of_single_order"));
+									//jobject.put("singleOrders", resultSet.getInt("no_of_single_order"));
 									jobject.put("cuisineid", resultSet.getString("kitchen_cuisine_id"));
 									jobject.put("categoryid",resultSet.getString("category_id"));
 									jobject.put("categorydescription", resultSet.getString("item_description") );
@@ -7872,7 +7872,7 @@ public class DBConnection {
 									//show mew user items
 									if(FetchCuisineDAO.isNewUserItem(itemCode)){
 										jobject.put("itemcode", itemCode);
-										jobject.put("singleOrders", resultSet.getInt("no_of_single_order"));
+									//	jobject.put("singleOrders", resultSet.getInt("no_of_single_order"));
 										jobject.put("cuisineid", resultSet.getString("kitchen_cuisine_id"));
 										jobject.put("categoryid",resultSet.getString("category_id"));
 										jobject.put("categorydescription", resultSet.getString("item_description") );
