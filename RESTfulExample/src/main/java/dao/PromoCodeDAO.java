@@ -99,6 +99,7 @@ public class PromoCodeDAO {
 				
 			}else{
 				if(totalQuantity == volumeQuantity){
+					
 					if(!isPromoCodeApplied){
 						message = "Valid promoCode";
 						discountedValue =  promoValue;
@@ -243,7 +244,7 @@ public class PromoCodeDAO {
 					Connection connection = DBConnection.createConnection();
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
-					String sql = "select count(applied_promo_code)AS promo_code from fapp_accounts where contact_number = ? and "
+					String sql = "select count(applied_promo_code)AS promo_code from fapp_accounts where mobile_no = ? and "
 							+ " applied_promo_code = ?";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
@@ -283,7 +284,7 @@ public class PromoCodeDAO {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
 					PreparedStatement preparedStatement = null;
-					String sql = "update fapp_accounts set applied_promo_code = ? where contact_number = ? ";
+					String sql = "update fapp_accounts set applied_promo_code = ? where mobile_no = ? ";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, promoCode);
