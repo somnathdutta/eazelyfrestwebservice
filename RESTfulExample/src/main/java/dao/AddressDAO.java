@@ -341,6 +341,7 @@ public class AddressDAO {
 							}
 							
 							if(resultSet.getString("delivery_zone")!=null){
+								System.out.println(resultSet.getString("address_type")+"->"+resultSet.getString("delivery_zone"));
 								temp.put("deliveryzone", resultSet.getString("delivery_zone"));
 							}else{
 								temp.put("deliveryzone", " ");

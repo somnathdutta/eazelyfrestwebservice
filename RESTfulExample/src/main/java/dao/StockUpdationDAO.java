@@ -54,15 +54,27 @@ public class StockUpdationDAO {
 		return updatedRows;
 	}
 	
-	public static int updateSingleOrder(int kitchenId){
+	public static int updateSingleOrder(int kitchenId, String mealType, String deliveryDay){
 		int updatedRows = 0;
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
 					PreparedStatement preparedStatement = null;
 					String sql = "";
+					if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
 						sql = "UPDATE fapp_kitchen_items set no_of_single_order = (no_of_single_order - 1)"
 								+ " where kitchen_id = ? and no_of_single_order > 0";
+					}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW")){
+						sql = "UPDATE fapp_kitchen_items set no_of_single_order_lunch_tomorrow = (no_of_single_order_lunch_tomorrow - 1)"
+								+ " where kitchen_id = ? and no_of_single_order_lunch_tomorrow > 0";
+					}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY")){
+						sql = "UPDATE fapp_kitchen_items set no_of_single_order_dinner = (no_of_single_order_dinner - 1)"
+								+ " where kitchen_id = ? and no_of_single_order_dinner > 0";
+					}else{
+						sql = "UPDATE fapp_kitchen_items set no_of_single_order_dinner_tomorrow = (no_of_single_order_dinner_tomorrow - 1)"
+								+ " where kitchen_id = ? and no_of_single_order_dinner_tomorrow > 0";
+					}
+					
 					
 					System.out.println("*** Stock updation start with ****"+updatedRows);
 					try {

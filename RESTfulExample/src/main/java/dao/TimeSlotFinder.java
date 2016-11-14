@@ -297,10 +297,11 @@ public class TimeSlotFinder {
 						JSONObject bikerJson = new JSONObject();
 						JSONArray itemsArrray = new JSONArray();
 						bikerJson.put("bikerUserId", bikerUserId);
-						for(OrderItems orders : kitchenOrderItems){
-							System.out.println("Orders kitchen:: "+orders.kitchenId);
-							System.out.println("kicthenid:: "+kitchenid);
-							if(orders.kitchenId==kitchenid){
+						//for(OrderItems orders : kitchenOrderItems){
+						for(OrderItems orders : orderItemList){
+						//System.out.println("Orders kitchen:: "+orders.kitchenId);
+							//System.out.println("kicthenid:: "+kitchenid);
+							//if(orders.kitchenId==kitchenid){
 								JSONObject items = new JSONObject();
 								items.put("cuisineid", orders.cuisineId);
 								items.put("cuisine", orders.getCuisinName());
@@ -309,7 +310,7 @@ public class TimeSlotFinder {
 								items.put("stock", ItemDAO.itemCurrentStock(kitchenid, orders.itemCode, mealTypePojo));
 								items.put("quanity", orders.getQuantity());
 								itemsArrray.put(items);
-							}
+							//}
 						}
 						bikerJson.put("itemDetails", itemsArrray );
 

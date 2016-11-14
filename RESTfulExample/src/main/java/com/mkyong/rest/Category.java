@@ -66,15 +66,14 @@ import dao.LoginDAO;
 import dao.OrderSummaryDAO;
 import dao.OrderTimingsDAO;
 import dao.PickJiDAO;
-import dao.PickjiCall;
-import dao.PincodeDAO;
 import dao.PlaceSubscriptionOrderDAO;
 import dao.PrivacyPolicyDAO;
 import dao.PromoCodeDAO;
 import dao.QueryTypeDAO;
-import dao.RoundRobinKitchenFinder;
 import dao.SetItemDetailsDao;
 import dao.ShareDAO;
+import dao.SignUpDAO;
+import dao.SingleOrderDAO;
 import dao.StartMyTripDAO;
 import dao.SubmitFeedBackDAO;
 import dao.TermsAndConditionDAO;
@@ -185,9 +184,10 @@ public class Category {
 			@FormParam("instruction")String instruction
 			/*@FormParam("email")String email*/) throws JSONException{
 		System.out.println("---------------------------------------------");
-		System.out.println("saveaddress webservice is called * * * * * * *with address type-->"+addressType+" user-->"+user);
-		System.out.println("Mailid->"+mailId+" name->"+name+" location->"+location+" pincode->"+pincode);
-		//System.out.println("email-->"+email);
+		System.out.println(" SAVEADDRESS API CALLED ");
+		System.out.println("address type-->"+addressType+" user-->"+user);
+		System.out.println("Mailid->"+mailId+" pincode->"+pincode);
+		System.out.println("Zone-->"+deliveryZone);
 		System.out.println("user length-->"+user.length());
 		JSONObject saveAddress ; 
 		/*if(email != null ){
@@ -329,11 +329,35 @@ public class Category {
 			jsonObject.put("status", false);
 			jsonObject.put("message", "Contact number required!");
 		}else{
-			jsonObject = DBConnection.signUp(name, email, contactNumber,  password, referalCode);
+			jsonObject = DBConnection.signUp(name.trim(), email.trim(), contactNumber.trim(),  password.trim(), referalCode.trim());
 		//object = DBConnection.signUp(name,  contactNumber, password);
 		}
 		System.out.println("Sign up status::"+jsonObject);
 
+		return jsonObject;
+	}
+	
+	@POST
+	@Path("/socialSignup")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject socialSignup(@FormParam("name")String name,
+			@FormParam("email")String email,
+			@FormParam("contactnumber")String contactNumber,
+			@FormParam("refcode")String referalCode,
+			@FormParam("password")String password) throws JSONException{
+		System.out.println("------ socialSignup webservice is called ------");
+		System.out.println("name--"+name+" email-"+email+"  number-"+contactNumber+" password-"+password+
+				"Referel code: "+referalCode);
+		JSONObject jsonObject = new JSONObject(); 
+		if(contactNumber.trim().length()==0){
+			jsonObject.put("status", false);
+			jsonObject.put("message", "Contact number required!");
+		}else{
+			jsonObject = SignUpDAO.socialSignup(name.trim(), email.trim(), contactNumber.trim(),  password, referalCode);
+		//object = DBConnection.signUp(name,  contactNumber, password);
+		}
+		System.out.println("socialSignup::"+jsonObject);
+		System.out.println("------ socialSignup webservice is end ------");
 		return jsonObject;
 	}
 
@@ -1850,6 +1874,11 @@ public class Category {
 		}else{
 			jsonObject.put("status", "204");
 			jsonObject.put("message", "Currently we are not serving in this zip code!");
+			jsonObject.put("isSingleOrderLunchAvailable", true);
+			jsonObject.put("lunchAlert", "");
+			jsonObject.put("isSingleOrderDinnerAvailable", true);
+			jsonObject.put("dinnerAlert","");
+			jsonObject.put("cartCapacity", 0);
 			jsonObject.put("cuisinelist", new JSONArray());
 		}
 		System.out.println("------------------------------------------------------");
@@ -1881,6 +1910,40 @@ public class Category {
 		}*/
 	}
 	
+	@POST
+	@Path("/singleOrder")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject singleOrder(@FormParam("mealType")String mealType,
+			@FormParam("deliveryday")String deliveryDay,
+			@FormParam("area")String area) throws Exception{
+		System.out.println("-------------------------------------------------------");
+		System.out.println("***** singleOrder webservice called ***************");
+		System.out.println(" Day: "+deliveryDay+" Area: "+area);
+		JSONObject jsonObject = new JSONObject();
+		if(area!=null || area.trim().length()>0){
+			if(mealType!=null || mealType.trim().length()>0){
+				if(deliveryDay!=null || deliveryDay.trim().length()>0){
+					jsonObject = SingleOrderDAO.getSingleOrderJSON(area,deliveryDay, mealType);
+				}else{
+					jsonObject.put("status", "204");
+					jsonObject.put("isSingleOrderAvailable", true);
+					jsonObject.put("message", "Delivery Day required!");
+				}
+			}else{
+				jsonObject.put("status", "204");
+				jsonObject.put("isSingleOrderAvailable", true);
+				jsonObject.put("message", "Meal Type required!");
+			}
+		}else{
+			jsonObject.put("status", "204");
+			jsonObject.put("isSingleOrderAvailable", true);
+			jsonObject.put("message", "Area required!");
+		}
+		
+		System.out.println("------------------------------------------------------");
+		return jsonObject;
+		
+	}
 	
 	
 	@POST
@@ -2090,7 +2153,7 @@ public class Category {
 			
 			//System.out.println("MOBILE NO AVIAIL -- >> ");
 			if(!PromoCodeDAO.isUsedPromoCode(promoCode, mobileNo)){
-				promoCodeValidJson = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList,mobileNo);
+				promoCodeValidJson = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList,mobileNo, orderDetails);
 				//System.out.println("1 N ------------------- >>> >> > " + queryTypeJsonObject);
 				//System.out.println("***** isPromoCodeValid webservice  ends* * * * * * * * * *  *");
 				//return queryTypeJsonObject;
@@ -2104,7 +2167,7 @@ public class Category {
 				//System.out.println("2 N ------------------- >>> >> > " + queryTypeJsonObject);
 			}
 		}else{
-			    promoCodeValidJson = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList,mobileNo);
+			    promoCodeValidJson = PromoCodeDAO.isPromoCodeValid(promoCode,orderItemList,mobileNo, orderDetails);
 				//System.out.println("3 N ------------------- >>> >> > " + queryTypeJsonObject);
 		}
 		System.out.println(promoCodeValidJson);
