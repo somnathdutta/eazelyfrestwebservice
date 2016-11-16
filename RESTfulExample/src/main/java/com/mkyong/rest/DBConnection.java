@@ -3481,8 +3481,8 @@ public class DBConnection {
         	}*/
     		if(kitchenAssigned && orderId!=0){
     			//updateStock(orderItemList, dealingKitchenIds);
-    			if(totalNoOfQuantity > 1){
-    				if(totalBenQty > 1 || totalNiQty > 1){
+    			//if(totalNoOfQuantity > 1){
+    			//	if(totalBenQty > 1 || totalNiQty > 1){
     					if(BookDriver.assignDriverWithKitchen(timeSlotList, orderId)){//assign driver id and current time wrt kitchen and order id
         					//BookDriver.bookDriverSlot(mealTypePojo,timeSlotList);//driver status table updation qty++ order++
         					BookDriver.saveBikersQtyWithKitchen(timeSlotList, orderId);
@@ -3498,9 +3498,8 @@ public class DBConnection {
         					/*if(BookDriver.isSlotFull(mealTypePojo,timeSlotList) ){//check for slot is full qty<9 && order==2
         						BookDriver.makeSlotLocked(mealTypePojo,timeSlotList);//make slot full as inactive
         					}*/
-        				}
-    				}
-    				
+        				//}
+    				//}
     			}
     			ArrayList<KitchenStock> kitchenQtyList = new ArrayList<KitchenStock>();
     			Collections.sort(orderItemList);
@@ -6568,6 +6567,9 @@ public class DBConnection {
     	boolean isSingleOrderLunchAvailable = false,isSingleOrderDinnerAvailable = false;
     	String alertMessage = "";int cartCapacity = 0;
     	boolean[] isSingleOrder = new boolean[2];
+    	int[] cartValue = new int[2];
+    	int lunchCart = 0, dinnerCart = 0 ;
+    	
     	try {
 			SQL:{
 	    		connection = DBConnection.createConnection();
@@ -6577,8 +6579,11 @@ public class DBConnection {
 	        	allcuisine.put("cuisinename", "All");
 	        	allcuisine.put("categorylist", fetchCategoriesOfAllCuisineWithPincode(pincode,connection));
 	        	cuisinesarrayList.put(allcuisine);*/
-	    		cartCapacity = SingleOrderDAO.getCartCapacity(connection);
+	    		cartCapacity = SingleOrderDAO.getCartCapacity(connection,area);
 	    		isSingleOrder = SingleOrderDAO.isSingleOrderAvailable(area, deliveryDay, connection);
+	    		//cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay);
+	    		//lunchCart = cartValue[0];
+	    		//dinnerCart = cartValue[1];
 	    		isSingleOrderLunchAvailable = isSingleOrder[0];
 	        	isSingleOrderDinnerAvailable = isSingleOrder[1];
 	        	
@@ -8144,6 +8149,9 @@ public class DBConnection {
 						resultSet = preparedStatement.executeQuery();
 						if (resultSet.next()) {
 							stock = resultSet.getInt("stock");
+							if(stock<=0){
+								stock = 0;
+							}
 						}
 					} catch (Exception e) {
 						//System.out.println("ERROR DUE TO:"+e.getMessage());

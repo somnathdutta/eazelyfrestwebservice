@@ -175,4 +175,31 @@ public class SendMessageDAO {
 			// TODO: handle exception
 		}
 	}
+	
+	public static int sendOTP(String recipient,String OTP){
+		int done = 0;
+		try {
+			String message ="";
+			message = "Your OTP CODE is:"+OTP+" Thnx & Rgds Eazelyf.";
+			String username = "nextgenvision"; 
+			String password = "sms@123";
+			String senderId = "eazelyf";
+			String requestUrl  = "http://fastsms.way2mint.com/SendSMS/sendmsg.php?" +
+					"uname=" + URLEncoder.encode(username, "UTF-8") +
+					"&pass=" + URLEncoder.encode(password, "UTF-8") +
+					"&send=" + URLEncoder.encode(senderId, "UTF-8") +
+					"&dest=" + URLEncoder.encode(recipient, "UTF-8") +
+					"&msg=" + URLEncoder.encode(message, "UTF-8") ;
+			System.out.println("Message sent to mobile no::"+recipient+"::"+message);
+			URL url = new URL(requestUrl);
+			HttpURLConnection uc = (HttpURLConnection)url.openConnection();
+			System.out.println("Message Response:::::"+uc.getResponseMessage());
+			System.out.println("Message Response code:::::"+uc.getResponseCode());
+			done = uc.getResponseCode();
+			uc.disconnect();
+		} catch(Exception ex) {
+			System.out.println(ex.getMessage());
+		}	
+		return done;
+	}
 }

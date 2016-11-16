@@ -65,6 +65,7 @@ import dao.KitchenReceiveOrderDAO;
 import dao.LoginDAO;
 import dao.OrderSummaryDAO;
 import dao.OrderTimingsDAO;
+import dao.OtpDAO;
 import dao.PickJiDAO;
 import dao.PlaceSubscriptionOrderDAO;
 import dao.PrivacyPolicyDAO;
@@ -310,7 +311,28 @@ public class Category {
 		System.out.println(object);
 		System.out.println("-----------------------------------------");
 		return object;
-
+	}
+	
+	@POST
+	@Path("/sendOtp")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject sendOTP(@FormParam("mobileNo")String mobileNo,
+			@FormParam("userType")String userType) throws JSONException{
+		JSONObject otpJsonObject = new JSONObject();
+		if(mobileNo!=null || mobileNo.trim().length()>0){
+			if(userType!=null || userType.trim().length()>0){
+				otpJsonObject = OtpDAO.sendOtp(mobileNo, userType);
+			}else{
+				otpJsonObject.put("status", "204");
+				otpJsonObject.put("otpStatus", false);
+				otpJsonObject.put("message", "User Type required!");
+			}
+		}else{
+			otpJsonObject.put("status", "204");
+			otpJsonObject.put("otpStatus", false);
+			otpJsonObject.put("message", "Mobile no required!");
+		}
+		return otpJsonObject;
 	}
 
 	@POST
@@ -320,16 +342,23 @@ public class Category {
 			@FormParam("email")String email,
 			@FormParam("contactnumber")String contactNumber,
 			@FormParam("refcode")String referalCode,
-			@FormParam("password")String password) throws JSONException{
+			@FormParam("password")String password,
+			@FormParam("otp")String otp,
+			@FormParam("userType")String userType) throws JSONException{
 		System.out.println("Sign up webservice is called...");
 		System.out.println("name--"+name+" email-"+email+"  number-"+contactNumber+" password-"+password+
 				"Referel code: "+referalCode);
+		System.out.println("OTP:"+otp+" User type: "+userType);
 		JSONObject jsonObject = new JSONObject(); 
 		if(contactNumber.trim().length()==0){
 			jsonObject.put("status", false);
 			jsonObject.put("message", "Contact number required!");
 		}else{
-			jsonObject = DBConnection.signUp(name.trim(), email.trim(), contactNumber.trim(),  password.trim(), referalCode.trim());
+			if(userType.equalsIgnoreCase("GUEST")){
+				
+			}else{
+				jsonObject = DBConnection.signUp(name.trim(), email.trim(), contactNumber.trim(),  password, referalCode);
+			}
 		//object = DBConnection.signUp(name,  contactNumber, password);
 		}
 		System.out.println("Sign up status::"+jsonObject);
@@ -1910,40 +1939,6 @@ public class Category {
 		}*/
 	}
 	
-	@POST
-	@Path("/singleOrder")
-	@Produces(MediaType.APPLICATION_JSON)
-	public JSONObject singleOrder(@FormParam("mealType")String mealType,
-			@FormParam("deliveryday")String deliveryDay,
-			@FormParam("area")String area) throws Exception{
-		System.out.println("-------------------------------------------------------");
-		System.out.println("***** singleOrder webservice called ***************");
-		System.out.println(" Day: "+deliveryDay+" Area: "+area);
-		JSONObject jsonObject = new JSONObject();
-		if(area!=null || area.trim().length()>0){
-			if(mealType!=null || mealType.trim().length()>0){
-				if(deliveryDay!=null || deliveryDay.trim().length()>0){
-					jsonObject = SingleOrderDAO.getSingleOrderJSON(area,deliveryDay, mealType);
-				}else{
-					jsonObject.put("status", "204");
-					jsonObject.put("isSingleOrderAvailable", true);
-					jsonObject.put("message", "Delivery Day required!");
-				}
-			}else{
-				jsonObject.put("status", "204");
-				jsonObject.put("isSingleOrderAvailable", true);
-				jsonObject.put("message", "Meal Type required!");
-			}
-		}else{
-			jsonObject.put("status", "204");
-			jsonObject.put("isSingleOrderAvailable", true);
-			jsonObject.put("message", "Area required!");
-		}
-		
-		System.out.println("------------------------------------------------------");
-		return jsonObject;
-		
-	}
 	
 	
 	@POST

@@ -120,4 +120,93 @@ public class SignUpDAO {
 		}
 		 return isMobileNoRegistered;
 	 }
+	 
+	 public static JSONObject signUp(String name, String email,
+	    		String contactNumber,String password,String referalCode) throws JSONException{
+		 JSONObject signUpJson = new JSONObject();
+		 if( !isEmailExists(email) ){
+			 if( !isMobileExists(contactNumber) ){
+				 
+			 }else{
+				 signUpJson.put("status", false);
+				 signUpJson.put("message", "The mobile number is already registered");
+			 }
+		 }else{
+			 signUpJson.put("status", false);
+			 signUpJson.put("message", "The email id is already registered");
+		 }
+		 return signUpJson;
+	 }
+	 
+	 public static boolean isEmailExists(String email){
+		 boolean isEmailExists = false;
+		 try {
+			SQL:{
+			 		Connection connection= DBConnection.createConnection();
+			 		PreparedStatement preparedStatement = null;
+			 		String sql = "Select count(email)As email from fapp_accounts where email = ?";
+			 		ResultSet resultSet = null;
+			 		try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, email);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							int count = resultSet.getInt("email");
+							if(count>1){
+								isEmailExists = true;
+							}
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+		 		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		 return isEmailExists;
+	 }
+	 
+	 public static boolean isMobileExists(String mobile){
+		 boolean isMobileExists = false;
+		 try {
+			SQL:{
+			 		Connection connection= DBConnection.createConnection();
+			 		PreparedStatement preparedStatement = null;
+			 		String sql = "Select count(mobile_no)As mobile_no from fapp_accounts where mobile_no = ?";
+			 		ResultSet resultSet = null;
+			 		try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, mobile);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							int count = resultSet.getInt("mobile_no");
+							if(count>1){
+								isMobileExists = true;
+							}
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+		 		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		 return isMobileExists;
+	 }
 }
