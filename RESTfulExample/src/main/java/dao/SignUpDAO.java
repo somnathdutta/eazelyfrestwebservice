@@ -14,7 +14,7 @@ import pojo.User;
 public class SignUpDAO {
 
 	 public static JSONObject socialSignup(String name, String email,
-	    		String contactNumber,String password,String referalCode) throws JSONException{
+	    		String contactNumber,String password,String referalCode,String otp) throws JSONException{
 	    	JSONObject jsonObject = new JSONObject();
 	    	Boolean insertStatus = false;
 	    	String myReferalCode = null;
@@ -29,32 +29,41 @@ public class SignUpDAO {
 	    			System.out.println("Referral code exists...");
 	    			//If given referral code exists for somebody
 	    			double myBalance = 50.0;
-	    			User referalUser = new User(name, contactNumber, email, contactNumber, referalCode, myBalance);
-	    			//just try to insert data in db for new user
-	    			isNewUserCreated = DBConnection.doSignUpFor(referalUser);
-	    			if(isNewUserCreated){
-	    				System.out.println("New user created...and now update balance. . .");
-	    				insertStatus = DBConnection.updateBalanceForReferredUserFrom(referalCode.trim());
-	    				if(insertStatus){
-	    					System.out.println("Referred user balance updated...");
-	    					myReferalCode = DBConnection.generateReferalCode(name);
-	    					System.out.println("New users code ::"+myReferalCode);
-	    					DBConnection.updateMyCode(myReferalCode, contactNumber);
-	    					jsonObject.put("status", true);
-	            			jsonObject.put("message", "Thank you for registration!");
-	    				}else{
-	    					jsonObject.put("status", true);
-	            			jsonObject.put("message", "User created but user balance updation failed!");
-	    				}
+	    			if(OtpDAO.isValidOtp(contactNumber, otp)){
+	    				User referalUser = new User(name, contactNumber, email, contactNumber, referalCode, myBalance);
+		    			//just try to insert data in db for new user
+		    			isNewUserCreated = DBConnection.doSignUpFor(referalUser);
+		    			if(isNewUserCreated){
+		    				System.out.println("New user created...and now update balance. . .");
+		    				insertStatus = DBConnection.updateBalanceForReferredUserFrom(referalCode.trim());
+		    				if(insertStatus){
+		    					System.out.println("Referred user balance updated...");
+		    					myReferalCode = DBConnection.generateReferalCode(name);
+		    					System.out.println("New users code ::"+myReferalCode);
+		    					DBConnection.updateMyCode(myReferalCode, contactNumber);
+		    					OtpDAO.deleteOtp(contactNumber);
+		    					jsonObject.put("status", true);
+		            			jsonObject.put("message", "Thank you for registration!");
+		    				}else{
+		    					OtpDAO.deleteOtp(contactNumber);
+		    					jsonObject.put("status", true);
+		            			jsonObject.put("message", "User created but user balance updation failed!");
+		    				}
+		    			}else{
+		        			if(isMobileNoRegistered(contactNumber)){
+		        				OtpDAO.deleteOtp(contactNumber);
+		        				jsonObject.put("status", true);
+			        			jsonObject.put("message", "Logged in successfully!");
+		        			}else{
+		        				jsonObject.put("status", false);
+			        			jsonObject.put("message", "The mobile number is already registered!");
+		        			}
+		        		}
 	    			}else{
-	        			if(isMobileNoRegistered(contactNumber)){
-	        				jsonObject.put("status", true);
-		        			jsonObject.put("message", "Logged in successfully!");
-	        			}else{
-	        				jsonObject.put("status", false);
-		        			jsonObject.put("message", "The mobile number is already registered!");
-	        			}
-	        		}
+	    				jsonObject.put("status", false);
+	        			jsonObject.put("message", "Invalid OTP given!");
+	    			}
+	    			
 	    		}else{
 	    			jsonObject.put("status", false);
 	    			jsonObject.put("message", "Referral code is Invalid");
@@ -62,23 +71,31 @@ public class SignUpDAO {
 	    	}else{
 	    		System.out.println("Referral code not given::"+referalCode);
 	    		//when referral code not given by user, just try to insert data in db for new user
-	    		User newUser = new User(name, contactNumber, email, contactNumber,referalCode,0.0);
-	    		isNewUserCreated = DBConnection.doSignUpFor(newUser);
-	    		if(isNewUserCreated){
-	    			insertStatus = true;
-	    			myReferalCode = DBConnection.generateReferalCode(name);
-	    			DBConnection.updateMyCode(myReferalCode, contactNumber);
-	    			jsonObject.put("status", true);
-	    			jsonObject.put("message", "Thank you for registration!");
+	    		if(OtpDAO.isValidOtp(contactNumber, otp)){
+	    			User newUser = new User(name, contactNumber, email, contactNumber,referalCode,0.0);
+		    		isNewUserCreated = DBConnection.doSignUpFor(newUser);
+		    		if(isNewUserCreated){
+		    			insertStatus = true;
+		    			myReferalCode = DBConnection.generateReferalCode(name);
+		    			DBConnection.updateMyCode(myReferalCode, contactNumber);
+		    			OtpDAO.deleteOtp(contactNumber);
+		    			jsonObject.put("status", true);
+		    			jsonObject.put("message", "Thank you for registration!");
+		    		}else{
+		    			if(isMobileNoRegistered(contactNumber)){
+		    				OtpDAO.deleteOtp(contactNumber);
+	        				jsonObject.put("status", true);
+		        			jsonObject.put("message", "Logged in successfully!");
+	        			}else{
+	        				jsonObject.put("status", false);
+		        			jsonObject.put("message", "The mobile number is already registered!");
+	        			}
+		    		}
 	    		}else{
-	    			if(isMobileNoRegistered(contactNumber)){
-        				jsonObject.put("status", true);
-	        			jsonObject.put("message", "Logged in successfully!");
-        			}else{
-        				jsonObject.put("status", false);
-	        			jsonObject.put("message", "The mobile number is already registered!");
-        			}
+	    			jsonObject.put("status", false);
+	    			jsonObject.put("message", "Invalid OTP given!");
 	    		}
+	    		
 	    	}
 	    	return jsonObject;
 	    }
@@ -188,7 +205,7 @@ public class SignUpDAO {
 						resultSet = preparedStatement.executeQuery();
 						while (resultSet.next()) {
 							int count = resultSet.getInt("mobile_no");
-							if(count>1){
+							if(count>0){
 								isMobileExists = true;
 							}
 						}

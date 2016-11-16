@@ -264,12 +264,43 @@ public class BikerDAO {
 		return bikerCapa;
 	}
 	
+	public static int[] getBikerCapacityAndOrders(Connection connection){
+		int[] bikerCapa =  new int[2];
+		try {
+			SQL:{
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql = "select biker_capacity,serving_location_per_slot from fapp_biker_capacity"
+							+ " where is_active='Y' and is_delete='N'";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							bikerCapa[0] = resultSet.getInt("biker_capacity");
+							bikerCapa[1] = resultSet.getInt("serving_location_per_slot");
+						}
+								
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return bikerCapa;
+	}
+	
 	
 	public static int getAvailableLunchQuantity(Connection connection, String bikerUserId, String deliveryday ){
 		int noOfFreeSlots = 0 ,lunchSlot = 0;
 		lunchSlot = getNoOfLunchSlot(connection);
 		int[] bikerCapa = new int[2];
-		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders(connection);
 		int bikerCapacity = bikerCapa[0];
 		int bikerOrders = bikerCapa[1];
 		try {
@@ -303,8 +334,6 @@ public class BikerDAO {
 					}finally{
 						if(preparedStatement!=null){
 							preparedStatement.close();
-						}if(connection!=null){
-							connection.close();
 						}
 					}
 				}

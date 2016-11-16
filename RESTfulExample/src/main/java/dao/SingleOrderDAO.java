@@ -124,9 +124,7 @@ public class SingleOrderDAO {
 	public static int[] getCartValue(Connection connection, String area,  String deliveryDay){
 		int[] cartCapacity = new int[2];
 		int lunchCapacity = 0,dinnerCapacity = 0;
-		cartCapacity[0] = lunchCapacity;
-		cartCapacity[1] = dinnerCapacity;
-				
+						
 		ArrayList<Integer> kitchenList = KitchenDAO.findKitchensInArea(connection, area);
 		
 		for(Integer kitchenId : kitchenList){
@@ -134,12 +132,16 @@ public class SingleOrderDAO {
 			bikerList = BikerDAO.findMultiTypeBikerOfKitchen(connection, kitchenId);
 			
 			for(String bikerUserId : bikerList){
-				lunchCapacity += BikerDAO.getAvailableLunchQuantity(connection, bikerUserId, deliveryDay);
-				dinnerCapacity += BikerDAO.getAvailableDinnerQuantity(connection, bikerUserId, deliveryDay);
-				System.out.println("LC:"+lunchCapacity+" DC:"+dinnerCapacity);
+				int lc = BikerDAO.getAvailableLunchQuantity(connection, bikerUserId, deliveryDay);
+				int dc = BikerDAO.getAvailableDinnerQuantity(connection, bikerUserId, deliveryDay);
+				lunchCapacity += lc;
+				dinnerCapacity += dc;
+				System.out.println("LC:"+lc+" DC:"+dc);
 			}
 		}
-		
+		System.out.println("LC-------:"+lunchCapacity+" DC-----------:"+dinnerCapacity);
+		cartCapacity[0] = lunchCapacity;
+		cartCapacity[1] = dinnerCapacity;
 		return cartCapacity;
 	}
 	

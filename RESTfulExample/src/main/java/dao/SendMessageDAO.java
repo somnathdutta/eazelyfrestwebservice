@@ -180,7 +180,7 @@ public class SendMessageDAO {
 		int done = 0;
 		try {
 			String message ="";
-			message = "Your OTP CODE is:"+OTP+" Thnx & Rgds Eazelyf.";
+			message = "Please use this OTP: "+OTP+". Eazelyf.";
 			String username = "nextgenvision"; 
 			String password = "sms@123";
 			String senderId = "eazelyf";

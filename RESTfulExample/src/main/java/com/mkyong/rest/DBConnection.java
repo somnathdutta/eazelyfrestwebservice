@@ -96,6 +96,7 @@ import dao.Invoice;
 import dao.OrderDetailsDAO;
 import dao.OrderItemDAO;
 import dao.OrderTimeDAO;
+import dao.OtpDAO;
 import dao.PlaceOrderDAO;
 import dao.PromoCodeDAO;
 import dao.RoundRobinKitchenFinder;
@@ -1004,7 +1005,7 @@ public class DBConnection {
    /* public  static JSONObject signUp(String name, String email, 
     		String contactNumber,String city ,String password) throws JSONException{*/
     public  static JSONObject signUp(String name, String email,
-    		String contactNumber,String password,String referalCode) throws JSONException{
+    		String contactNumber,String password,String referalCode, String otp) throws JSONException{
     	JSONObject jsonObject = new JSONObject();
     	Boolean insertStatus = false;
     	String myReferalCode = null;
@@ -1019,27 +1020,35 @@ public class DBConnection {
     			System.out.println("Referral code exists...");
     			//If given referral code exists for somebody
     			double myBalance = 50.0;
-    			User referalUser = new User(name, password, email, contactNumber, referalCode, myBalance);
-    			//just try to insert data in db for new user
-    			isNewUserCreated = doSignUpFor(referalUser);
-    			if(isNewUserCreated){
-    				System.out.println("New user created...and now update balance. . .");
-    				insertStatus = updateBalanceForReferredUserFrom(referalCode.trim());
-    				if(insertStatus){
-    					System.out.println("Referred user balance updated...");
-    					myReferalCode = generateReferalCode(name);
-    					System.out.println("New users code ::"+myReferalCode);
-    					updateMyCode(myReferalCode, contactNumber);
-    					jsonObject.put("status", true);
-            			jsonObject.put("message", "Thank you for registration!");
-    				}else{
-    					jsonObject.put("status", true);
-            			jsonObject.put("message", "User created but user balance updation failed!");
-    				}
+    			if(OtpDAO.isValidOtp(contactNumber, otp)){
+    				User referalUser = new User(name, password, email, contactNumber, referalCode, myBalance);
+        			//just try to insert data in db for new user
+        			isNewUserCreated = doSignUpFor(referalUser);
+        			if(isNewUserCreated){
+        				System.out.println("New user created...and now update balance. . .");
+        				insertStatus = updateBalanceForReferredUserFrom(referalCode.trim());
+        				if(insertStatus){
+        					System.out.println("Referred user balance updated...");
+        					myReferalCode = generateReferalCode(name);
+        					System.out.println("New users code ::"+myReferalCode);
+        					updateMyCode(myReferalCode, contactNumber);
+        					OtpDAO.deleteOtp(contactNumber);
+        					jsonObject.put("status", true);
+                			jsonObject.put("message", "Thank you for registration!");
+        				}else{
+        					OtpDAO.deleteOtp(contactNumber);
+        					jsonObject.put("status", true);
+                			jsonObject.put("message", "User created but user balance updation failed!");
+        				}
+        			}else{
+            			jsonObject.put("status", false);
+            			jsonObject.put("message", "The mobile number is already registered");
+            		}
     			}else{
-        			jsonObject.put("status", false);
-        			jsonObject.put("message", "The mobile number is already registered");
-        		}
+    				jsonObject.put("status", false);
+        			jsonObject.put("message", "Invalid OTP given!");
+    			}
+    			
     		}else{
     			jsonObject.put("status", false);
     			jsonObject.put("message", "Referral code is Invalid");
@@ -1047,18 +1056,25 @@ public class DBConnection {
     	}else{
     		System.out.println("Referral code not given::"+referalCode);
     		//when referral code not given by user, just try to insert data in db for new user
-    		User newUser = new User(name, password, email, contactNumber,referalCode,0.0);
-    		isNewUserCreated = doSignUpFor(newUser);
-    		if(isNewUserCreated){
-    			insertStatus = true;
-    			myReferalCode = generateReferalCode(name);
-				updateMyCode(myReferalCode, contactNumber);
-    			jsonObject.put("status", true);
-    			jsonObject.put("message", "Thank you for registration!");
+    		if(OtpDAO.isValidOtp(contactNumber, otp)){
+    			User newUser = new User(name, password, email, contactNumber,referalCode,0.0);
+        		isNewUserCreated = doSignUpFor(newUser);
+        		if(isNewUserCreated){
+        			insertStatus = true;
+        			myReferalCode = generateReferalCode(name);
+    				updateMyCode(myReferalCode, contactNumber);
+    				OtpDAO.deleteOtp(contactNumber);
+        			jsonObject.put("status", true);
+        			jsonObject.put("message", "Thank you for registration!");
+        		}else{
+        			jsonObject.put("status", false);
+        			jsonObject.put("message", "The mobile number is already registered");
+        		}
     		}else{
     			jsonObject.put("status", false);
-    			jsonObject.put("message", "The mobile number is already registered");
+    			jsonObject.put("message", "Invalid OTP given!");
     		}
+    		
     	}
     		/*try {
     			Connection connection = DBConnection.createConnection();
@@ -6581,9 +6597,9 @@ public class DBConnection {
 	        	cuisinesarrayList.put(allcuisine);*/
 	    		cartCapacity = SingleOrderDAO.getCartCapacity(connection,area);
 	    		isSingleOrder = SingleOrderDAO.isSingleOrderAvailable(area, deliveryDay, connection);
-	    		//cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay);
-	    		//lunchCart = cartValue[0];
-	    		//dinnerCart = cartValue[1];
+	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay);
+	    		lunchCart = cartValue[0];
+	    		dinnerCart = cartValue[1];
 	    		isSingleOrderLunchAvailable = isSingleOrder[0];
 	        	isSingleOrderDinnerAvailable = isSingleOrder[1];
 	        	
@@ -6653,6 +6669,8 @@ public class DBConnection {
     		cuisineList.put("dinnerAlert", alertMessage);
     	}
     	cuisineList.put("cartCapacity", cartCapacity);
+    	cuisineList.put("lunchCartCapacity", lunchCart);
+    	cuisineList.put("dinnerCartCapacity", dinnerCart);
     	cuisineList.put("cuisinelist", cuisinesarrayList);
     	return cuisineList;
     }

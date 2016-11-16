@@ -318,6 +318,9 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject sendOTP(@FormParam("mobileNo")String mobileNo,
 			@FormParam("userType")String userType) throws JSONException{
+		System.out.println("---------------------------------------");
+		System.out.println("- - - - - sendOtp API CALLED - - - - - ");
+		System.out.println("Mobile no: "+mobileNo+" User Type : "+userType);
 		JSONObject otpJsonObject = new JSONObject();
 		if(mobileNo!=null || mobileNo.trim().length()>0){
 			if(userType!=null || userType.trim().length()>0){
@@ -332,6 +335,7 @@ public class Category {
 			otpJsonObject.put("otpStatus", false);
 			otpJsonObject.put("message", "Mobile no required!");
 		}
+		System.out.println("---------------------------------------");
 		return otpJsonObject;
 	}
 
@@ -355,9 +359,16 @@ public class Category {
 			jsonObject.put("message", "Contact number required!");
 		}else{
 			if(userType.equalsIgnoreCase("GUEST")){
-				
+				if(OtpDAO.isValidOtp(contactNumber, otp)){
+					OtpDAO.deleteOtp(contactNumber);
+					jsonObject.put("status", true);
+        			jsonObject.put("message", "Thank you for registration!");
+				}else{
+					jsonObject.put("status", false);
+        			jsonObject.put("message", "Invalid OTP given!");
+				}
 			}else{
-				jsonObject = DBConnection.signUp(name.trim(), email.trim(), contactNumber.trim(),  password, referalCode);
+				jsonObject = DBConnection.signUp(name.trim(), email.trim(), contactNumber.trim(),  password, referalCode, otp);
 			}
 		//object = DBConnection.signUp(name,  contactNumber, password);
 		}
@@ -373,16 +384,20 @@ public class Category {
 			@FormParam("email")String email,
 			@FormParam("contactnumber")String contactNumber,
 			@FormParam("refcode")String referalCode,
-			@FormParam("password")String password) throws JSONException{
+			@FormParam("password")String password,
+			@FormParam("otp")String otp,
+			@FormParam("userType")String userType) throws JSONException{
 		System.out.println("------ socialSignup webservice is called ------");
 		System.out.println("name--"+name+" email-"+email+"  number-"+contactNumber+" password-"+password+
 				"Referel code: "+referalCode);
+		System.out.println("otp: "+otp);
+		System.out.println("User Type: "+userType);
 		JSONObject jsonObject = new JSONObject(); 
 		if(contactNumber.trim().length()==0){
 			jsonObject.put("status", false);
 			jsonObject.put("message", "Contact number required!");
 		}else{
-			jsonObject = SignUpDAO.socialSignup(name.trim(), email.trim(), contactNumber.trim(),  password, referalCode);
+			jsonObject = SignUpDAO.socialSignup(name.trim(), email.trim(), contactNumber.trim(),  password, referalCode,otp);
 		//object = DBConnection.signUp(name,  contactNumber, password);
 		}
 		System.out.println("socialSignup::"+jsonObject);
@@ -1908,6 +1923,8 @@ public class Category {
 			jsonObject.put("isSingleOrderDinnerAvailable", true);
 			jsonObject.put("dinnerAlert","");
 			jsonObject.put("cartCapacity", 0);
+			jsonObject.put("lunchCartCapacity", 0);
+			jsonObject.put("dinnerCartCapacity", 0);
 			jsonObject.put("cuisinelist", new JSONArray());
 		}
 		System.out.println("------------------------------------------------------");
