@@ -55,6 +55,7 @@ import dao.ContactUsDAO;
 import dao.FaqDAO;
 import dao.FetchAlaCarteItemDAO;
 import dao.FetchBannersDAO;
+import dao.FetchCuisineDAO;
 import dao.FetchLocationDAO;
 import dao.ForgotPassword;
 import dao.ItemDAO;
@@ -335,6 +336,7 @@ public class Category {
 			otpJsonObject.put("otpStatus", false);
 			otpJsonObject.put("message", "Mobile no required!");
 		}
+		System.out.println(otpJsonObject);
 		System.out.println("---------------------------------------");
 		return otpJsonObject;
 	}
@@ -1914,7 +1916,7 @@ public class Category {
 		System.out.println(" Pincode: "+pincode+" Day: "+deliveryDay+" Area: "+area);
 		JSONObject jsonObject = new JSONObject();
 		if(area!=null){
-			jsonObject = DBConnection.fetchAllCuisineWithItemData(pincode, deliveryDay, mobileNo,area);
+			jsonObject = FetchCuisineDAO.fetchAllCuisineWithItemData(pincode, deliveryDay, mobileNo,area);
 		}else{
 			jsonObject.put("status", "204");
 			jsonObject.put("message", "Currently we are not serving in this zip code!");

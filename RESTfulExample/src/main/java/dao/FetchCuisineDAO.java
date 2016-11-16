@@ -4,10 +4,109 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONObject;
+
 import com.mkyong.rest.DBConnection;
 
 public class FetchCuisineDAO {
 
+	public static JSONObject fetchAllCuisineWithItemData(String pincode, String deliveryDay, String mobileNo, String area) throws Exception{
+    	Connection connection = null;
+    	PreparedStatement preparedStatement = null;
+		ResultSet resultSet = null;
+		JSONObject cuisineList = new JSONObject();
+    	JSONArray cuisinesarrayList = new JSONArray();
+    	JSONObject allcuisine = new JSONObject();
+    	boolean isSingleOrderLunchAvailable = false,isSingleOrderDinnerAvailable = false;
+    	String alertMessage = "";int cartCapacity = 0;
+    	boolean[] isSingleOrder = new boolean[2];
+    	int[] cartValue = new int[2];
+    	int lunchCart = 0, dinnerCart = 0 ;
+    	
+    	try {
+			SQL:{
+	    		connection = DBConnection.createConnection();
+	    		cartCapacity = SingleOrderDAO.getCartCapacity(connection,area);
+	    		isSingleOrder = SingleOrderDAO.isSingleOrderAvailable(area, deliveryDay, connection);
+	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay);
+	    		lunchCart = cartValue[0];
+	    		dinnerCart = cartValue[1];
+	    		isSingleOrderLunchAvailable = isSingleOrder[0];
+	        	isSingleOrderDinnerAvailable = isSingleOrder[1];
+	        	
+	        	String sql = "SELECT cuisin_id,cuisin_name,cuisine_image FROM fapp_cuisins "
+    				+ " WHERE is_active = 'Y' order by cuisin_id  ";
+	    		try {
+					preparedStatement = connection.prepareStatement(sql);
+					
+					resultSet = preparedStatement.executeQuery();
+					while (resultSet.next()) {
+						JSONObject tempCuisine = new JSONObject();
+						
+						tempCuisine.put("cuisineid", resultSet.getInt("cuisin_id"));
+						String tempImage  = resultSet.getString("cuisine_image");
+						String cuisineImage;
+						if(tempImage.contains("C:\\apache-tomcat-7.0.62/webapps/")){
+							cuisineImage = tempImage.replace("C:\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+						}else if(tempImage.startsWith("http://")){
+							cuisineImage = tempImage.replace("http://", "");
+						}else{
+							cuisineImage = tempImage.replace("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62/webapps/", "appsquad.cloudapp.net:8080/");
+						}
+						tempCuisine.put("cuisineimage", cuisineImage);
+						tempCuisine.put("cuisinename", resultSet.getString("cuisin_name"));
+						tempCuisine.put("categorylist", FetchCategory.fetchCategoriesOfCuisineWithPincode(tempCuisine.getInt("cuisineid"),pincode,
+								connection,deliveryDay,mobileNo,area));
+						cuisinesarrayList.put(tempCuisine);
+					}
+					if(!FetchCuisineDAO.isAllActive()){
+						allcuisine.put("cuisineid", cuisinesarrayList.length()+1);
+						//http://i.imgur.com/o0HO5pL.png
+			        	allcuisine.put("cuisineimage", "i.imgur.com/o0HO5pL.png");
+			        	allcuisine.put("cuisinename", "All");
+			        	allcuisine.put("categorylist", FetchCategory.fetchCategoriesOfAllCuisineWithPincode(pincode,connection,deliveryDay,mobileNo,area));
+			        	cuisinesarrayList.put(allcuisine);
+					}
+					
+		        
+				}  catch (Exception e) {
+					e.printStackTrace();
+				} finally{
+					if(connection!=null){
+						connection.close();
+					}
+				}	
+    		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	
+    	cuisineList.put("status", "200");
+    	cuisineList.put("message", "Our serving menus.");
+    	
+    	cuisineList.put("isSingleOrderLunchAvailable", isSingleOrderLunchAvailable);
+    	if(!isSingleOrderLunchAvailable){
+    		alertMessage = "Currently we do not have biker to serve single order.Please add more quantity.";
+    		cuisineList.put("lunchAlert", alertMessage);
+    	}else{
+    		cuisineList.put("lunchAlert", alertMessage);
+    	}
+    	cuisineList.put("isSingleOrderDinnerAvailable", isSingleOrderDinnerAvailable);
+    	if(!isSingleOrderDinnerAvailable){
+    		alertMessage = "Currently we do not have biker to serve single order.Please add more quantity.";
+    		cuisineList.put("dinnerAlert", alertMessage);
+    	}else{
+    		cuisineList.put("dinnerAlert", alertMessage);
+    	}
+    	cuisineList.put("cartCapacity", cartCapacity);
+    	cuisineList.put("lunchCartCapacity", lunchCart);
+    	cuisineList.put("dinnerCartCapacity", dinnerCart);
+    	cuisineList.put("cuisinelist", cuisinesarrayList);
+    	return cuisineList;
+    }
+	
+	
 	 public static boolean isAllActive(){
 	    	boolean isAllActive = false;
 	    	try {

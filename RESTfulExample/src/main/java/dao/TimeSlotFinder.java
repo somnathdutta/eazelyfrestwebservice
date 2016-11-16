@@ -31,10 +31,10 @@ public class TimeSlotFinder {
 
 	public static JSONObject getFreeSlots(String contactNumber, String deliveryAddress, ArrayList<OrderItems>
 	orderItemList, String mealtype,String deliveryDay, String pincode,  MealTypePojo mealTypePojo, String area) throws JSONException, ParseException{
-		int totalQty = 0;boolean isStaggeredDelivery=false;
+		boolean isStaggeredDelivery=false;
 		int totalNoOfQuantity = 0, totalBengQty = 0,totalNIQty = 0;
 		for(OrderItems items : orderItemList){
-			totalQty += items.quantity;
+			totalNoOfQuantity += items.quantity;
 			if(items.cuisineId == 1){
 				totalBengQty += items.quantity;
 			}
@@ -47,7 +47,7 @@ public class TimeSlotFinder {
 		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
 		int bikerCapacity = bikerCapa[0];
 		int bikerOrders = bikerCapa[1];
-		System.out.println("Total qty: "+totalQty);
+		System.out.println("Total qty: "+totalNoOfQuantity);
 		
 		if(totalNoOfQuantity>bikerCapacity || totalBengQty>bikerCapacity || totalNIQty>bikerCapacity ){
 			isStaggeredDelivery = true;
@@ -62,7 +62,7 @@ public class TimeSlotFinder {
 			timsSlotObject.put("status", "200");
 			timsSlotObject.put("staggered", isStaggeredDelivery);
 			timsSlotObject.put("message", "Slot found successfully!");
-			if(kitchens.length()>1 || totalQty > bikerCapacity){
+			if(kitchens.length()>1 || totalNoOfQuantity > bikerCapacity){
 				timsSlotObject.put("splitOrder", true);		
 			}else{
 				timsSlotObject.put("splitOrder", false);	
@@ -208,6 +208,7 @@ public class TimeSlotFinder {
 							continue;
 						}
 						if(kitchenStock.stock>items.quantity){
+							//System.out.println("if part kitchenStock.stock>itemqty");
 							OrderItems kio = new OrderItems();
 							kio.itemName = items.itemName;
 							kio.itemDescription = items.itemDescription;
@@ -218,7 +219,8 @@ public class TimeSlotFinder {
 							kio.kitchenId = kitchenStock.kitchenId;
 							kitchenOrderItems.add(kio);
 							kitchenStock.stock = kitchenStock.stock - items.quantity;
-							items.quantity = 0;
+							//items.quantity = 0;
+							//System.out.println("item qty:"+items.quantity);
 						} else {
 							OrderItems kio = new OrderItems();
 							kio.itemName = items.itemName;
@@ -230,6 +232,7 @@ public class TimeSlotFinder {
 							kio.kitchenId = kitchenStock.kitchenId;
 							kitchenOrderItems.add(kio);
 							items.quantity = items.quantity - kitchenStock.stock;
+							//System.out.println("else part item qty:"+items.quantity);
 							break;
 						}
 					}
@@ -241,7 +244,7 @@ public class TimeSlotFinder {
 		System.out.println("TotalNoOfBengQuantity:: "+totalBengQty);
 		System.out.println("TotalNoOfNIQuantity:: "+totalNIQty);
 
-		for(int i=0 ; i < kitchenItemsOrderList.size() ; i++){
+		/*for(int i=0 ; i < kitchenItemsOrderList.size() ; i++){
 			System.out.print("CUID::"+kitchenItemsOrderList.get(i).cuisineId);
 			System.out.print(" CUI ::"+kitchenItemsOrderList.get(i).cuisinName);
 			//System.out.print(" CATID::"+kitchenItemsOrderList.get(i).categoryId);
@@ -251,7 +254,7 @@ public class TimeSlotFinder {
 			System.out.print(" QTY::"+kitchenItemsOrderList.get(i).quantity);
 			System.out.println(" KITCHEN::"+kitchenItemsOrderList.get(i).kitchenId+"\n");
 
-		}	
+		}	*/
 		if(totalNoOfQuantity>bikerCapacity || totalBengQty>bikerCapacity || totalNIQty>bikerCapacity ){
 			isStaggeredDelivery = true;
 		}
@@ -759,7 +762,7 @@ public class TimeSlotFinder {
 					for(OrderItems orders : orderItemList){
 						//System.out.println("kicthenid:: "+kitchenid);
 						System.out.println("* * * * ");
-						System.out.println(orders.cuisinName+" "+orders.cuisineId+" "+orders.itemName+" "+orders.itemCode);
+						System.out.println(orders.itemName+" "+orders.quantity);
 						
 						JSONObject items = new JSONObject();
 						items.put("cuisineid", orders.getCuisineId());

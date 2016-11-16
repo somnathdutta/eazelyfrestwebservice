@@ -15,7 +15,14 @@ import pojo.Kitchen;
 
 public class SingleOrderDAO {
 
-	
+	/**
+	 * This method will return the lunch and dinner availability of kitchen for single order
+	 * @param area
+	 * @param deliveryDay
+	 * @param connection
+	 * @return boolean array
+	 * @throws JSONException
+	 */
 	public static boolean[] isSingleOrderAvailable(String area, String deliveryDay, Connection connection) throws JSONException{
 		boolean[] isSingleOrderAvailable = new boolean[2];
 		ArrayList<Kitchen> kitchenSingleOrders = getKitchenWithSingleOrders(area, deliveryDay, connection);
@@ -53,7 +60,13 @@ public class SingleOrderDAO {
 		return isSingleOrderAvailable;
 	}
 	
-	
+	/**
+	 * Get the kitchen and no of single order from area
+	 * @param area
+	 * @param deliveryDay
+	 * @param connection
+	 * @return
+	 */
 	public static ArrayList<Kitchen> getKitchenWithSingleOrders(String area, String deliveryDay, 
 			Connection connection){
 		ArrayList<Kitchen> kitchenSingleOrders = new ArrayList<Kitchen>();
@@ -121,6 +134,13 @@ public class SingleOrderDAO {
 		return cartCapacity;
 	}
 
+	/**
+	 * This method will return the lunch and dinner cart capacity for each kitchen for specific area
+	 * @param connection
+	 * @param area
+	 * @param deliveryDay
+	 * @return integer array for lunch and dinner cart capacity
+	 */
 	public static int[] getCartValue(Connection connection, String area,  String deliveryDay){
 		int[] cartCapacity = new int[2];
 		int lunchCapacity = 0,dinnerCapacity = 0;
