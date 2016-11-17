@@ -17,8 +17,20 @@ public class OtpDAO {
 		JSONObject otpJsonObject = new JSONObject();
 		if(!userType.equalsIgnoreCase("GUEST")){//FOR REGISTERED USER
 			if(SignUpDAO.isMobileExists(mobileNo)){
-				otpJsonObject.put("status", "200");
-				otpJsonObject.put("otpStatus", false);
+				//otpJsonObject.put("status", "200");
+				//otpJsonObject.put("otpStatus", true);
+				String otp = OTPGenerator.generateOTP(4);
+				int otpStatus = SendMessageDAO.sendOTP(mobileNo, otp);
+				if(otpStatus==200){
+					saveOtp(mobileNo, otp);
+					otpJsonObject.put("status", "200");
+					otpJsonObject.put("otpStatus", true);
+					otpJsonObject.put("message", "OTP send to your mobile number");
+				}else{
+					otpJsonObject.put("status", "200");
+					otpJsonObject.put("otpStatus", false);
+					otpJsonObject.put("message", "Try again");
+				}
 				otpJsonObject.put("message", "This Mobile no is already registered!");
 			}else{
 				String otp = OTPGenerator.generateOTP(4);

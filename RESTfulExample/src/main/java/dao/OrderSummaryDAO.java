@@ -85,20 +85,27 @@ public class OrderSummaryDAO {
 						String sql ;
 						sql = "select distinct item_name,item_code"
 								+ " from vw_order_items_of_kitchen "
-								+ " where  kitchen_name = ? and delivery_date= ? ";
+								+ " where  kitchen_name = ? and delivery_date= ? and meal_type = ?";
 						try {
 							preparedStatement = connection.prepareStatement(sql);
 							preparedStatement.setString(1, kitchenName);
 							preparedStatement.setDate(2, new java.sql.Date(deliveryDate.getTime()));
+							preparedStatement.setString(3, mealType.toUpperCase());
 							resultSet = preparedStatement.executeQuery();
 							while (resultSet.next()) {
 								JSONObject orderItem = new JSONObject();
 								String itemCode = resultSet.getString("item_code");
-								orderItem.put("itemName", resultSet.getString("item_name"));
-								String qnty = getItemQuanity(kitchenName,deliveryDate,itemCode, mealType);
-								if(qnty!=null){
-									orderItem.put("quantity", getItemQuanity(kitchenName,deliveryDate,itemCode, mealType));
+								String qnty = "";
+								if(itemCode!=null){
+									orderItem.put("itemName", resultSet.getString("item_name"));
+									qnty = getItemQuanity(kitchenName,deliveryDate,itemCode, mealType);
+									if(qnty!=null){
+										orderItem.put("quantity", getItemQuanity(kitchenName,deliveryDate,itemCode, mealType));
+									}else{
+										orderItem.put("quantity", "0");
+									}
 								}else{
+									orderItem.put("itemName", "");
 									orderItem.put("quantity", "0");
 								}
 								orderSummaryArray.put(orderItem);
@@ -117,6 +124,7 @@ public class OrderSummaryDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+		System.out.println("Order summary list size: "+orderSummaryArray.length());
 		if(orderSummaryArray.length()>0){
 			orderSummaryJson.put("status", "200");
 			orderSummaryJson.put("message", "Order details");

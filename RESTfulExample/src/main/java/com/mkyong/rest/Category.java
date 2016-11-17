@@ -812,6 +812,14 @@ public class Category {
 		return kitchenorders;
 	}
 	
+	/**
+	 * This method is used for order summmary
+	 * @param kitchenName
+	 * @param deliveryDay
+	 * @param mealType
+	 * @return
+	 * @throws JSONException
+	 */
 	@POST
 	@Path("/orderSummary")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -826,6 +834,22 @@ public class Category {
 		return kitchenorders;
 	}
 
+	/**
+	 * set details
+	 * @throws JSONException 
+	 * 
+	 * */
+	@POST
+	@Path("/setItemDetails")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject setItemDetails(@FormParam("kitchenId")String kitchenName) throws JSONException{
+		System.out.println("--------------------------------------");
+		System.out.println("setItemDetails api called for: "+kitchenName);
+		JSONObject setItemJson = SetItemDetailsDao.fetchSetDetails(kitchenName);
+		System.out.println("--------------------------------------");
+		return setItemJson;
+	}
+	
 	@POST
 	@Path("/receiveorder")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -2746,21 +2770,6 @@ public class Category {
 		return object;
 	}
 	
-	/**
-	 * set details
-	 * @throws JSONException 
-	 * 
-	 * */
-	@POST
-	@Path("/setItemDetails")
-	@Produces(MediaType.APPLICATION_JSON)
-	public JSONObject setItemDetails(@FormParam("kitchenId")String kitchenName) throws JSONException{
-		System.out.println("--------------------------------------");
-		System.out.println("setItemDetails api called for: "+kitchenName);
-		JSONObject setItemJson = SetItemDetailsDao.fetchSetDetails(kitchenName);
-		System.out.println("--------------------------------------");
-		return setItemJson;
-		
-	}
+	
 	
 	}

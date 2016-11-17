@@ -393,4 +393,33 @@ public class SlotDAO {
 		}
 		return slotTimings;
 	}
+	
+	public static String[] getSlotTimings(Connection connection){
+		String[] slotTimings = new String[2];
+		try {
+			SQL:{
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet =null;
+					String sql = "select lunch_from,lunch_to from fapp_slot_timings ";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							slotTimings[0] = resultSet.getString("lunch_from");
+							slotTimings[1] = resultSet.getString("lunch_to");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return slotTimings;
+	}
 }

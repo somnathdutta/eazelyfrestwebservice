@@ -229,6 +229,45 @@ public class BikerDAO {
 		return bikerList;
 	}
 	
+	/**
+	 * This method returns the single type bikers of kitchen
+	 * @param kicthenId
+	 * @return
+	 */
+	public static ArrayList<String> findSingleTypeBikerOfKitchen(Connection connection, int kitchenId){
+		ArrayList<String> bikerList = new ArrayList<String>();
+		try {
+			SQL:{
+			PreparedStatement preparedStatement = null;
+			ResultSet resultSet = null;
+			String sql = "";
+
+			sql ="select delivery_boy_user_id"
+					+ " from fapp_delivery_boy where kitchen_id = ? and is_active = 'Y'"
+					+ " and is_single_order_biker='Y'";
+
+			try {
+				preparedStatement = connection.prepareStatement(sql);
+				preparedStatement.setInt(1, kitchenId);
+				resultSet = preparedStatement.executeQuery();
+				while (resultSet.next()) {
+					bikerList.add(resultSet.getString("delivery_boy_user_id"));
+				}
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}finally{
+				if(preparedStatement!=null){
+					preparedStatement.close();
+				}
+			}
+		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		System.out.println(bikerList);
+		return bikerList;
+	}
 	public static int[] getBikerCapacityAndOrders(){
 		int[] bikerCapa =  new int[2];
 		try {

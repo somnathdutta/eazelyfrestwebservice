@@ -3,6 +3,8 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
@@ -18,19 +20,36 @@ public class FetchCuisineDAO {
 		JSONObject cuisineList = new JSONObject();
     	JSONArray cuisinesarrayList = new JSONArray();
     	JSONObject allcuisine = new JSONObject();
-    	boolean isSingleOrderLunchAvailable = false,isSingleOrderDinnerAvailable = false;
+    	boolean isSingleOrderLunchAvailable = false,isSingleOrderDinnerAvailable = false,isOrderBetweenSpecialTime = false;
     	String alertMessage = "";int cartCapacity = 0;
     	boolean[] isSingleOrder = new boolean[2];
     	int[] cartValue = new int[2];
     	int lunchCart = 0, dinnerCart = 0 ;
+    	String[] slotTimings = new String[2];
+    	
+		Date date = new Date();
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		String currentTime = sdf.format(date);
+		
     	
     	try {
 			SQL:{
 	    		connection = DBConnection.createConnection();
-	    		cartCapacity = SingleOrderDAO.getCartCapacity(connection,area);
+	    		slotTimings = SlotDAO.getSlotTimings(connection);
+	    		String initialTimings = slotTimings[0];
+	    		String finalTimings = slotTimings[1];
+	    		if(OrderTimeDAO.isTimeBetweenTwoTime(initialTimings, finalTimings, currentTime)  ){//showing lunch slot 2-3 for order time 11-12 
+	    			System.out.println("Menu time: "+currentTime);
+	    			isOrderBetweenSpecialTime = true;
+	    		}
+	    		//cartCapacity = SingleOrderDAO.getCartCapacity(connection,area);
 	    		isSingleOrder = SingleOrderDAO.isSingleOrderAvailable(area, deliveryDay, connection);
 	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay);
-	    		lunchCart = cartValue[0];
+	    		if(isOrderBetweenSpecialTime){
+	    			lunchCart = SingleOrderDAO.getSpecialLunchCartValue(connection, area, deliveryDay);
+	    		}else{
+	    			lunchCart = cartValue[0];
+	    		}
 	    		dinnerCart = cartValue[1];
 	    		isSingleOrderLunchAvailable = isSingleOrder[0];
 	        	isSingleOrderDinnerAvailable = isSingleOrder[1];

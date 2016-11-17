@@ -25,16 +25,29 @@ public class KitchenNotifyOrderDAO {
 	 */
 	public static JSONObject notifyLogistics(String orderNo , String kitchenName, String boyId) throws JSONException {
 		JSONObject notifiedJsonObject = new JSONObject();
-		JSONObject responseJsonObject = new JSONObject();
+		//JSONObject responseJsonObject = new JSONObject();
 		Boolean orderNotified = false;
-		JSONObject notifyObject ;
-		int totalNoOfQuantity = PlaceOrderDAO.getTotalNoOfQuantity(kitchenName, orderNo);
+		//JSONObject notifyObject ;
+		//int totalNoOfQuantity = PlaceOrderDAO.getTotalNoOfQuantity(kitchenName, orderNo);
 		orderNotified = notifyOrder(orderNo, kitchenName);
 		if(isAllKitchenNotified(orderNo)){
 			changeOrderStatusToReady(orderNo);
 		}
 		if(orderNotified){
-			if(totalNoOfQuantity==1){
+			String bikerUserId = BookDriver.getBikerUserID(kitchenName, orderNo);//Get biker user id
+
+			if(callDriver(orderNo, kitchenName, bikerUserId)){
+				Biker biker = BikerDAO.getDriverDetailsFromKitchen(orderNo, kitchenName);
+				notifiedJsonObject.put("status", true);
+				notifiedJsonObject.put("boyId", biker.getUserId());
+				notifiedJsonObject.put("boyName", biker.getBikerName());
+				notifiedJsonObject.put("boyPhoneNo", biker.getBikerContact());
+			}
+		}
+		System.out.println(notifiedJsonObject);
+		return notifiedJsonObject;
+	}
+			/*if(totalNoOfQuantity==1){
 				JSONObject pickJiBiker = CallPickJiBikerDAO.callPickJi(orderNo, kitchenName);
 				Biker biker = new Biker();
 				String lat = null,lng = null ;
@@ -80,10 +93,10 @@ public class KitchenNotifyOrderDAO {
 					notifiedJsonObject.put("boyName", "NO BOY NAME");
 					notifiedJsonObject.put("boyPhoneNo", "NO BOY CONTACT");
 				}
-			}else{
+			}else{*/
 
-				String bikerUserId = BookDriver.getBikerUserID(kitchenName, orderNo);//Get biker user id
-				if(BookDriver.isPickJiBoy(bikerUserId)){
+				//String bikerUserId = BookDriver.getBikerUserID(kitchenName, orderNo);//Get biker user id
+				/*if(BookDriver.isPickJiBoy(bikerUserId)){
 					JSONObject pickJiBiker = CallPickJiBikerDAO.callPickJi(orderNo, kitchenName);
 					Biker biker = new Biker();
 					String lat = null,lng = null ;
@@ -130,20 +143,18 @@ public class KitchenNotifyOrderDAO {
 						notifiedJsonObject.put("boyPhoneNo", "NO BOY CONTACT");
 					}
 
-				}else{
-					if(callDriver(orderNo, kitchenName, boyId)){
+				}else{*/
+					/*if(callDriver(orderNo, kitchenName, boyId)){
 						Biker biker = BikerDAO.getDriverDetailsFromKitchen(orderNo, kitchenName);
 						notifiedJsonObject.put("status", true);
 						notifiedJsonObject.put("boyId", biker.getUserId());
 						notifiedJsonObject.put("boyName", biker.getBikerName());
 						notifiedJsonObject.put("boyPhoneNo", biker.getBikerContact());
-					}
-				}
-			}
-		}
-		System.out.println(notifiedJsonObject);
-		return notifiedJsonObject;
-	}
+					}*/
+				//}
+			
+		
+	//}
 	
 	/**
 	 * Update order tracking with notify 'Y' and current timestamp for order id and kitchen

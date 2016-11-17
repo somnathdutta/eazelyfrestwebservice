@@ -37,7 +37,7 @@ public class KitchenReceiveOrderDAO {
 	    			 */
 	    			if(orderReceived){
 	    				JSONObject notifyObject ;
-	    				if(totalNoOfQuantity == 1){//If total quantity ==1 then place order to pickji
+	    				/*if(totalNoOfQuantity == 1){//If total quantity ==1 then place order to pickji
 	    					notifyObject = PickJiDAO.placeOrderToPickJi(orderNo, kitchenName);// need to be changed
 		    				JSONObject pickJiJson = new JSONObject();
 		    				pickJiJson = notifyObject;
@@ -52,7 +52,7 @@ public class KitchenReceiveOrderDAO {
 	        				    receivedJsonObject.put("boyName", "PickjiBoyName");
 	        				    receivedJsonObject.put("boyPhoneNo", "PickjiBoyContact");
 		    				}
-	    				}else{
+	    				}else{*/
 	    					//Total qty >1 eazelyf biker details
 	    					String bikerUserId = BookDriver.getBikerUserID(kitchenName, orderNo);//Get biker user id
 	    					   if(BookDriver.isPickJiBoy(bikerUserId)){
@@ -78,7 +78,7 @@ public class KitchenReceiveOrderDAO {
 		        				    receivedJsonObject.put("boyPhoneNo", biker.getBikerContact());
 	    					   }
 	    						
-	    				}
+	    			//	}
 	    				
 	    			}
     			/**
