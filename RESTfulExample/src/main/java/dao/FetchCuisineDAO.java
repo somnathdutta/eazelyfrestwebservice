@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.codehaus.jettison.json.JSONArray;
@@ -20,8 +21,9 @@ public class FetchCuisineDAO {
 		JSONObject cuisineList = new JSONObject();
     	JSONArray cuisinesarrayList = new JSONArray();
     	JSONObject allcuisine = new JSONObject();
-    	boolean isSingleOrderLunchAvailable = false,isSingleOrderDinnerAvailable = false,isOrderBetweenSpecialTime = false;
-    	String alertMessage = "";int cartCapacity = 0;
+    	boolean isSingleOrderLunchAvailable = false,isSingleOrderDinnerAvailable = false,
+    			isMultipleOrderLunchAvailable = true,isMultipleOrderDinnerAvailable = true,isOrderBetweenSpecialTime = false;
+    	String alertMessage = "",multiOrderLunchAlertMessage = "",multiOrderDinnerAlertMessage = "";int cartCapacity = 0;
     	boolean[] isSingleOrder = new boolean[2];
     	int[] cartValue = new int[2];
     	int lunchCart = 0, dinnerCart = 0 ;
@@ -42,15 +44,27 @@ public class FetchCuisineDAO {
 	    			System.out.println("Menu time: "+currentTime);
 	    			isOrderBetweenSpecialTime = true;
 	    		}
+	    		ArrayList<Integer> kitchenList = KitchenDAO.findKitchensInArea(connection, area);
+	    		
 	    		//cartCapacity = SingleOrderDAO.getCartCapacity(connection,area);
 	    		isSingleOrder = SingleOrderDAO.isSingleOrderAvailable(area, deliveryDay, connection);
-	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay);
+	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay,kitchenList);
 	    		if(isOrderBetweenSpecialTime){
-	    			lunchCart = SingleOrderDAO.getSpecialLunchCartValue(connection, area, deliveryDay);
+	    			lunchCart = SingleOrderDAO.getSpecialLunchCartValue(connection, area, deliveryDay,kitchenList);
 	    		}else{
 	    			lunchCart = cartValue[0];
+	    			if(lunchCart==0){
+	    				isMultipleOrderLunchAvailable = false;
+	    				multiOrderLunchAlertMessage = "Currently multiple order not possible, as our biker not available for lunch!";
+	    				lunchCart = SingleOrderDAO.getSingleBikerLunchCartValue(connection, area, deliveryDay, kitchenList);
+	    			}
 	    		}
 	    		dinnerCart = cartValue[1];
+	    		if(dinnerCart==0){
+    				isMultipleOrderDinnerAvailable = false;
+    				multiOrderDinnerAlertMessage = "Currently multiple order not possible, as our biker not available for dinner!";
+    				lunchCart = SingleOrderDAO.getSingleBikerDinnerCartValue(connection, area, deliveryDay, kitchenList);
+    			}
 	    		isSingleOrderLunchAvailable = isSingleOrder[0];
 	        	isSingleOrderDinnerAvailable = isSingleOrder[1];
 	        	
@@ -103,6 +117,21 @@ public class FetchCuisineDAO {
     	
     	cuisineList.put("status", "200");
     	cuisineList.put("message", "Our serving menus.");
+    	if(!isMultipleOrderLunchAvailable){
+    		cuisineList.put("isMultipleOrderLunchAvailable", isMultipleOrderLunchAvailable);
+        	cuisineList.put("multipleLunchAlert", multiOrderLunchAlertMessage);
+    	}else{
+    		cuisineList.put("isMultipleOrderLunchAvailable", isMultipleOrderLunchAvailable);
+        	cuisineList.put("multipleLunchAlert", multiOrderLunchAlertMessage);
+    	}
+    	
+    	if(!isMultipleOrderDinnerAvailable){
+    		cuisineList.put("isMultipleOrderDinnerAvailable", isMultipleOrderDinnerAvailable);
+        	cuisineList.put("multipleDinnerAlert", multiOrderDinnerAlertMessage);
+    	}else{
+    		cuisineList.put("isMultipleOrderDinnerAvailable", isMultipleOrderLunchAvailable);
+        	cuisineList.put("multipleDinnerAlert", multiOrderDinnerAlertMessage);
+    	}
     	
     	cuisineList.put("isSingleOrderLunchAvailable", isSingleOrderLunchAvailable);
     	if(!isSingleOrderLunchAvailable){

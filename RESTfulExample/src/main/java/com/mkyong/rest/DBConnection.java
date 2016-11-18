@@ -6597,7 +6597,7 @@ public class DBConnection {
 	        	cuisinesarrayList.put(allcuisine);*/
 	    		cartCapacity = SingleOrderDAO.getCartCapacity(connection,area);
 	    		isSingleOrder = SingleOrderDAO.isSingleOrderAvailable(area, deliveryDay, connection);
-	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay);
+	    		//cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay);
 	    		lunchCart = cartValue[0];
 	    		dinnerCart = cartValue[1];
 	    		isSingleOrderLunchAvailable = isSingleOrder[0];

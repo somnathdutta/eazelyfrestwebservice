@@ -1939,7 +1939,7 @@ public class Category {
 		System.out.println("***** fetchcuisine webservice called ***************");
 		System.out.println(" Pincode: "+pincode+" Day: "+deliveryDay+" Area: "+area);
 		JSONObject jsonObject = new JSONObject();
-		if(area!=null){
+		if(area!=null ){
 			jsonObject = FetchCuisineDAO.fetchAllCuisineWithItemData(pincode, deliveryDay, mobileNo,area);
 		}else{
 			jsonObject.put("status", "204");
@@ -1947,6 +1947,10 @@ public class Category {
 			jsonObject.put("isSingleOrderLunchAvailable", true);
 			jsonObject.put("lunchAlert", "");
 			jsonObject.put("isSingleOrderDinnerAvailable", true);
+			jsonObject.put("isMultipleOrderLunchAvailable", true);
+			jsonObject.put("multipleLunchAlert", "");
+			jsonObject.put("isMultipleOrderDinnerAvailable", true);
+			jsonObject.put("multipleDinnerAlert", "");
 			jsonObject.put("dinnerAlert","");
 			jsonObject.put("cartCapacity", 0);
 			jsonObject.put("lunchCartCapacity", 0);

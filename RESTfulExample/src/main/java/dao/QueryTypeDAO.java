@@ -107,9 +107,9 @@ public class QueryTypeDAO {
 			}
 			if(submitted){
 				submitJson.put("status", "200");
-				submitJson.put("message", "We will respond to you within 48 hours of registering the queries "
-						+" through e-mail. \nIf You Dont hear from us please feel free to call us "
-						+" in-between 2pm to 6 pm post 48 hours.");
+				submitJson.put("message", "We will respond to you within 48 hours of receiving your request through E-mail,"
+						+"\nif you dont hear from us please feel free to call us "
+						+" in-between 2pm to 6 pm from Monday to saturday post 48 hours.");
 				
 			}else{
 				submitJson.put("status", "204");

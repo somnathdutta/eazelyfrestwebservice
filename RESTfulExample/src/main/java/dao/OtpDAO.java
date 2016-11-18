@@ -7,9 +7,9 @@ import java.sql.ResultSet;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import com.mkyong.rest.DBConnection;
-
 import utility.OTPGenerator;
+
+import com.mkyong.rest.DBConnection;
 
 public class OtpDAO {
 
@@ -17,9 +17,29 @@ public class OtpDAO {
 		JSONObject otpJsonObject = new JSONObject();
 		if(!userType.equalsIgnoreCase("GUEST")){//FOR REGISTERED USER
 			if(SignUpDAO.isMobileExists(mobileNo)){
+				if(isSocialSignUp(mobileNo)){
+					System.out.println("Social sign up otp");
+					String otp = OTPGenerator.generateOTP(4);
+					int otpStatus = SendMessageDAO.sendOTP(mobileNo, otp);
+					if(otpStatus==200){
+						saveOtp(mobileNo, otp);
+						otpJsonObject.put("status", "200");
+						otpJsonObject.put("otpStatus", true);
+						otpJsonObject.put("message", "OTP send to your mobile number");
+					}else{
+						otpJsonObject.put("status", "200");
+						otpJsonObject.put("otpStatus", false);
+						otpJsonObject.put("message", "Try again");
+					}
+				}else{
+					System.out.println("Mobile sign up otp");
+					otpJsonObject.put("status", "204");
+					otpJsonObject.put("otpStatus", true);
+					otpJsonObject.put("message", "This Mobile no is already registered!");
+				}
 				//otpJsonObject.put("status", "200");
 				//otpJsonObject.put("otpStatus", true);
-				String otp = OTPGenerator.generateOTP(4);
+				/*String otp = OTPGenerator.generateOTP(4);
 				int otpStatus = SendMessageDAO.sendOTP(mobileNo, otp);
 				if(otpStatus==200){
 					saveOtp(mobileNo, otp);
@@ -30,8 +50,7 @@ public class OtpDAO {
 					otpJsonObject.put("status", "200");
 					otpJsonObject.put("otpStatus", false);
 					otpJsonObject.put("message", "Try again");
-				}
-				otpJsonObject.put("message", "This Mobile no is already registered!");
+				}*/
 			}else{
 				String otp = OTPGenerator.generateOTP(4);
 				int otpStatus = SendMessageDAO.sendOTP(mobileNo, otp);
@@ -235,5 +254,41 @@ public class OtpDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+	}
+	
+	public static boolean isSocialSignUp(String mobile){
+		boolean isSocialSignUp = false;
+		try {
+			SQL:{
+			Connection connection= DBConnection.createConnection();
+			PreparedStatement preparedStatement = null;
+			String sql = "Select password from fapp_accounts where mobile_no = ?";
+			ResultSet resultSet = null;
+			try {
+				preparedStatement = connection.prepareStatement(sql);
+				preparedStatement.setString(1, mobile);
+				resultSet = preparedStatement.executeQuery();
+				while (resultSet.next()) {
+					String password = resultSet.getString("password");
+					if(password.equalsIgnoreCase(mobile)){
+						isSocialSignUp = true;
+					}
+				}
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}finally{
+				if(preparedStatement!=null){
+					preparedStatement.close();
+				}
+				if(connection!=null){
+					connection.close();
+				}
+			}
+		}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return isSocialSignUp;
 	}
 }

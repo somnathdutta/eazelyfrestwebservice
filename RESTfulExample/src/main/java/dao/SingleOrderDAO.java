@@ -4,15 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
-import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
-
-import com.mkyong.rest.DBConnection;
 
 import pojo.Kitchen;
 
@@ -145,13 +139,12 @@ public class SingleOrderDAO {
 	 * @return integer array for lunch and dinner cart capacity
 	 * @throws ParseException 
 	 */
-	public static int[] getCartValue(Connection connection, String area,  String deliveryDay) throws ParseException{
+	public static int[] getCartValue(Connection connection, String area,  String deliveryDay, 
+			ArrayList<Integer> kitchenList) throws ParseException{
 		int[] cartCapacity = new int[2];
 		int lunchCapacity = 0,dinnerCapacity = 0;
 		
-		
-		ArrayList<Integer> kitchenList = KitchenDAO.findKitchensInArea(connection, area);
-		
+		//ArrayList<Integer> kitchenList = KitchenDAO.findKitchensInArea(connection, area);
 		
 		for(Integer kitchenId : kitchenList){
 			ArrayList<String> bikerList = new ArrayList<String>();
@@ -167,14 +160,16 @@ public class SingleOrderDAO {
 			}
 		}
 		System.out.println("LC-------:"+lunchCapacity+" DC-----------:"+dinnerCapacity);
+		
 		cartCapacity[0] = lunchCapacity;
 		cartCapacity[1] = dinnerCapacity;
 		return cartCapacity;
 	}
 	
-	public static int getSpecialLunchCartValue(Connection connection, String area,  String deliveryDay){
+	public static int getSpecialLunchCartValue(Connection connection, String area,  String deliveryDay,
+			ArrayList<Integer> kitchenList){
 		int lunchCapacity = 0;
-		ArrayList<Integer> kitchenList = KitchenDAO.findKitchensInArea(connection, area);
+		//ArrayList<Integer> kitchenList = KitchenDAO.findKitchensInArea(connection, area);
 		
 		for(Integer kitchenId : kitchenList){
 			ArrayList<String> bikerList = new ArrayList<String>();
@@ -190,4 +185,41 @@ public class SingleOrderDAO {
 		return lunchCapacity;
 	}
 	
+	public static int getSingleBikerLunchCartValue(Connection connection, String area, String deliveryDay,ArrayList<Integer> kitchenList){
+		int lunchCapacity = 0;
+	
+		for(Integer kitchenId : kitchenList){
+			ArrayList<String> bikerList = new ArrayList<String>();
+			
+			bikerList = BikerDAO.findSingleTypeBikerOfKitchen(connection, kitchenId);		
+			
+			for(String bikerUserId : bikerList){
+				int lc = BikerDAO.getAvailableLunchQuantity(connection, bikerUserId, deliveryDay);
+				lunchCapacity += lc;
+				System.out.println("LC for single biker:"+lc);
+			}
+		}
+		System.out.println("LC-------:"+lunchCapacity);
+		
+		return lunchCapacity;
+	}
+	
+	public static int getSingleBikerDinnerCartValue(Connection connection, String area, String deliveryDay,ArrayList<Integer> kitchenList){
+		int dinnerCapacity = 0;
+	
+		for(Integer kitchenId : kitchenList){
+			ArrayList<String> bikerList = new ArrayList<String>();
+			
+			bikerList = BikerDAO.findSingleTypeBikerOfKitchen(connection, kitchenId);		
+			
+			for(String bikerUserId : bikerList){
+				int dc = BikerDAO.getAvailableDinnerQuantity(connection, bikerUserId, deliveryDay);
+				dinnerCapacity += dc;
+				System.out.println("DC for single biker:"+dc);
+			}
+		}
+		System.out.println("DC-------:"+dinnerCapacity);
+		
+		return dinnerCapacity;
+	}
 }
