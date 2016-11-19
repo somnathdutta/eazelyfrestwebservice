@@ -15,9 +15,8 @@ import com.mkyong.rest.DBConnection;
 
 public class SlotDAO {
 
-	public static ArrayList<TimeSlot> findCommonTimeSlots(String boyUserId, int kitchenId, 
-			MealTypePojo mealTypePojo){
-		System.out.println("$ $ $ $ $ $ $ $ START FINDING SLOTS FOR BOY USER ID:: "+boyUserId);
+	public static ArrayList<TimeSlot> findCommonTimeSlots(String boyUserId, MealTypePojo mealTypePojo){
+		System.out.println("======== START FINDING SLOTS FOR BOY USER ID:: ============"+boyUserId);
 		ArrayList<TimeSlot> timeSlotList = new ArrayList<TimeSlot>();
 		ArrayList<Integer> timeSlotIds = new ArrayList<Integer>();
 		boolean firstSlotToday=false;
@@ -77,13 +76,16 @@ public class SlotDAO {
 					/*if(noOfRows == 0){
 							firstSlotToday = true;
 						}*/
-					if(mealTypePojo.isLunchToday() && noOfRows==2){
+					int lunchSlots = BikerDAO.getNoOfLunchSlot(connection);
+					int dinnerSlots = BikerDAO.getNoOfDinnerSlot(connection);
+					
+					if(mealTypePojo.isLunchToday() && noOfRows==lunchSlots){
 						firstSlotToday = true;
-					}else if(mealTypePojo.isDinnerToday() && noOfRows==2){
+					}else if(mealTypePojo.isDinnerToday() && noOfRows==dinnerSlots){
 						firstSlotToday = true;
-					}else if(mealTypePojo.isLunchTomorrow() && noOfRows==2){
+					}else if(mealTypePojo.isLunchTomorrow() && noOfRows==lunchSlots){
 						firstSlotToday = true;
-					}else if(mealTypePojo.isDinnerTomorrow() && noOfRows==2){
+					}else if(mealTypePojo.isDinnerTomorrow() && noOfRows==dinnerSlots){
 						firstSlotToday = true;
 					}else{
 						firstSlotToday = false;
@@ -168,42 +170,57 @@ public class SlotDAO {
 			 				+ " and is_slot_active ='Y' and no_of_orders < 3 and quantity <9 "
 			 				+ " and assigned_date = current_date";*/
 				if(mealTypePojo.isLunchToday()){
-					sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders  "
+					/*sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders  "
 							+ " from fapp_timeslot_driver_status ftds "
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
 							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders <= ? and quantity <= ? ";
-							/*+ " and assigned_date = current_date and ftds.time_slot_id <4 ";
+							+ " and assigned_date = current_date and ftds.time_slot_id <4 ";
 							+ " and ftds.time_slot_id <4 ";*/
+					sql= "select time_slot_id ,time_slot,quantity,no_of_orders  "
+							+ " from vw_driver_today_status "
+							+ " where driver_user_id = ? and is_slot_locked ='N'  "
+							+ " and is_slot_active ='Y' and is_lunch='Y' and no_of_orders <= ? and quantity <= ? ";
 				}else if(mealTypePojo.isDinnerToday() ){
-					sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders "
+					/*sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders "
 							+ " from fapp_timeslot_driver_status ftds "
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
 							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders <= ? and quantity <= ? ";
-							/*+ " and assigned_date = current_date and ftds.time_slot_id >3 ";
+							+ " and assigned_date = current_date and ftds.time_slot_id >3 ";
 							+ " and ftds.time_slot_id >3 "*/;
+					sql= "select time_slot_id ,time_slot,quantity,no_of_orders "
+							+ " from vw_driver_today_status "
+							+ " where driver_user_id = ? and is_slot_locked ='N'  "
+							+ " and is_slot_active ='Y' and is_lunch='N' and no_of_orders <= ? and quantity <= ? ";
 				}else if(mealTypePojo.isLunchTomorrow() ){
-					sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders "
+					/*sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders "
 							+ " from fapp_timeslot_driver_status_tommorrow ftds "
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
 							+ " and is_slot_active ='Y' and ft.is_lunch='Y' and no_of_orders <= ? and quantity <= ? ";
-							/*+ " and assigned_date = current_date and ftds.time_slot_id <4 ";
+							+ " and assigned_date = current_date and ftds.time_slot_id <4 ";
 							+ " and ftds.time_slot_id <4 "*/
+					sql= "select time_slot_id ,time_slot,quantity,no_of_orders "
+							+ " from vw_driver_tomorrow_status "
+							+ " where driver_user_id = ? and is_slot_locked ='N'  "
+							+ " and is_slot_active ='Y' and is_lunch='Y' and no_of_orders <= ? and quantity <= ? ";
 				}else{
-					sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders "
+					/*sql= "select ftds.time_slot_id ,ft.time_slot,ftds.quantity,ftds.no_of_orders "
 							+ " from fapp_timeslot_driver_status_tommorrow ftds "
 							+ " join fapp_timeslot ft "
 							+ " on ftds.time_slot_id = ft.time_slot_id"
 							+ " where driver_user_id = ? and is_slot_locked ='N'  "
 							+ " and is_slot_active ='Y' and ft.is_lunch='N' and no_of_orders <= ? and quantity <= ? ";
-							/*+ " and assigned_date = current_date and ftds.time_slot_id >3 ";
+							+ " and assigned_date = current_date and ftds.time_slot_id >3 ";
 							+ " and ftds.time_slot_id >3 "*/
-
+					sql= "select time_slot_id ,time_slot,quantity,no_of_orders "
+							+ " from vw_driver_tomorrow_status "
+							+ " where driver_user_id = ? and is_slot_locked ='N'  "
+							+ " and is_slot_active ='Y' and is_lunch='N' and no_of_orders <= ? and quantity <= ? ";
 				}
 				try {
 					preparedStatement = connection.prepareStatement(sql);

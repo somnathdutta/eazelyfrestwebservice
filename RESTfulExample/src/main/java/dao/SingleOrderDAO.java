@@ -194,7 +194,7 @@ public class SingleOrderDAO {
 			bikerList = BikerDAO.findSingleTypeBikerOfKitchen(connection, kitchenId);		
 			
 			for(String bikerUserId : bikerList){
-				int lc = BikerDAO.getAvailableLunchQuantity(connection, bikerUserId, deliveryDay);
+				int lc = BikerDAO.getSigleTypeAvailableLunchQuantity(connection, bikerUserId, deliveryDay);
 				lunchCapacity += lc;
 				System.out.println("LC for single biker:"+lc);
 			}
@@ -213,7 +213,7 @@ public class SingleOrderDAO {
 			bikerList = BikerDAO.findSingleTypeBikerOfKitchen(connection, kitchenId);		
 			
 			for(String bikerUserId : bikerList){
-				int dc = BikerDAO.getAvailableDinnerQuantity(connection, bikerUserId, deliveryDay);
+				int dc = BikerDAO.getSigleTypeAvailableDinnerQuantity(connection, bikerUserId, deliveryDay);
 				dinnerCapacity += dc;
 				System.out.println("DC for single biker:"+dc);
 			}

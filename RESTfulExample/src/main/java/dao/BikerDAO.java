@@ -342,18 +342,19 @@ public class BikerDAO {
 		bikerCapa = BikerDAO.getBikerCapacityAndOrders(connection);
 		int bikerCapacity = bikerCapa[0];
 		int bikerOrders = bikerCapa[1];
+		boolean found = false;
 		try {
 			SQL:{
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
 					String sql = "";
 					if(deliveryday.equalsIgnoreCase("TODAY") ){
-						sql = "select SUM(quantity)AS free from vw_driver_today_status "
+						sql = "select quantity AS free from vw_driver_today_status "
 								+" where driver_user_id = ? "
 								+" and is_slot_locked = 'N' and is_lunch='Y' "
 								+" and (quantity<? or no_of_orders <?) " ;
 					}else{
-						sql = "select SUM(quantity)AS free from vw_driver_tomorrow_status "
+						sql = "select quantity AS free from vw_driver_tomorrow_status "
 								+" where driver_user_id = ? "
 								+" and is_slot_locked = 'N' and is_lunch='Y' "
 								+" and (quantity<? or no_of_orders <?) " ;
@@ -364,9 +365,18 @@ public class BikerDAO {
 						preparedStatement.setInt(2, bikerCapacity);
 						preparedStatement.setInt(3, bikerOrders);
 						resultSet = preparedStatement.executeQuery();
-						if(resultSet.next())
-								noOfFreeSlots = resultSet.getInt("free");
-								noOfFreeSlots = (bikerCapacity*lunchSlot) - noOfFreeSlots;
+						while(resultSet.next()){
+							found = true;
+							int free = resultSet.getInt("free");   
+							noOfFreeSlots = noOfFreeSlots + free;
+							/* noOfFreeSlots = (Integer) resultSet.getObject("free");
+								//noOfFreeSlots=Integer.valueOf(noOfFreeSlots);
+								if(noOfFreeSlots==null){
+									noOfFreeSlots = 0;
+								}else{
+									noOfFreeSlots = (Integer)(bikerCapacity*lunchSlot) - noOfFreeSlots;		
+								}	*/
+						}
 					} catch (Exception e) {
 						// TODO: handle exception
 						e.printStackTrace();
@@ -379,6 +389,12 @@ public class BikerDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		} 
+		if(!found){
+			noOfFreeSlots = 0;
+		}else{
+			noOfFreeSlots = (bikerCapacity*lunchSlot) - noOfFreeSlots;	
+		}
+		System.out.println("free lunch: "+noOfFreeSlots);
 		return noOfFreeSlots ;
 	}
 	
@@ -389,18 +405,19 @@ public class BikerDAO {
 		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
 		int bikerCapacity = bikerCapa[0];
 		int bikerOrders = bikerCapa[1];
+		boolean found = false;
 		try {
 			SQL:{
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
 					String sql = "";
 					if(deliveryday.equalsIgnoreCase("TODAY") ){
-						sql = "select SUM(quantity)AS free from vw_driver_today_status "
+						sql = "select quantity AS free from vw_driver_today_status "
 								+" where driver_user_id = ? "
 								+" and is_slot_locked = 'N' and is_dinner='Y' "
 								+" and (quantity<? or no_of_orders <?) " ;
 					}else{
-						sql = "select SUM(quantity)AS free from vw_driver_tomorrow_status "
+						sql = "select quantity AS free from vw_driver_tomorrow_status "
 								+" where driver_user_id = ? "
 								+" and is_slot_locked = 'N' and is_dinner='Y' "
 								+" and (quantity<? or no_of_orders <?) " ;
@@ -411,9 +428,18 @@ public class BikerDAO {
 						preparedStatement.setInt(2, bikerCapacity);
 						preparedStatement.setInt(3, bikerOrders);
 						resultSet = preparedStatement.executeQuery();
-						if(resultSet.next())
-								noOfFreeSlots = resultSet.getInt("free");
-								noOfFreeSlots = (bikerCapacity*dinnerSlot) - noOfFreeSlots;
+						while(resultSet.next()){
+							found = true;
+							int free = resultSet.getInt("free");   
+							noOfFreeSlots = noOfFreeSlots + free;
+							/*noOfFreeSlots = (Integer) resultSet.getObject("free");
+								//noOfFreeSlots=Integer.valueOf(noOfFreeSlots);
+								if(noOfFreeSlots==null){
+									noOfFreeSlots = 0;
+								}else{
+									noOfFreeSlots =(Integer) (bikerCapacity*dinnerSlot) - noOfFreeSlots;		
+								}	*/
+						}	
 					} catch (Exception e) {
 						// TODO: handle exception
 						e.printStackTrace();
@@ -426,6 +452,139 @@ public class BikerDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		} 
+		if(!found){
+			noOfFreeSlots = 0;
+		}else{
+			noOfFreeSlots = (bikerCapacity*dinnerSlot) - noOfFreeSlots;	
+		}
+		System.out.println("free dinner: "+noOfFreeSlots);
+		return noOfFreeSlots ;
+	}
+	
+	
+	public static int getSigleTypeAvailableLunchQuantity(Connection connection, String bikerUserId, String deliveryday ){
+		int noOfFreeSlots = 0 ,lunchSlot = 0;
+		lunchSlot = getNoOfLunchSlot(connection);
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders(connection);
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
+		boolean found = false;
+		try {
+			SQL:{
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql = "";
+					if(deliveryday.equalsIgnoreCase("TODAY") ){
+						sql = "select quantity AS free from vw_driver_today_status "
+								+" where driver_user_id = ? "
+								+" and is_slot_locked = 'N' and is_lunch='Y' "
+								+" and (quantity<? or no_of_orders <?) " ;
+					}else{
+						sql = "select quantity AS free from vw_driver_tomorrow_status "
+								+" where driver_user_id = ? "
+								+" and is_slot_locked = 'N' and is_lunch='Y' "
+								+" and (quantity<? or no_of_orders <?) " ;
+					}
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, bikerUserId);
+						preparedStatement.setInt(2, bikerCapacity);
+						preparedStatement.setInt(3, bikerOrders);
+						resultSet = preparedStatement.executeQuery();
+						while(resultSet.next()){
+							found = true;
+							int free = resultSet.getInt("free");   
+							noOfFreeSlots = noOfFreeSlots + free;
+							/* noOfFreeSlots = (Integer) resultSet.getObject("free");
+								//noOfFreeSlots=Integer.valueOf(noOfFreeSlots);
+								if(noOfFreeSlots==null){
+									noOfFreeSlots = 0;
+								}else{
+									noOfFreeSlots = (Integer)(bikerCapacity*lunchSlot) - noOfFreeSlots;		
+								}	*/
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		} 
+		if(!found){
+			noOfFreeSlots = 0;
+		}else{
+			noOfFreeSlots = (bikerOrders*lunchSlot) - noOfFreeSlots;	
+		}
+		System.out.println("free lunch: "+noOfFreeSlots);
+		return noOfFreeSlots ;
+	}
+	
+	public static int getSigleTypeAvailableDinnerQuantity(Connection connection, String bikerUserId, String deliveryday ){
+		int noOfFreeSlots = 0 ,dinnerSlot = 0;
+		dinnerSlot = getNoOfDinnerSlot(connection);
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
+		boolean found = false;
+		try {
+			SQL:{
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql = "";
+					if(deliveryday.equalsIgnoreCase("TODAY") ){
+						sql = "select quantity AS free from vw_driver_today_status "
+								+" where driver_user_id = ? "
+								+" and is_slot_locked = 'N' and is_dinner='Y' "
+								+" and (quantity<? or no_of_orders <?) " ;
+					}else{
+						sql = "select quantity AS free from vw_driver_tomorrow_status "
+								+" where driver_user_id = ? "
+								+" and is_slot_locked = 'N' and is_dinner='Y' "
+								+" and (quantity<? or no_of_orders <?) " ;
+					}
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, bikerUserId);
+						preparedStatement.setInt(2, bikerCapacity);
+						preparedStatement.setInt(3, bikerOrders);
+						resultSet = preparedStatement.executeQuery();
+						while(resultSet.next()){
+							found = true;
+							int free = resultSet.getInt("free");   
+							noOfFreeSlots = noOfFreeSlots + free;
+							/*noOfFreeSlots = (Integer) resultSet.getObject("free");
+								//noOfFreeSlots=Integer.valueOf(noOfFreeSlots);
+								if(noOfFreeSlots==null){
+									noOfFreeSlots = 0;
+								}else{
+									noOfFreeSlots =(Integer) (bikerCapacity*dinnerSlot) - noOfFreeSlots;		
+								}	*/
+						}	
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		} 
+		if(!found){
+			noOfFreeSlots = 0;
+		}else{
+			noOfFreeSlots = (bikerOrders*dinnerSlot) - noOfFreeSlots;	
+		}
+		System.out.println("free dinner: "+noOfFreeSlots);
 		return noOfFreeSlots ;
 	}
 	

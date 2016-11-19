@@ -289,6 +289,265 @@ public class BookDriver {
 		return slotInactivation ;
 	}
 	
+	
+	/**
+	 * Check whether a slot is full or not??
+	 * if no of orders == 2
+	 * @param mealTypePojo
+	 * @return
+	 */
+	public static boolean isSlotFullForOrders(MealTypePojo mealTypePojo,TimeSlot timeSlot ){
+		boolean isSlotFull = false;
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		int bikerOrders = bikerCapa[1];
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql ="";
+					if(mealTypePojo.isLunchToday()){
+						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
+								+ " no_of_orders >= ?  and driver_user_id = ? and time_slot_id = ?";
+					}else if(mealTypePojo.isDinnerToday()){
+						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
+								+ " no_of_orders >= ? and driver_user_id = ? and time_slot_id = ?";
+					}else if(mealTypePojo.isLunchTomorrow()){
+						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
+								+ " no_of_orders = ? and driver_user_id = ? and time_slot_id = ?";
+					}else{
+						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
+								+ " no_of_orders = ? and driver_user_id = ? and time_slot_id = ?";
+					}	
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setInt(1, bikerOrders);
+						//preparedStatement.setInt(2, bikerCapacity);
+						preparedStatement.setString(2, timeSlot.bikerUserId);
+						preparedStatement.setInt(3, timeSlot.getSlotId());
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							int timeSlotId = resultSet.getInt("time_slot_id");
+							if(timeSlotId>0){
+								isSlotFull = true;
+							}
+						}	 
+					} catch (Exception e) {
+						System.out.println(e);
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}if(connection!=null){
+							connection.close();
+						}
+					}
+					
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		if(isSlotFull){
+			System.out.println("Slot "+timeSlot.getSlotId()+" FULL for boy id:: "+timeSlot.bikerUserId);
+		}else{
+			System.out.println("Slot "+timeSlot.getSlotId()+" NOT FULL for boy id:: "+timeSlot.bikerUserId);
+		}	
+		return isSlotFull;
+	}
+	
+	
+	/**
+	 * Check whether a slot is full or not??
+	 * if no of orders == 2
+	 * @param mealTypePojo
+	 * @return
+	 */
+	public static boolean isSlotFullForQuantity(MealTypePojo mealTypePojo,TimeSlot timeSlot ){
+		boolean isSlotFull = false;
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql ="";
+					if(mealTypePojo.isLunchToday()){
+						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
+								+ " quantity >= ?  and driver_user_id = ? and time_slot_id = ?";
+					}else if(mealTypePojo.isDinnerToday()){
+						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status where"
+								+ " quantity >= ? and driver_user_id = ? and time_slot_id = ?";
+					}else if(mealTypePojo.isLunchTomorrow()){
+						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
+								+ " quantity = ? and driver_user_id = ? and time_slot_id = ?";
+					}else{
+						sql = "select count(time_slot_id)AS time_slot_id from fapp_timeslot_driver_status_tommorrow where"
+								+ " quantity = ? and driver_user_id = ? and time_slot_id = ?";
+					}	
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						//preparedStatement.setInt(1, bikerOrders);
+						preparedStatement.setInt(1, bikerCapacity);
+						preparedStatement.setString(2, timeSlot.bikerUserId);
+						preparedStatement.setInt(3, timeSlot.getSlotId());
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							int timeSlotId = resultSet.getInt("time_slot_id");
+							if(timeSlotId>0){
+								isSlotFull = true;
+							}
+						}	 
+					} catch (Exception e) {
+						System.out.println(e);
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}if(connection!=null){
+							connection.close();
+						}
+					}
+					
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		if(isSlotFull){
+			System.out.println("Slot "+timeSlot.getSlotId()+" FULL for boy id:: "+timeSlot.bikerUserId);
+		}else{
+			System.out.println("Slot "+timeSlot.getSlotId()+" NOT FULL for boy id:: "+timeSlot.bikerUserId);
+		}	
+		return isSlotFull;
+	}
+	
+	/**
+	 * Make the slot locked when (no_of_orders=2 or quantity=8) for a biker
+	 * update is_slot_locked = 'Y'
+	 * @param mealTypePojo
+	 * @return
+	 */
+	public static boolean makeSlotLockedForOrders(MealTypePojo mealTypePojo , TimeSlot timeSlot){
+		boolean slotInactivation  = false;
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerOrders = bikerCapa[1];
+		try {
+			SQL:{
+				Connection connection = DBConnection.createConnection();
+				PreparedStatement preparedStatement = null;
+				String sql ="";
+				if(mealTypePojo.isLunchToday()){
+					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=? )";
+				}else if(mealTypePojo.isDinnerToday()){
+					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=? )";
+				}else if(mealTypePojo.isLunchTomorrow()){
+					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=? )";
+				}else{
+					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
+							+ " where driver_user_id = ? and time_slot_id = ? and (no_of_orders=? )";
+				}
+				
+				try {
+					preparedStatement = connection.prepareStatement(sql);
+					preparedStatement.setString(1, timeSlot.bikerUserId);
+					preparedStatement.setInt(2, timeSlot.getSlotId());
+					preparedStatement.setInt(3, bikerOrders);
+					int countUpdate = preparedStatement.executeUpdate();
+					if(countUpdate>0){
+							slotInactivation = true;
+					}	 
+				} catch (Exception e) {
+					System.out.println(e);
+					e.printStackTrace();
+				}finally{
+					if(preparedStatement!=null){
+						preparedStatement.close();
+					}if(connection!=null){
+						connection.close();
+					}
+				}
+				
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		if(slotInactivation){
+			System.out.println("Slot "+timeSlot.getSlotId()+" locked for boy id:: "+timeSlot.bikerUserId);
+		}else{
+			System.out.println("Slot "+timeSlot.getSlotId()+" NOT locked for boy id:: "+timeSlot.bikerUserId);
+		}
+		return slotInactivation ;
+	}
+	
+	/**
+	 * Make the slot locked when (no_of_orders=2 or quantity=8) for a biker
+	 * update is_slot_locked = 'Y'
+	 * @param mealTypePojo
+	 * @return
+	 */
+	public static boolean makeSlotLockedForQuantity(MealTypePojo mealTypePojo , TimeSlot timeSlot){
+		boolean slotInactivation  = false;
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0];
+		try {
+			SQL:{
+				Connection connection = DBConnection.createConnection();
+				PreparedStatement preparedStatement = null;
+				String sql ="";
+				if(mealTypePojo.isLunchToday()){
+					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
+							+ " where driver_user_id = ? and time_slot_id = ? and quantity>=?";
+				}else if(mealTypePojo.isDinnerToday()){
+					sql = "UPDATE fapp_timeslot_driver_status SET is_slot_locked = 'Y'"
+							+ " where driver_user_id = ? and time_slot_id = ? and quantity>=?";
+				}else if(mealTypePojo.isLunchTomorrow()){
+					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
+							+ " where driver_user_id = ? and time_slot_id = ? and quantity>=?";
+				}else{
+					sql = "UPDATE fapp_timeslot_driver_status_tommorrow SET is_slot_locked = 'Y'"
+							+ " where driver_user_id = ? and time_slot_id = ? and quantity>=?";
+				}
+				
+				try {
+					preparedStatement = connection.prepareStatement(sql);
+					preparedStatement.setString(1, timeSlot.bikerUserId);
+					preparedStatement.setInt(2, timeSlot.getSlotId());
+					preparedStatement.setInt(3, bikerCapacity);
+					int countUpdate = preparedStatement.executeUpdate();
+					if(countUpdate>0){
+							slotInactivation = true;
+					}	 
+				} catch (Exception e) {
+					System.out.println(e);
+					e.printStackTrace();
+				}finally{
+					if(preparedStatement!=null){
+						preparedStatement.close();
+					}if(connection!=null){
+						connection.close();
+					}
+				}
+				
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		if(slotInactivation){
+			System.out.println("Slot "+timeSlot.getSlotId()+" locked for boy id:: "+timeSlot.bikerUserId);
+		}else{
+			System.out.println("Slot "+timeSlot.getSlotId()+" NOT locked for boy id:: "+timeSlot.bikerUserId);
+		}
+		return slotInactivation ;
+	}
+	
 	/**
 	 * Make the slot unlocked when no of orders <2 for a biker
 	 * update is_slot_locked = 'N'

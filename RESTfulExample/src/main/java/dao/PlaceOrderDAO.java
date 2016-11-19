@@ -96,21 +96,26 @@ public class PlaceOrderDAO {
 		int totalNoOfBikers = 0,noFreeBikerSlot = 0; 
 		ArrayList<Integer> servableKitchenIds = findServableKitchens(itemCode, connection, deliveryDay, isLunch, area);
 		
-		for(Integer kitchenId : servableKitchenIds){
-			ArrayList<String> bikerList = findBikerOfKitchen(kitchenId,connection);
-			for(String bikerUserId : bikerList){
-				totalNoOfBikers ++;
-				int totalFreeSlotsForBiker = totalFreeSlots(bikerUserId, connection, deliveryDay, isLunch);
-				if(totalFreeSlotsForBiker == 0){//NO SLOT FOR BIKER
-					noFreeBikerSlot++;
+		if(servableKitchenIds.size()>0){
+			for(Integer kitchenId : servableKitchenIds){
+				ArrayList<String> bikerList = findBikerOfKitchen(kitchenId,connection);
+				for(String bikerUserId : bikerList){
+					totalNoOfBikers ++;
+					int totalFreeSlotsForBiker = totalFreeSlots(bikerUserId, connection, deliveryDay, isLunch);
+					if(totalFreeSlotsForBiker == 0){//NO SLOT FOR BIKER
+						noFreeBikerSlot++;
+					}
 				}
 			}
-		}
-		if(totalNoOfBikers == noFreeBikerSlot){
-			isServable = false;
+			if(totalNoOfBikers == noFreeBikerSlot){
+				isServable = false;
+			}else{
+				isServable = true;
+			}
 		}else{
-			isServable = true;
+			isServable = false;
 		}
+		
 		//System.out.println("Total no of bikers:: "+totalNoOfBikers+" and bikerSlots:: "+bikerSlot);
 		//System.out.println("Item code "+itemCode+" is available:"+isServable );	
 		//System.out.println("- - - - - - - - - - - - - - - - - - - -  - - - -  - - - - -");
@@ -301,14 +306,14 @@ public class PlaceOrderDAO {
 								+" vw_driver_today_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and is_lunch='Y'"
-								+" and (quantity<? or no_of_orders <?)" ; 
+								+" and (quantity<? AND no_of_orders <?)" ; 
 					}else if(deliverDay.equalsIgnoreCase("TODAY") && !isLunch){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" vw_driver_today_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and is_lunch='N'"
-								+" and (quantity<? or no_of_orders <?)" ;
+								+" and (quantity<? AND no_of_orders <?)" ;
 					}else if(deliverDay.equalsIgnoreCase("TOMORROW") && isLunch){
 						//System.out.println("target - - ");
 						sql = "select count(time_slot_id) "
@@ -316,14 +321,14 @@ public class PlaceOrderDAO {
 								+" vw_driver_tomorrow_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and is_lunch='Y'"
-								+" and (quantity<? or no_of_orders <?)" ;
+								+" and (quantity<? AND no_of_orders <?)" ;
 					}else if(deliverDay.equalsIgnoreCase("TOMORROW") && !isLunch){
 						sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "
 								+" vw_driver_tomorrow_status " 
 								+" where driver_user_id= ? "
 								+" and is_slot_locked = 'N' and is_lunch='N'"
-								+" and (quantity<? or no_of_orders <?)" ;
+								+" and (quantity<? AND no_of_orders <?)" ;
 					}
 					/*sql = "select count(time_slot_id) "
 								+" as no_of_free_slots from  "

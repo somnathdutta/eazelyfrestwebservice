@@ -1,6 +1,7 @@
 package com.mkyong.rest;
 
 import java.sql.Date;
+import java.util.ArrayList;
 
 public class OrderItems implements Comparable<OrderItems>{
 	
@@ -25,6 +26,9 @@ public class OrderItems implements Comparable<OrderItems>{
 	public String timsSlot;
 	
 	public int kitchenId; 
+	
+	private ArrayList<Integer> kitchenIdlist = new ArrayList<Integer>();
+
 
 	public OrderItems() {
 		super();
@@ -194,6 +198,14 @@ public class OrderItems implements Comparable<OrderItems>{
 
 	public void setMealType(String mealType) {
 		this.mealType = mealType;
+	}
+
+	public ArrayList<Integer> getKitchenIdlist() {
+		return kitchenIdlist;
+	}
+
+	public void setKitchenIdlist(ArrayList<Integer> kitchenIdlist) {
+		this.kitchenIdlist = kitchenIdlist;
 	}
 }
   

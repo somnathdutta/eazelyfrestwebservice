@@ -2,8 +2,14 @@ package pojo;
 
 public class Kitchen {
 
-	private int kitchenId,singleOrder,singleOrderLunch,singleOrderDinner;
+	private int kitchenId,singleOrder,singleOrderLunch,singleOrderDinner,itemStock;
 
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "("+kitchenId+" "+itemStock+")";
+	}
+	
 	public int getKitchenId() {
 		return kitchenId;
 	}
@@ -35,6 +41,14 @@ public class Kitchen {
 
 	public void setSingleOrderDinner(int singleOrderDinner) {
 		this.singleOrderDinner = singleOrderDinner;
+	}
+
+	public int getItemStock() {
+		return itemStock;
+	}
+
+	public void setItemStock(int itemStock) {
+		this.itemStock = itemStock;
 	}
 	
 	

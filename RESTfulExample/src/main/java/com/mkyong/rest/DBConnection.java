@@ -1,5 +1,6 @@
 package com.mkyong.rest;
 
+import java.awt.print.Book;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -3507,8 +3508,18 @@ public class DBConnection {
         						mealTypePojo.setSlotId(slot.slotId);
         						
         						BookDriver.bookDriverSlot(mealTypePojo, slot);//driver status table updation qty++ order++
+        						
+        						if(BookDriver.isSlotFullForQuantity(mealTypePojo, slot)){
+        							BookDriver.makeSlotLockedForQuantity(mealTypePojo, slot);
+        						}
+        						if(BookDriver.isSlotFullForQuantity(mealTypePojo, slot)){
+        							BookDriver.makeSlotLockedForQuantity(mealTypePojo, slot);
+        						}
+        						
         						if(BookDriver.isSlotFull(mealTypePojo, slot) ){//check for slot is full qty<9 && order==2
             						BookDriver.makeSlotLocked(mealTypePojo,slot);//make slot full as inactive
+            						//BookDriver.makeSlotLockedForOrders(mealTypePojo, slot);
+            						//BookDriver.makeSlotLockedForQuantity(mealTypePojo, slot);
             					}
         					}
         					/*if(BookDriver.isSlotFull(mealTypePojo,timeSlotList) ){//check for slot is full qty<9 && order==2
@@ -3549,8 +3560,9 @@ public class DBConnection {
     				updateRows = 0;
     				for(OrderItems items : orderItemList){
         				singleOrderKitchenId = items.kitchenId;
+        				updateRows = StockUpdationDAO.updateSingleOrder(singleOrderKitchenId,mealType,deliveryDay);
+        				StockUpdationDAO.updateKitchenItemStock(singleOrderKitchenId, items.itemCode, items.quantity, mealType, deliveryDay);
         			}
-    				updateRows = StockUpdationDAO.updateSingleOrder(singleOrderKitchenId,mealType,deliveryDay);
     				if(updateRows > 0){
         				System.out.println("*** Single order updated ****"+updateRows);
         			}

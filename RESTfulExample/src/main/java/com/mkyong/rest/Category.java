@@ -52,11 +52,13 @@ import dao.BookDriver;
 import dao.CallPickJiBikerDAO;
 import dao.ChangePasswordDAO;
 import dao.ContactUsDAO;
+import dao.DeliverySlotFinder;
 import dao.FaqDAO;
 import dao.FetchAlaCarteItemDAO;
 import dao.FetchBannersDAO;
 import dao.FetchCuisineDAO;
 import dao.FetchLocationDAO;
+import dao.FindDeliverySlots;
 import dao.ForgotPassword;
 import dao.ItemDAO;
 import dao.KitchenDeliverOrderDAO;
@@ -76,6 +78,7 @@ import dao.SetItemDetailsDao;
 import dao.ShareDAO;
 import dao.SignUpDAO;
 import dao.SingleOrderDAO;
+import dao.SlotDAO;
 import dao.StartMyTripDAO;
 import dao.SubmitFeedBackDAO;
 import dao.TermsAndConditionDAO;
@@ -1435,17 +1438,14 @@ public class Category {
 			@FormParam("deliverydate")String deliveryDay,
 			@FormParam("area")String area
 			) throws Exception{
-		System.out.println("******************************************************");
-		System.out.println("** FINDSLOT webservice is called** ** ** ** ");
-		System.out.println("*******************************************************");
-		System.out.println("deliveryday-->"+deliveryDay);
-		System.out.println("mobileno-->"+contactNumber);
+		System.out.println("------------------------------------------------------");
+		System.out.println("|     findSlot webservice is called		  			  |");
+		System.out.println("------------------------------------------------------");
+		System.out.println("Name -->"+guestName+"\t mobileno-->"+contactNumber);
+		System.out.println("deliveryday-->"+deliveryDay+"\t Meal type-->"+mealtype);
 		System.out.println("fooddetails[]-->"+orderDetails.toString());
-		System.out.println("deliverypincode -->"+pincode);
-		System.out.println("Meal type-->"+mealtype);
-		System.out.println("Area - - >"+area);
-		//System.out.println("delivery address-->"+deliveryAddress);
-	
+		System.out.println("deliverypincode -->"+pincode+"\t Area - - >"+area);
+		
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
 		JSONObject timeSlot = new JSONObject();
 		MealTypePojo mealType = new MealTypePojo();
@@ -1470,10 +1470,7 @@ public class Category {
 			orderItemList.add(items);
 		}
 	
-		int totalQuantity = 0;
-		for(OrderItems items :  orderItemList){
-			totalQuantity += items.quantity;
-		}
+		
 	
 		//System.out.println("Total order quantity:: "+ totalQuantity);
 		if(mealtype.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
@@ -1488,14 +1485,81 @@ public class Category {
 	
 		timeSlot = TimeSlotFinder.getFreeSlots(contactNumber, deliveryAddress, orderItemList,
 				mealtype, deliveryDay, pincode, mealType, area);
-		//System.out.println(timeSlot);
+		
+		/*timeSlot = 	FindDeliverySlots.getDeliverySlots(contactNumber, deliveryAddress, orderItemList,
+				mealtype, deliveryDay, pincode, mealType, area);	*/
+		
 		System.out.println(timeSlot);
-		System.out.println("******************************************************");
-		System.out.println("** ** ** **FINDSLOT webservice is ended here** ** ** ** ");
-		System.out.println("*******************************************************");
+		System.out.println("---------------------------------------------------------");
+		System.out.println("|           FINDSLOT webservice is ended here           |");
+		System.out.println("---------------------------------------------------------");
 		return timeSlot;
 	}
 	
+	
+	@POST
+	@Path("/findDeliverySlots")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject findDeliverySlots(
+			@FormParam("mobileno")String contactNumber,
+			@FormParam("name")String guestName,
+			@FormParam("deliverypincode")String pincode,
+			@FormParam("fooddetails[]")List<String> orderDetails,
+			@FormParam("mealtype")String mealtype,
+			@FormParam("deliveryaddress")String deliveryAddress,
+			@FormParam("deliverydate")String deliveryDay,
+			@FormParam("area")String area
+			) throws Exception{
+		System.out.println("------------------------------------------------------");
+		System.out.println("|     findDeliverySlots webservice is called		  |");
+		System.out.println("------------------------------------------------------");
+		System.out.println("Name -->"+guestName+"\t mobileno-->"+contactNumber);
+		System.out.println("deliveryday-->"+deliveryDay+"\t Meal type-->"+mealtype);
+		System.out.println("fooddetails[]-->"+orderDetails.toString());
+		System.out.println("deliverypincode -->"+pincode+"\t Area - - >"+area);
+		
+		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
+		JSONObject timeSlot = new JSONObject();
+		MealTypePojo mealType = new MealTypePojo();
+	
+		for(String str : orderDetails){	
+			OrderItems items = new OrderItems();
+			String[] order = str.split("\\$");
+			for(int i=0;i<order.length;i++){
+				if(order.length==6){
+					items.cuisineId = Integer.valueOf(order[0]);
+					items.categoryId = Integer.valueOf(order[1]);
+					items.itemCode = order[2].trim();
+					String[] itemDetails = ItemDAO.getItemDetails(items.itemCode);
+					items.cuisinName = itemDetails[0];
+					items.categoryName = itemDetails[1];
+					items.itemName = itemDetails[2];
+					items.price = Double.valueOf(order[3]);
+					items.quantity = Integer.valueOf(order[4]);
+					items.packing = order[5].trim().toUpperCase();
+				}
+			}
+			orderItemList.add(items);
+		}
+	
+		if(mealtype.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
+			mealType.setLunchToday(true);
+		}else if(mealtype.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY") ){
+			mealType.setDinnerToday(true);
+		}else if(mealtype.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW") ){
+			mealType.setLunchTomorrow(true);
+		}else{
+			mealType.setDinnerTomorrow(true);
+		}
+	
+		timeSlot = FindDeliverySlots.getDeliverySlots(contactNumber, deliveryAddress, orderItemList,
+				mealtype, deliveryDay, pincode, mealType, area);
+		System.out.println(timeSlot);
+		System.out.println("--------------------------------------------------------");
+		System.out.println("| findDeliverySlots webservice is ended here           |");
+		System.out.println("--------------------------------------------------------");
+		return timeSlot;
+	}
 	
 	@POST
 	@Path("/trackOrder")

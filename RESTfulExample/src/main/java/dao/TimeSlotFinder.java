@@ -24,6 +24,7 @@ import pojo.MealTypePojo;
 import pojo.TimeSlot;
 import utility.ValueComparator;
 
+import com.appsquad.finder.KitchenFinder;
 import com.mkyong.rest.DBConnection;
 import com.mkyong.rest.OrderItems;
 
@@ -68,7 +69,6 @@ public class TimeSlotFinder {
 				timsSlotObject.put("splitOrder", false);	
 			}
 			timsSlotObject.put("slotDetails", kitchens);
-
 		}else{
 			timsSlotObject.put("status", "204");
 			timsSlotObject.put("staggered", false);
@@ -142,7 +142,7 @@ public class TimeSlotFinder {
 			dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress, mealTypePojo, pincode, area);
 			if(dealingKitchenIds.size()==0){
 				dealingKitchenIds = RoundRobinKitchenFinder.getUniqueKitchen(orderItemList, pincode, mealType, deliveryDay, area);
-				//dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode, mealType, deliveryDay);
+				//dealingKitchenIds = KitchenFinder.getKitchenIds(orderItemList, mealType, deliveryDay, area);
 			}
 		}
 		if(onlyNiCuisine){
@@ -150,7 +150,7 @@ public class TimeSlotFinder {
 			dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress,mealTypePojo, pincode, area);
 			if(dealingKitchenIds.size()==0){
 				dealingKitchenIds = RoundRobinKitchenFinder.getUniqueKitchen(orderItemList, pincode, mealType, deliveryDay, area);
-				//dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode, mealType, deliveryDay);
+				//dealingKitchenIds = KitchenFinder.getKitchenIds(orderItemList, mealType, deliveryDay, area);
 			}
 		}
 		if(bengNiCuisine){
@@ -158,7 +158,7 @@ public class TimeSlotFinder {
 			dealingKitchenIds = SameUserPlaceOrder.getLastKitchenId(orderItemList, contactNumber, deliveryAddress,mealTypePojo, pincode, area);
 			if(dealingKitchenIds.size()==0){
 				dealingKitchenIds = RoundRobinKitchenFinder.getUniqueKitchen(orderItemList, pincode, mealType, deliveryDay, area);
-				//dealingKitchenIds = FindKitchensByRoundRobin.getKitchenId(orderItemList, pincode, mealType, deliveryDay);
+				//dealingKitchenIds = KitchenFinder.getKitchenIds(orderItemList, mealType, deliveryDay, area);
 			}	
 		}
 
@@ -414,7 +414,7 @@ public class TimeSlotFinder {
 								/**************************************************************************************************/
 								/****************************** ORDER SPILT code for ORDER BEFORE 11 ******************************/
 								/**************************************************************************************************/
-								ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kitchenid, mealTypePojo);
+								ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
 								Collections.sort(timeSlotList);
 								int Qty = 0;
 								for(TimeSlot slot : timeSlotList){
@@ -643,7 +643,7 @@ public class TimeSlotFinder {
 								/******************************* ORDER BEFORE 11 **************************************************/
 								/**************************************************************************************************/
 								ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
-								ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kitchenid, mealTypePojo);
+								ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId,  mealTypePojo);
 								Collections.sort(timeSlotList);
 								int Qty = 0;
 								for(TimeSlot slot : timeSlotList){
@@ -893,7 +893,7 @@ public class TimeSlotFinder {
 							/**************************************************************************************************/
 							System.out.println("- - - - Order NOT between 11-12 - - - - ");
 							ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
-							ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, kitchenid, mealTypePojo);
+							ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
 							Collections.sort(timeSlotList);
 							int Qty = 0;
 							for(TimeSlot slot : timeSlotList){

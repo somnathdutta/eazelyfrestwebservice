@@ -47,24 +47,35 @@ public class FetchCuisineDAO {
 	    		ArrayList<Integer> kitchenList = KitchenDAO.findKitchensInArea(connection, area);
 	    		
 	    		//cartCapacity = SingleOrderDAO.getCartCapacity(connection,area);
-	    		isSingleOrder = SingleOrderDAO.isSingleOrderAvailable(area, deliveryDay, connection);
-	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay,kitchenList);
-	    		if(isOrderBetweenSpecialTime){
-	    			lunchCart = SingleOrderDAO.getSpecialLunchCartValue(connection, area, deliveryDay,kitchenList);
-	    		}else{
-	    			lunchCart = cartValue[0];
-	    			if(lunchCart==0){
-	    				isMultipleOrderLunchAvailable = false;
-	    				multiOrderLunchAlertMessage = "Currently multiple order not possible, as our biker not available for lunch!";
-	    				lunchCart = SingleOrderDAO.getSingleBikerLunchCartValue(connection, area, deliveryDay, kitchenList);
-	    			}
-	    		}
+	    		isSingleOrder = SingleOrderDAO.isSingleOrderAvailable(area, deliveryDay, connection);//single order availability
+	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay,kitchenList);//multiple order availability
+	    		lunchCart = cartValue[0];
+    			if(lunchCart==0){
+    				System.out.println("Multiple biker not available for lunch");
+    				isMultipleOrderLunchAvailable = false;
+    				multiOrderLunchAlertMessage = "Currently we dont have biker to process multiple order for lunch!"
+    						+ "\nPlease order single quantity.";
+    				lunchCart = SingleOrderDAO.getSingleBikerLunchCartValue(connection, area, deliveryDay, kitchenList);
+    			}
+	    		
 	    		dinnerCart = cartValue[1];
 	    		if(dinnerCart==0){
-    				isMultipleOrderDinnerAvailable = false;
-    				multiOrderDinnerAlertMessage = "Currently multiple order not possible, as our biker not available for dinner!";
-    				lunchCart = SingleOrderDAO.getSingleBikerDinnerCartValue(connection, area, deliveryDay, kitchenList);
+	    			System.out.println("Multiple biker not available for dinner");
+	    			isMultipleOrderDinnerAvailable = false;
+    				multiOrderDinnerAlertMessage =  "Currently we dont have biker to process multiple order for dinner!"
+    						+ "\nPlease order single quantity.";
+    				dinnerCart = SingleOrderDAO.getSingleBikerDinnerCartValue(connection, area, deliveryDay, kitchenList);
     			}
+	    		/*if(isOrderBetweenSpecialTime){
+    			lunchCart = SingleOrderDAO.getSpecialLunchCartValue(connection, area, deliveryDay,kitchenList);
+    			}else{
+    			lunchCart = cartValue[0];
+    			if(lunchCart==0){
+    				isMultipleOrderLunchAvailable = false;
+    				multiOrderLunchAlertMessage = "Currently multiple order not possible, as our biker not available for lunch!";
+    				lunchCart = SingleOrderDAO.getSingleBikerLunchCartValue(connection, area, deliveryDay, kitchenList);
+    			}
+    			}*/
 	    		isSingleOrderLunchAvailable = isSingleOrder[0];
 	        	isSingleOrderDinnerAvailable = isSingleOrder[1];
 	        	
@@ -114,7 +125,7 @@ public class FetchCuisineDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-    	
+    	System.out.println("Lunch : "+lunchCart+" Dinner : "+dinnerCart);
     	cuisineList.put("status", "200");
     	cuisineList.put("message", "Our serving menus.");
     	if(!isMultipleOrderLunchAvailable){
@@ -129,20 +140,26 @@ public class FetchCuisineDAO {
     		cuisineList.put("isMultipleOrderDinnerAvailable", isMultipleOrderDinnerAvailable);
         	cuisineList.put("multipleDinnerAlert", multiOrderDinnerAlertMessage);
     	}else{
-    		cuisineList.put("isMultipleOrderDinnerAvailable", isMultipleOrderLunchAvailable);
+    		cuisineList.put("isMultipleOrderDinnerAvailable", isMultipleOrderDinnerAvailable);
         	cuisineList.put("multipleDinnerAlert", multiOrderDinnerAlertMessage);
     	}
     	
     	cuisineList.put("isSingleOrderLunchAvailable", isSingleOrderLunchAvailable);
     	if(!isSingleOrderLunchAvailable){
-    		alertMessage = "Currently we do not have biker to serve single order.Please add more quantity.";
+    		System.out.println("Single biker not available for lunch");
+    		
+    		alertMessage =  "Currently we dont have biker to process single order for lunch!"
+					+ "\nPlease order more than asingle quantity.";
     		cuisineList.put("lunchAlert", alertMessage);
     	}else{
     		cuisineList.put("lunchAlert", alertMessage);
     	}
     	cuisineList.put("isSingleOrderDinnerAvailable", isSingleOrderDinnerAvailable);
     	if(!isSingleOrderDinnerAvailable){
-    		alertMessage = "Currently we do not have biker to serve single order.Please add more quantity.";
+    		System.out.println("Single biker not available for dinner");
+    		
+    		alertMessage = "Currently we dont have biker to process single order for dinner!"
+					+ "\nPlease order more than asingle quantity.";
     		cuisineList.put("dinnerAlert", alertMessage);
     	}else{
     		cuisineList.put("dinnerAlert", alertMessage);
