@@ -29,6 +29,7 @@ public class OrderItems implements Comparable<OrderItems>{
 	
 	private ArrayList<Integer> kitchenIdlist = new ArrayList<Integer>();
 
+	private ArrayList<pojo.Kitchen> kitchenList = new ArrayList<pojo.Kitchen>();
 
 	public OrderItems() {
 		super();
@@ -207,5 +208,15 @@ public class OrderItems implements Comparable<OrderItems>{
 	public void setKitchenIdlist(ArrayList<Integer> kitchenIdlist) {
 		this.kitchenIdlist = kitchenIdlist;
 	}
+
+	public ArrayList<pojo.Kitchen> getKitchenList() {
+		return kitchenList;
+	}
+
+	public void setKitchenList(ArrayList<pojo.Kitchen> kitchenList) {
+		this.kitchenList = kitchenList;
+	}
+
+	
 }
   

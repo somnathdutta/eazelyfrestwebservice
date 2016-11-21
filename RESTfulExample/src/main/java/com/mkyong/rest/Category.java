@@ -2172,6 +2172,17 @@ public class Category {
 	}
 	
 	@POST
+	@Path("/fetchOrderContactUs")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject fetchOrderContactUs() throws JSONException{
+		System.out.println("----------------------------------------------------------");
+		System.out.println(" fetchOrderContactUs webservice  ");
+		JSONObject faqJsonObject = ContactUsDAO.getOrderMessge();
+		System.out.println("----- fetchOrderContactUs webservice  ends----------------");
+		return faqJsonObject;
+	}
+	
+	@POST
 	@Path("/fetchAboutUs")
 	@Produces(MediaType.APPLICATION_JSON)
 	public static JSONObject fetchAboutUs() throws JSONException{

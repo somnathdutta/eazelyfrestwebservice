@@ -1,13 +1,14 @@
 package pojo;
 
-public class Kitchen {
 
-	private int kitchenId,singleOrder,singleOrderLunch,singleOrderDinner,itemStock;
+public class Kitchen implements Comparable<Kitchen>{
+
+	private int kitchenId,singleOrder,singleOrderLunch,singleOrderDinner,itemStock,userItemQuantity;
 
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return "("+kitchenId+" "+itemStock+")";
+		return "("+kitchenId+" "+itemStock+" "+userItemQuantity+")";
 	}
 	
 	public int getKitchenId() {
@@ -51,5 +52,17 @@ public class Kitchen {
 		this.itemStock = itemStock;
 	}
 	
-	
+	@Override
+	public int compareTo(Kitchen other) {
+		// TODO Auto-generated method stub
+		return other.itemStock - this.itemStock;
+	}
+
+	public int getUserItemQuantity() {
+		return userItemQuantity;
+	}
+
+	public void setUserItemQuantity(int userItemQuantity) {
+		this.userItemQuantity = userItemQuantity;
+	}
 }

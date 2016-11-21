@@ -19,21 +19,29 @@ public class FindDeliverySlots {
 		JSONArray slotDetailsJsonArray = new JSONArray();
 		
 		boolean isStaggeredOrder = false, isSplitOrder = false;
-		isStaggeredOrder = isStaggeredOrder(orderItemList);
+		
+		/**
+		 * Add items with kitchen servable stock
+		 */
+		ArrayList<OrderItems> ordersWithKitchen = KitchenFinder.getKitchenOfOrderedItem(orderItemList, mealType, deliveryDay, area);
+		
+		isStaggeredOrder = isStaggeredOrder(ordersWithKitchen);
+		
 		
 		/**
 		 * Find dealing kitchen id's with respect to ordered items
 		 */
-		ArrayList<Integer> dealingKitchens = KitchenFinder.getKitchenIds(orderItemList, mealType, deliveryDay, area);
+		ArrayList<Integer> dealingKitchens = KitchenFinder.getDealingKitchenIds(ordersWithKitchen);
 		if(dealingKitchens.size() > 1){
 			isSplitOrder = true;
 		}
+		
 		
 		/**
 		 * Find delivery slots for dealing kitchens, if found
 		 */
 		if(dealingKitchens.size()>0){
-			slotDetailsJsonArray = DeliverySlotFinder.getSlotDetails(dealingKitchens, orderItemList, mealTypePojo);
+			slotDetailsJsonArray = DeliverySlotFinder.getSlotDetails(dealingKitchens, ordersWithKitchen, mealTypePojo);
 		}
 		
 		
