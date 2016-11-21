@@ -176,7 +176,7 @@ public class KitchenFinder {
 		ArrayList<Kitchen> tempKitchens = new ArrayList<Kitchen>();
 		ArrayList<Integer> selectedKitchenIds = new ArrayList<Integer>();
 		ArrayList<Kitchen> selectedKitchens = new ArrayList<Kitchen>();
-		System.out.println("ITEM CODE:: "+itemCode+" USER QTY:: "+quantity);
+		System.out.println(":: :: :: :: :: :: :: :: :: ITEM CODE:: ("+itemCode+") USER QTY:: "+quantity);
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
@@ -295,11 +295,18 @@ public class KitchenFinder {
 			
 			if(servableBySingleKitchen){
 				System.out.println("Single kicthen");	
+				for(Kitchen kitchen : tempKitchens){
+					Kitchen orderKitchen = new Kitchen();
+					orderKitchen.setUserItemQuantity(quantity);
+					orderKitchen.setKitchenId(kitchen.getKitchenId());
+					selectedKitchens.add(orderKitchen);
+				}
+				
 			}
 		}else{
 			
 		}
-		System.out.println("Selected kitchen with order qty : "+selectedKitchens);
+		System.out.println("************** Selected kitchen with order qty : "+selectedKitchens+" **************************");
 		
 		return selectedKitchens;
 	}

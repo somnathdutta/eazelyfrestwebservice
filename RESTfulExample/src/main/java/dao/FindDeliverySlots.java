@@ -35,7 +35,7 @@ public class FindDeliverySlots {
 		if(dealingKitchens.size() > 1){
 			isSplitOrder = true;
 		}
-		
+		System.out.println("DEALING KITCHEN IDS "+dealingKitchens);
 		
 		/**
 		 * Find delivery slots for dealing kitchens, if found
