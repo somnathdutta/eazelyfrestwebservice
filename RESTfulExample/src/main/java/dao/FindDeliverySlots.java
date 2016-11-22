@@ -54,7 +54,7 @@ public class FindDeliverySlots {
 		}else{
 			timsSlotObject.put("status", "204");
 			timsSlotObject.put("staggered", false);
-			timsSlotObject.put("message", "Sorry!Items sold out at this time!");
+			timsSlotObject.put("message", "Oops!..Currently all our bikers are busy. Please order for dinner or tomorrow’s lunch.");
 			timsSlotObject.put("splitOrder", false);
 			timsSlotObject.put("slotDetails", slotDetailsJsonArray);
 		}

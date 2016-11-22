@@ -1039,7 +1039,9 @@ public class Category {
 			@FormParam("promoCode")String promoCode
 			) throws Exception{
 
-		System.out.println("placeOrder webservice is called * * * * * * * * *");
+		System.out.println("-------------------------------------------------");
+		System.out.println("------- PLACE ORDER STARTS HERE - - - - - - --- -");
+		System.out.println("--------------------------------------------------");
 		System.out.println("Usertype - >"+userType);
 		System.out.println("Name ->"+guestName);
 		System.out.println("deliveryday-->"+deliveryDay);
@@ -1418,6 +1420,9 @@ public class Category {
 					city, location,pincode, getLocationId(location, city),mealType,timeslot, orderItemList,
 					deliveryZone,deliveryAddress,instruction,deliveryDay,payAmount,credit, payType , totalNoOfQuantity, 
 					mealTypePojo , dealingTimeSlots, servingKitchenIds, promoCode );
+			System.out.println("----------------------------------------");
+			System.out.println("------- PLACE ORDER ENDS HERE ----------");
+			System.out.println("----------------------------------------");
 			return orderPlaced;
 		}
 
@@ -1483,11 +1488,11 @@ public class Category {
 			mealType.setDinnerTomorrow(true);
 		}
 	
-		timeSlot = TimeSlotFinder.getFreeSlots(contactNumber, deliveryAddress, orderItemList,
-				mealtype, deliveryDay, pincode, mealType, area);
+		/*timeSlot = TimeSlotFinder.getFreeSlots(contactNumber, deliveryAddress, orderItemList,
+				mealtype, deliveryDay, pincode, mealType, area);*/
 		
-		/*timeSlot = 	FindDeliverySlots.getDeliverySlots(contactNumber, deliveryAddress, orderItemList,
-				mealtype, deliveryDay, pincode, mealType, area);*/	
+		timeSlot = 	FindDeliverySlots.getDeliverySlots(contactNumber, deliveryAddress, orderItemList,
+				mealtype, deliveryDay, pincode, mealType, area);	
 		
 		System.out.println(timeSlot);
 		System.out.println("---------------------------------------------------------");

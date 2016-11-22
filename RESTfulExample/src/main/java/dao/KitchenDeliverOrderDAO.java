@@ -18,7 +18,7 @@ public class KitchenDeliverOrderDAO {
 		JSONObject deliveryBoyJsonObj = new JSONObject();
 		if(isDeliveredToBoy(orderNo, kitchenName)){
 			deliveryBoyJsonObj.put("status", true);
-			Biker pickJibiker = isOrderDeliverByPickJiBoy(orderNo, kitchenName);//If order will be delivered by pickji
+			/*Biker pickJibiker = isOrderDeliverByPickJiBoy(orderNo, kitchenName);//If order will be delivered by pickji
 			if( pickJibiker != null){
 				Biker updatedBiker = callPickJiForStatus(pickJibiker.getUserId());// Get pickji pickup time
 				if(updatedBiker!=null){
@@ -34,7 +34,7 @@ public class KitchenDeliverOrderDAO {
 			     Thread t = new Thread(myRunnable);
 			     t.start();
 			    
-			}
+			}*/
 		}else{
 			deliveryBoyJsonObj.put("status", false);
 		}

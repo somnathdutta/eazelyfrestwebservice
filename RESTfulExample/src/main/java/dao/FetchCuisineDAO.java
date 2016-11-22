@@ -55,7 +55,8 @@ public class FetchCuisineDAO {
     				isMultipleOrderLunchAvailable = false;
     				/*multiOrderLunchAlertMessage = "Currently we dont have biker to process multiple order for lunch!"
     						+ "\nPlease order single quantity.";*/
-    				multiOrderLunchAlertMessage = "Please place single order & we will deliver :)";
+    				multiOrderLunchAlertMessage = "Currently all our delivery boys are busy for delivery of multiple order."
+    						+ "\n Please only order single quantity & we will deliver :)";
     				lunchCart = SingleOrderDAO.getSingleBikerLunchCartValue(connection, area, deliveryDay, kitchenList);
     			}
 	    		
@@ -65,7 +66,8 @@ public class FetchCuisineDAO {
 	    			isMultipleOrderDinnerAvailable = false;
     				/*multiOrderDinnerAlertMessage =  "Currently we dont have biker to process multiple order for dinner!"
     						+ "\nPlease order single quantity.";*/
-	    			multiOrderDinnerAlertMessage = "Please place single order & we will deliver :)";
+	    			multiOrderDinnerAlertMessage = "Currently all our delivery boys are busy for delivery of multiple order."
+    						+ "\n Please only order single quantity & we will deliver :)";
     				dinnerCart = SingleOrderDAO.getSingleBikerDinnerCartValue(connection, area, deliveryDay, kitchenList);
     			}
 	    		/*if(isOrderBetweenSpecialTime){
@@ -152,7 +154,8 @@ public class FetchCuisineDAO {
     		
     		/*alertMessage =  "Currently we dont have biker to process single order for lunch!"
 					+ "\nPlease order more than asingle quantity.";*/
-    		alertMessage = "Please place multiple orders & we will deliver :)";
+    		alertMessage = "Currently all our delivery boys are busy for delivery of single order."
+					+ "\n Please order multiple quantity & we will deliver :)";
     		cuisineList.put("lunchAlert", alertMessage);
     	}else{
     		cuisineList.put("lunchAlert", alertMessage);
@@ -163,7 +166,8 @@ public class FetchCuisineDAO {
     		
     		/*alertMessage = "Currently we dont have biker to process single order for dinner!"
 					+ "\nPlease order more than asingle quantity.";*/
-    		alertMessage = "Please place multiple orders & we will deliver :)";
+    		alertMessage = "Currently all our delivery boys are busy for delivery of single order."
+					+ "\n Please order multiple quantity & we will deliver :)";
     		cuisineList.put("dinnerAlert", alertMessage);
     	}else{
     		cuisineList.put("dinnerAlert", alertMessage);

@@ -168,14 +168,43 @@ public class MultipleOrder {
 	public static JSONArray getBikerSlotJsonArray(String bikerUserId, MealTypePojo mealTypePojo, int totalNoOfItems) throws JSONException{
 		JSONArray slotJSONArray = new JSONArray();
 		ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
-		for(TimeSlot tSlot : timeSlotList){//Timeslot list for loop starts here
+		ArrayList<TimeSlot> returningTimeSlot = fetchTimeSlotList(totalNoOfItems, timeSlotList);
+				
+		for(TimeSlot tSlot : returningTimeSlot){//Returning Timeslot list for loop starts here
 			JSONObject slotJson = new JSONObject();
 			slotJson.put("slotId", tSlot.slotId);
 			slotJson.put("timeSlot", tSlot.timeSlot);
 			slotJson.put("quantity", tSlot.quantity);
 			slotJson.put("noOfOrders", tSlot.noOfOrders);
 			slotJSONArray.put(slotJson);
-		}//Timeslot list for loop ends here
+		}//Returning Timeslot list for loop ends here
+		
 		return slotJSONArray;
+	}
+	
+	
+	public static ArrayList<TimeSlot> fetchTimeSlotList(int totalQty, ArrayList<TimeSlot> timeSlotList){
+		System.out.println("Slot listing called. . . . . ");
+		ArrayList<TimeSlot> returningTimeSlotList = new ArrayList<TimeSlot>();
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0]; 
+		 for(TimeSlot slot : timeSlotList){
+				if(totalQty<=0){
+					continue;
+				}
+				if(bikerCapacity - slot.quantity <= bikerCapacity){
+					TimeSlot reslot = new TimeSlot();
+					reslot.slotId = slot.slotId;
+					reslot.timeSlot = slot.timeSlot;
+					reslot.quantity = slot.quantity;
+					reslot.noOfOrders = slot.noOfOrders;
+					returningTimeSlotList.add(reslot);
+					totalQty = totalQty -(bikerCapacity - slot.quantity);
+					System.out.println(returningTimeSlotList);
+					System.out.println("remain qty :"+totalQty);
+				}
+			}
+		return returningTimeSlotList;
 	}
 }

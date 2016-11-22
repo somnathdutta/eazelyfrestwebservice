@@ -3232,8 +3232,28 @@ public class DBConnection {
     		if(onlyBengCuisine){//when only bengali cuisine orders
 
     			if(sameCuisineSplit){
-    					
-    				for(TimeSlot kitchenSlot: timeSlotList){
+    					for(OrderItems items : orderItemList){
+    						
+    						for(TimeSlot kitchenSlot : timeSlotList){
+    							if(items.itemCode.equalsIgnoreCase(kitchenSlot.itemCode)){
+    								System.out.println("2nd loop Item code: "+items.itemCode+" Kitchen item code: "+kitchenSlot.itemCode);
+    								OrderItems kio = new OrderItems();
+        							kio.itemName = items.itemName;
+        							kio.itemDescription = items.itemDescription;
+        							kio.categoryId = items.categoryId;
+        							kio.cuisineId = items.cuisineId;
+        							kio.cuisinName = items.cuisinName;
+        							kio.itemCode = items.itemCode;
+        							kio.quantity = kitchenSlot.quantity;
+        							kio.price = items.price;
+        							kio.kitchenId = kitchenSlot.kitchenID;
+        							kio.packing = items.packing;
+        							kio.mealType = items.mealType;
+        							sameKitchenOrderList.add(kio);
+    							}
+    						}
+    					}
+    				/*for(TimeSlot kitchenSlot: timeSlotList){
     					for(OrderItems items : orderItemList){
     						if(kitchenSlot.quantity>0){
     							if(items.quantity == 0){
@@ -3249,13 +3269,20 @@ public class DBConnection {
     							kio.quantity = kitchenSlot.quantity;
     							kio.price = items.price;
     							kio.kitchenId = kitchenSlot.kitchenID;
+    							kio.packing = items.packing;
+    							kio.mealType = items.mealType;
     							sameKitchenOrderList.add(kio);
 
-    						}
+    						//}
     					}
+    				}*/
+    				if(orderItemList.size() > 0 ){
+    					orderItemList.clear();
     				}
-    				orderItemList = new ArrayList<OrderItems>();
-    				orderItemList = sameKitchenOrderList;
+    				System.out.println("O size: "+orderItemList.size());
+    				
+    				orderItemList.addAll(sameKitchenOrderList);
+    				System.out.println("Size : "+sameKitchenOrderList.size());
     				System.out.println(orderItemList);
     				for(OrderItems oritems : sameKitchenOrderList)
     					dealingKitchenIds.addAll(servingKitchenIds);
@@ -3590,13 +3617,15 @@ public class DBConnection {
 				}else{
 					isOrderPlaced.put("message", "Your order placed successfully!");
 				}
+    			//isOrderPlaced.put("message", "Your order placed successfully!");
     			isOrderPlaced.put("success", getRecentlyPlacedRegularOrderDetails(orderId));
+    			
     			//return isOrderPlaced;
     		}else{
     			System.out.println("####### Regular order failed!! ###########");
     			isOrderPlaced.put("status", false);
         		isOrderPlaced.put("message", "Internal problem occured!");
-    			//isOrderPlaced.put("success", new JSONObject());
+    			isOrderPlaced.put("success", new JSONObject());
     			//return isOrderPlaced;
     		}
         	
@@ -3611,7 +3640,7 @@ public class DBConnection {
     		//isOrderPlaced.put("success", "regular_success");
     		isOrderPlaced.put("status", false);
     		isOrderPlaced.put("message", "No Kitchen Found!");
-    		//isOrderPlaced.put("success", new JSONObject());
+    		isOrderPlaced.put("success", new JSONObject());
     		
     		//return isOrderPlaced;	
     	}
