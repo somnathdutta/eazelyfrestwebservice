@@ -3235,8 +3235,8 @@ public class DBConnection {
     					for(OrderItems items : orderItemList){
     						
     						for(TimeSlot kitchenSlot : timeSlotList){
+    							
     							if(items.itemCode.equalsIgnoreCase(kitchenSlot.itemCode)){
-    								System.out.println("2nd loop Item code: "+items.itemCode+" Kitchen item code: "+kitchenSlot.itemCode);
     								OrderItems kio = new OrderItems();
         							kio.itemName = items.itemName;
         							kio.itemDescription = items.itemDescription;

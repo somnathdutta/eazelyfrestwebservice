@@ -1267,7 +1267,10 @@ public class Category {
 		int qty = 0;
 		int slotQuantity = 0;
 		int otherslot = 0;
-
+		int[] bikerCapa = new int[2];
+		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+		int bikerCapacity = bikerCapa[0]; 
+		
 		for(int i = 0; i < timeSlotList.size(); i++){
 			TimeSlot slot = timeSlotList.get(i);
 			if(slot.quantity <1){
@@ -1294,8 +1297,8 @@ public class Category {
 			qty = slot.quantity;
 			//slotId = slot.slotId;
 
-			if( (10 - currQnty) >= slot.quantity){
-				if(slotQuantity + slot.quantity > 10){
+			if( (bikerCapacity - currQnty) >= slot.quantity){
+				if(slotQuantity + slot.quantity > bikerCapacity){
 					if(otherslot != 0){
 						slot.setQuantity(slot.quantity);
 						slot.slotId = otherslot;
@@ -1375,6 +1378,8 @@ public class Category {
 
 		if(isSttagegredDelivery){
 			System.out.println("Staggred delivery Dealing time slotss: "+dealingTimeSlots);
+			
+			
 		}else{
 			System.out.println("Dealing time slotss: "+dealingTimeSlots);
 		}
