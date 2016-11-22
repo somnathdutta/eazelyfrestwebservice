@@ -1278,6 +1278,7 @@ public class Category {
 			}
 			int currQnty = TimeSlotFinder.getBikerStock(slot.bikerUserId, slot.slotId, mealTypePojo);
 			System.out.println("Biker "+slot.bikerUserId+" dbqty:"+currQnty+" slot id: "+slot.slotId+" slot qty:"+slot.quantity);
+			System.out.println("Kitchen id: "+slot.kitchenID);
 			if(i != 0){
 				if(kitchen == slot.kitchenID && biker.equalsIgnoreCase(slot.bikerUserId) && cuisineId == slot.cuisineId
 						&& itemCode.equalsIgnoreCase(slot.itemCode) && qty == slot.quantity){
@@ -1285,7 +1286,7 @@ public class Category {
 					continue;
 				}
 				if(kitchen == slot.kitchenID && cuisineId == slot.cuisineId
-						&& itemCode.equalsIgnoreCase(slot.itemCode) && qty == slot.quantity && slot.quantity < 10){
+						&& itemCode.equalsIgnoreCase(slot.itemCode) && qty == slot.quantity && slot.quantity < bikerCapacity){
 					otherslot = slot.slotId;
 					continue;
 				}
@@ -1307,6 +1308,8 @@ public class Category {
 						dealingTimeSlots.add(slot);
 						slotQuantity = slotQuantity + slot.quantity;
 						System.out.println("First if: "+slot.quantity);
+						System.out.println("Kitchen id: "+slot.kitchenID);
+						
 					}
 				} else {
 					slot.setQuantity(slot.quantity);
@@ -1314,7 +1317,9 @@ public class Category {
 					slot.kitchenID = kitchen;
 					dealingTimeSlots.add(slot);
 					slotQuantity = slotQuantity + slot.quantity;
-					System.out.println("First if: "+slot.quantity);
+					System.out.println("else part: "+slot.quantity);
+					System.out.println("Kitchen id: "+slot.kitchenID);
+					
 				}
 			}
 			//slot.setQuantity(slot.quantity);

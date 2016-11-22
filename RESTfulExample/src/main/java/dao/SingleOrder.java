@@ -7,6 +7,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import pojo.MealTypePojo;
+import pojo.TimeSlot;
 
 import com.mkyong.rest.OrderItems;
 
@@ -38,10 +39,34 @@ public class SingleOrder {
 			JSONObject bikerJsonObject = new JSONObject();
 			bikerJsonObject.put("bikerUserId", bikerUserId);
 			bikerJsonObject.put("itemDetails", MultipleOrder.getItemDetailsJsonArray(orderItems));
-			bikerJsonObject.put("slotlist", MultipleOrder.getBikerSlotJsonArray(bikerUserId, mealTypePojo, totalNoOfItems));	
+			bikerJsonObject.put("slotlist", SingleOrder.getBikerSlotJsonArray(bikerUserId, mealTypePojo, totalNoOfItems));	
 			
 			returningBikerJsonArray.put(bikerJsonObject);
 		}
 		return returningBikerJsonArray;
+	}
+	
+	/**
+	 * Create json array of slots
+	 * @param bikerUserId
+	 * @param mealTypePojo
+	 * @param totalNoOfItems
+	 * @return
+	 * @throws JSONException
+	 */
+	public static JSONArray getBikerSlotJsonArray(String bikerUserId, MealTypePojo mealTypePojo, int totalNoOfItems) throws JSONException{
+		JSONArray slotJSONArray = new JSONArray();
+		ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
+				
+		for(TimeSlot tSlot : timeSlotList){//Returning Timeslot list for loop starts here
+			JSONObject slotJson = new JSONObject();
+			slotJson.put("slotId", tSlot.slotId);
+			slotJson.put("timeSlot", tSlot.timeSlot);
+			slotJson.put("quantity", tSlot.quantity);
+			slotJson.put("noOfOrders", tSlot.noOfOrders);
+			slotJSONArray.put(slotJson);
+		}//Returning Timeslot list for loop ends here
+		
+		return slotJSONArray;
 	}
 }
