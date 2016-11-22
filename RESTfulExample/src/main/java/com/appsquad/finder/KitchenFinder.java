@@ -176,7 +176,9 @@ public class KitchenFinder {
 		ArrayList<Kitchen> tempKitchens = new ArrayList<Kitchen>();
 		ArrayList<Integer> selectedKitchenIds = new ArrayList<Integer>();
 		ArrayList<Kitchen> selectedKitchens = new ArrayList<Kitchen>();
-		System.out.println(":: :: :: :: :: :: :: :: :: ITEM CODE:: ("+itemCode+") USER QTY:: "+quantity);
+		System.out.println("\n===========================================================");
+		System.out.println("|      ITEM CODE:: ("+itemCode+") USER QTY:: "+quantity);
+		System.out.println("=============================================================");
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
@@ -206,6 +208,7 @@ public class KitchenFinder {
 							Kitchen kitchen =  new Kitchen();
 							kitchen.setKitchenId(resultSet.getInt("kitchen_id"));
 							kitchen.setItemStock(resultSet.getInt("stock"));
+							kitchen.setTotalItemStock(resultSet.getInt("stock"));
 							tempKitchens.add(kitchen);
 						}
 						
@@ -257,6 +260,7 @@ public class KitchenFinder {
 			if(selectedKitchenIds.size()==1){
 				servableBySingleKitchen = true;
 				servableByMultiKitchen = false;
+				servableByAllKitchen = false;
 			}
 			
 			if(servableByAllKitchen){
@@ -270,10 +274,22 @@ public class KitchenFinder {
 				Kitchen orderKitchen = new Kitchen();
 				orderKitchen.setUserItemQuantity(quantity);
 				orderKitchen.setKitchenId(rrKitchenId);
+				orderKitchen.setTotalItemStock(totalItemStock);
 				selectedKitchens.add(orderKitchen);
 				selectedKitchenIds.add(rrKitchenId);
 			}
 			
+			if(servableBySingleKitchen){
+				System.out.println("Single kicthen");	
+				for(Integer kitchen : selectedKitchenIds){
+					Kitchen orderKitchen = new Kitchen();
+					orderKitchen.setUserItemQuantity(quantity);
+					orderKitchen.setKitchenId(kitchen);
+					orderKitchen.setTotalItemStock(totalItemStock);
+					selectedKitchens.add(orderKitchen);
+				}
+				
+			}
 			
 			if(servableByMultiKitchen){
 				System.out.println(" - - - -  - -Item will be servable by more than one kitchen - - - - - - -");
@@ -282,9 +298,11 @@ public class KitchenFinder {
 					if(quantity>=kitchen.getItemStock()){
 						userQtyKitchen.setKitchenId(kitchen.getKitchenId());
 						userQtyKitchen.setUserItemQuantity(kitchen.getItemStock());
+						userQtyKitchen.setTotalItemStock(kitchen.getTotalItemStock());
 					}else{
 						userQtyKitchen.setKitchenId(kitchen.getKitchenId());
 						userQtyKitchen.setUserItemQuantity(quantity);
+						userQtyKitchen.setTotalItemStock(kitchen.getTotalItemStock());
 					}
 					selectedKitchens.add(userQtyKitchen);
 					quantity = quantity - kitchen.getItemStock();
@@ -293,21 +311,12 @@ public class KitchenFinder {
 					
 			}
 			
-			if(servableBySingleKitchen){
-				System.out.println("Single kicthen");	
-				for(Kitchen kitchen : tempKitchens){
-					Kitchen orderKitchen = new Kitchen();
-					orderKitchen.setUserItemQuantity(quantity);
-					orderKitchen.setKitchenId(kitchen.getKitchenId());
-					selectedKitchens.add(orderKitchen);
-				}
-				
-			}
 		}else{
 			
 		}
-		System.out.println("************** Selected kitchen with order qty : "+selectedKitchens+" **************************");
-		
+		System.out.println("==========================================================");
+		System.out.println("| 		Selected kitchen with order qty : "+selectedKitchens);
+		System.out.println("==========================================================");
 		return selectedKitchens;
 	}
 	

@@ -3,7 +3,7 @@ package pojo;
 
 public class Kitchen implements Comparable<Kitchen>{
 
-	private int kitchenId,singleOrder,singleOrderLunch,singleOrderDinner,itemStock,userItemQuantity;
+	private int kitchenId,singleOrder,singleOrderLunch,singleOrderDinner,itemStock,userItemQuantity,totalItemStock;
 
 	@Override
 	public String toString() {
@@ -64,5 +64,13 @@ public class Kitchen implements Comparable<Kitchen>{
 
 	public void setUserItemQuantity(int userItemQuantity) {
 		this.userItemQuantity = userItemQuantity;
+	}
+
+	public int getTotalItemStock() {
+		return totalItemStock;
+	}
+
+	public void setTotalItemStock(int totalItemStock) {
+		this.totalItemStock = totalItemStock;
 	}
 }

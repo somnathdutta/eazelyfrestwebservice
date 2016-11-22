@@ -1487,7 +1487,7 @@ public class Category {
 				mealtype, deliveryDay, pincode, mealType, area);
 		
 		/*timeSlot = 	FindDeliverySlots.getDeliverySlots(contactNumber, deliveryAddress, orderItemList,
-				mealtype, deliveryDay, pincode, mealType, area);	*/
+				mealtype, deliveryDay, pincode, mealType, area);*/	
 		
 		System.out.println(timeSlot);
 		System.out.println("---------------------------------------------------------");

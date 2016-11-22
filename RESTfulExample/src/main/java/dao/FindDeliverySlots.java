@@ -47,14 +47,14 @@ public class FindDeliverySlots {
 		
 		if(dealingKitchens.size()>0){
 			timsSlotObject.put("status", "200");
-			timsSlotObject.put("message", "Slot found successfully!");
 			timsSlotObject.put("staggered", isStaggeredOrder);
+			timsSlotObject.put("message", "Slot found successfully!");
 			timsSlotObject.put("splitOrder", isSplitOrder);
 			timsSlotObject.put("slotDetails", slotDetailsJsonArray);
 		}else{
 			timsSlotObject.put("status", "204");
-			timsSlotObject.put("message", "Sorry!Items sold out at this time!");
 			timsSlotObject.put("staggered", false);
+			timsSlotObject.put("message", "Sorry!Items sold out at this time!");
 			timsSlotObject.put("splitOrder", false);
 			timsSlotObject.put("slotDetails", slotDetailsJsonArray);
 		}

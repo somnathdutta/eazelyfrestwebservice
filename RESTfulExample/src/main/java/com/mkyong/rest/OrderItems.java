@@ -25,7 +25,7 @@ public class OrderItems implements Comparable<OrderItems>{
 	
 	public String timsSlot;
 	
-	public int kitchenId; 
+	public int kitchenId,dividedOrderQuantity,stockQuantity; 
 	
 	private ArrayList<Integer> kitchenIdlist = new ArrayList<Integer>();
 
@@ -215,6 +215,22 @@ public class OrderItems implements Comparable<OrderItems>{
 
 	public void setKitchenList(ArrayList<pojo.Kitchen> kitchenList) {
 		this.kitchenList = kitchenList;
+	}
+
+	public int getDividedOrderQuantity() {
+		return dividedOrderQuantity;
+	}
+
+	public void setDividedOrderQuantity(int dividedOrderQuantity) {
+		this.dividedOrderQuantity = dividedOrderQuantity;
+	}
+
+	public int getStockQuantity() {
+		return stockQuantity;
+	}
+
+	public void setStockQuantity(int stockQuantity) {
+		this.stockQuantity = stockQuantity;
 	}
 
 	
