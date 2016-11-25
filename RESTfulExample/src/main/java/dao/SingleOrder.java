@@ -1,6 +1,10 @@
 package dao;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -53,11 +57,33 @@ public class SingleOrder {
 	 * @param totalNoOfItems
 	 * @return
 	 * @throws JSONException
+	 * @throws ParseException 
 	 */
-	public static JSONArray getBikerSlotJsonArray(String bikerUserId, MealTypePojo mealTypePojo, int totalNoOfItems) throws JSONException{
+	public static JSONArray getBikerSlotJsonArray(String bikerUserId, MealTypePojo mealTypePojo, int totalNoOfItems) 
+			throws JSONException, ParseException{
 		JSONArray slotJSONArray = new JSONArray();
-		ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
-				
+		
+		String[] slotTimings = new String[2];
+    	boolean isOrderBetweenSpecialTime = false;
+		Date date = new Date();
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		String currentTime = sdf.format(date);
+		slotTimings = SlotDAO.getSlotTimings();
+		String initialTimings = slotTimings[0];
+		String finalTimings = slotTimings[1];
+		
+		if(OrderTimeDAO.isTimeBetweenTwoTime(initialTimings, finalTimings, currentTime)  ){//showing lunch slot 2-3 for order time 11-12 
+			System.out.println("Menu time: "+currentTime);
+			isOrderBetweenSpecialTime = true;
+		}
+		ArrayList<TimeSlot> timeSlotList = null;
+		if(isOrderBetweenSpecialTime){
+			timeSlotList = SlotDAO.getSlotAfter11(bikerUserId, mealTypePojo);
+			Collections.sort(timeSlotList);
+		}else{
+			timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
+		}
+		
 		for(TimeSlot tSlot : timeSlotList){//Returning Timeslot list for loop starts here
 			JSONObject slotJson = new JSONObject();
 			slotJson.put("slotId", tSlot.slotId);

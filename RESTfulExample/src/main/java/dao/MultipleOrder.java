@@ -1,6 +1,9 @@
 package dao;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -165,10 +168,35 @@ public class MultipleOrder {
 	 * @return
 	 * @throws JSONException
 	 */
-	public static JSONArray getBikerSlotJsonArray(String bikerUserId, MealTypePojo mealTypePojo, int totalNoOfItems) throws JSONException{
+	public static JSONArray getBikerSlotJsonArray(String bikerUserId, MealTypePojo mealTypePojo, int totalNoOfItems) throws Exception{
 		JSONArray slotJSONArray = new JSONArray();
-		ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
-		ArrayList<TimeSlot> returningTimeSlot = fetchTimeSlotList(totalNoOfItems, timeSlotList);
+		String[] slotTimings = new String[2];
+    	boolean isOrderBetweenSpecialTime = false;
+		Date date = new Date();
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		String currentTime = sdf.format(date);
+		slotTimings = SlotDAO.getSlotTimings();
+		String initialTimings = slotTimings[0];
+		String finalTimings = slotTimings[1];
+	
+		if(OrderTimeDAO.isTimeBetweenTwoTime(initialTimings, finalTimings, currentTime)  ){//showing lunch slot 2-3 for order time 11-12 
+			System.out.println("Menu time: "+currentTime);
+			isOrderBetweenSpecialTime = true;
+		}
+	
+		ArrayList<TimeSlot> timeSlotList = null;
+		ArrayList<TimeSlot> returningTimeSlot = null;
+		if(isOrderBetweenSpecialTime){
+			returningTimeSlot = SlotDAO.getSlotAfter11(bikerUserId, mealTypePojo);
+			Collections.sort(returningTimeSlot);
+		}else{
+			//timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
+			//returningTimeSlot = fetchTimeSlotList(totalNoOfItems, timeSlotList);
+			returningTimeSlot = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
+		}
+		
+	//	ArrayList<TimeSlot> timeSlotList = SlotDAO.findCommonTimeSlots(bikerUserId, mealTypePojo);
+	//	ArrayList<TimeSlot> returningTimeSlot = fetchTimeSlotList(totalNoOfItems, timeSlotList);
 				
 		for(TimeSlot tSlot : returningTimeSlot){//Returning Timeslot list for loop starts here
 			JSONObject slotJson = new JSONObject();

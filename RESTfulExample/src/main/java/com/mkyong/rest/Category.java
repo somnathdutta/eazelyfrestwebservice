@@ -63,12 +63,14 @@ import dao.ForgotPassword;
 import dao.ItemDAO;
 import dao.KitchenDeliverOrderDAO;
 import dao.KitchenNotifyOrderDAO;
+import dao.KitchenOrderHistoryDAO;
 import dao.KitchenOrdersDAO;
 import dao.KitchenReceiveOrderDAO;
 import dao.LoginDAO;
 import dao.OrderSummaryDAO;
 import dao.OrderTimingsDAO;
 import dao.OtpDAO;
+import dao.PaymentTypeDAO;
 import dao.PickJiDAO;
 import dao.PlaceSubscriptionOrderDAO;
 import dao.PrivacyPolicyDAO;
@@ -702,7 +704,10 @@ public class Category {
 		try {
 			// BufferedReader in = new BufferedReader(new FileReader("http://192.168.1.116:8080/Myapp/ordertrackmap.html"));
 			//BufferedReader in = new BufferedReader(new FileReader("C:\\apache-tomcat-7.0.62\\webapps\\Myapp\\ordertrackmap.html")); 
-			BufferedReader in = new BufferedReader(new FileReader("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62\\webapps\\Myapp\\ordertrackmap.html")); 
+			//String fileName = "C:\\Bitnami\\tomcatstack-8.0.39-0\\apache-tomcat\\webapps\\Myapp\\ordertrackmap.html";
+			String fileName = "C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62\\webapps\\Myapp\\ordertrackmap.html";
+			//BufferedReader in = new BufferedReader(new FileReader("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62\\webapps\\Myapp\\ordertrackmap.html")); 
+			BufferedReader in = new BufferedReader(new FileReader(fileName));
 			String str;
 			while ((str = in.readLine()) != null) {
 				while ( (str = in.readLine()) != null) {
@@ -812,6 +817,17 @@ public class Category {
 		System.out.println(" kitchenorders web service is called...");
 		JSONObject kitchenorders = KitchenOrdersDAO.getKitchenOrders(kitchenid);
 		System.out.println("kitchenorders web service is end here:");
+		return kitchenorders;
+	}
+	
+	@POST
+	@Path("/kitchenOrderHistory")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject kitchenOrderHistory(@FormParam("kitchenid")String kitchenName) throws JSONException{
+		System.out.println("------------------------------------------------");
+		System.out.println(" kitchenOrderHistory web service is called by "+kitchenName);
+		System.out.println("------------------------------------------------");
+		JSONObject kitchenorders = KitchenOrderHistoryDAO.fetchKitchenOrderHistory(kitchenName);
 		return kitchenorders;
 	}
 	
@@ -2141,6 +2157,17 @@ public class Category {
 		return jobjLocation;
 	}
 	
+	@POST
+	@Path("/fetchPaymentTypes")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchPaymentTypes()throws JSONException{
+		System.out.println("--------------------------------------------");
+		System.out.println("--    fetchPaymentTypes api called  --------");
+		JSONObject paymentTypeJson = PaymentTypeDAO.fetchPaymentTypeList();
+		System.out.println("-- fetchPaymentTypes api ends here ---------");
+		System.out.println("--------------------------------------------");
+		return paymentTypeJson;
+	}
 	
 	@POST
 	@Path("/getQueryTypelist")

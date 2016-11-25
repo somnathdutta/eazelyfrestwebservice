@@ -3478,7 +3478,12 @@ public class DBConnection {
     										pincode, orderItemList,deliveryZone.trim(),deliveryAddress.trim(),instruction ) ;
     								
     								if(userDetailsInserted){
-    									itemDetailsInserted = saveItemsWithKitchen(orderId, orderItemList, dealingKitchenIds);
+    									Set<OrderItems> orderItems = new HashSet<OrderItems>();
+    									for(OrderItems items : orderItemList){
+    										orderItems.add(items);
+    									}
+    									ArrayList<OrderItems> orderItemsWithKitchen = new ArrayList<OrderItems>(orderItems);
+    									itemDetailsInserted = saveItemsWithKitchen(orderId, orderItemsWithKitchen, dealingKitchenIds);
     								}
     								if(itemDetailsInserted){
     									//kitchenAssigned = orderAssignToKitchen(orderId,  "REGULAR");//44
@@ -3608,16 +3613,16 @@ public class DBConnection {
     			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
 				String currentTime = sdf.format(date);
 				System.out.println("Order time: "+currentTime);
-				String[] orderTimings = new String[2];
-				orderTimings = OrderTimeDAO.getOrderTimings();
-				String initialTimings = orderTimings[0];
-				String finalTimings = orderTimings[1];
-				if(!OrderTimeDAO.isOrderTimeBetweenKitchenHours(initialTimings, finalTimings, currentTime) ){
+				///String[] orderTimings = new String[2];
+				////orderTimings = OrderTimeDAO.getOrderTimings();
+				//String initialTimings = orderTimings[0];
+				//String finalTimings = orderTimings[1];
+				/*if(!OrderTimeDAO.isOrderTimeBetweenKitchenHours(initialTimings, finalTimings, currentTime) ){
 					isOrderPlaced.put("message", "Our kitchen is closed now,when it will open the order will be accepted!");
 				}else{
 					isOrderPlaced.put("message", "Your order placed successfully!");
-				}
-    			//isOrderPlaced.put("message", "Your order placed successfully!");
+				}*/
+    			isOrderPlaced.put("message", "Your order placed successfully!");
     			isOrderPlaced.put("success", getRecentlyPlacedRegularOrderDetails(orderId));
     			
     			//return isOrderPlaced;

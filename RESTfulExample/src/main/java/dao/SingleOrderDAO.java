@@ -140,7 +140,7 @@ public class SingleOrderDAO {
 	 * @throws ParseException 
 	 */
 	public static int[] getCartValue(Connection connection, String area,  String deliveryDay, 
-			ArrayList<Integer> kitchenList) throws ParseException{
+			ArrayList<Integer> kitchenList, boolean isOrderSpecialTiming) throws ParseException{
 		int[] cartCapacity = new int[2];
 		int lunchCapacity = 0,dinnerCapacity = 0;
 		
@@ -152,7 +152,7 @@ public class SingleOrderDAO {
 			bikerList = BikerDAO.findMultiTypeBikerOfKitchen(connection, kitchenId);		
 			
 			for(String bikerUserId : bikerList){
-				int lc = BikerDAO.getAvailableLunchQuantity(connection, bikerUserId, deliveryDay);
+				int lc = BikerDAO.getAvailableLunchQuantity(connection, bikerUserId, deliveryDay, isOrderSpecialTiming);
 				int dc = BikerDAO.getAvailableDinnerQuantity(connection, bikerUserId, deliveryDay);
 				lunchCapacity += lc;
 				dinnerCapacity += dc;
@@ -166,7 +166,7 @@ public class SingleOrderDAO {
 		return cartCapacity;
 	}
 	
-	public static int getSpecialLunchCartValue(Connection connection, String area,  String deliveryDay,
+	/*public static int getSpecialLunchCartValue(Connection connection, String area,  String deliveryDay,
 			ArrayList<Integer> kitchenList){
 		int lunchCapacity = 0;
 		//ArrayList<Integer> kitchenList = KitchenDAO.findKitchensInArea(connection, area);
@@ -183,9 +183,10 @@ public class SingleOrderDAO {
 			}
 		}
 		return lunchCapacity;
-	}
+	}*/
 	
-	public static int getSingleBikerLunchCartValue(Connection connection, String area, String deliveryDay,ArrayList<Integer> kitchenList){
+	public static int getSingleBikerLunchCartValue(Connection connection, String area, String deliveryDay,
+			ArrayList<Integer> kitchenList, boolean isOrderSpecialTimings){
 		int lunchCapacity = 0;
 	
 		for(Integer kitchenId : kitchenList){
@@ -194,7 +195,7 @@ public class SingleOrderDAO {
 			bikerList = BikerDAO.findSingleTypeBikerOfKitchen(connection, kitchenId);		
 			
 			for(String bikerUserId : bikerList){
-				int lc = BikerDAO.getSigleTypeAvailableLunchQuantity(connection, bikerUserId, deliveryDay);
+				int lc = BikerDAO.getSigleTypeAvailableLunchQuantity(connection, bikerUserId, deliveryDay,isOrderSpecialTimings);
 				lunchCapacity += lc;
 				System.out.println("LC for single biker:"+lc);
 			}

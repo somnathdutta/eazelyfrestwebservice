@@ -143,7 +143,7 @@ public class PromoCodeDAO {
 		}else{
 			//System.out.println("---------------- >>>>>>>>>>> 22");
 			promoCodeValidJson.put("status","200");
-			promoCodeValidJson.put("message", "InValid promoCode");
+			promoCodeValidJson.put("message", "Invalid promoCode");
 			promoCodeValidJson.put("isValid", false);
 			promoCodeValidJson.put("promoValue", ( discountedValue) );
 			

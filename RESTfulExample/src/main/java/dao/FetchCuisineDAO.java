@@ -48,7 +48,7 @@ public class FetchCuisineDAO {
 	    		
 	    		//cartCapacity = SingleOrderDAO.getCartCapacity(connection,area);
 	    		isSingleOrder = SingleOrderDAO.isSingleOrderAvailable(area, deliveryDay, connection);//single order availability
-	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay,kitchenList);//multiple order availability
+	    		cartValue = SingleOrderDAO.getCartValue(connection, area, deliveryDay,kitchenList,isOrderBetweenSpecialTime);//multiple order availability
 	    		lunchCart = cartValue[0];
     			if(lunchCart==0){
     				System.out.println("Multiple biker not available for lunch");
@@ -56,8 +56,8 @@ public class FetchCuisineDAO {
     				/*multiOrderLunchAlertMessage = "Currently we dont have biker to process multiple order for lunch!"
     						+ "\nPlease order single quantity.";*/
     				multiOrderLunchAlertMessage = "Currently all our delivery boys are busy for delivery of multiple order."
-    						+ "\n Please only order single quantity & we will deliver :)";
-    				lunchCart = SingleOrderDAO.getSingleBikerLunchCartValue(connection, area, deliveryDay, kitchenList);
+    						+ "\n Please only order single quantity & we will deliver.";
+    				lunchCart = SingleOrderDAO.getSingleBikerLunchCartValue(connection, area, deliveryDay, kitchenList, isOrderBetweenSpecialTime);
     			}
 	    		
 	    		dinnerCart = cartValue[1];
@@ -67,7 +67,7 @@ public class FetchCuisineDAO {
     				/*multiOrderDinnerAlertMessage =  "Currently we dont have biker to process multiple order for dinner!"
     						+ "\nPlease order single quantity.";*/
 	    			multiOrderDinnerAlertMessage = "Currently all our delivery boys are busy for delivery of multiple order."
-    						+ "\n Please only order single quantity & we will deliver :)";
+    						+ "\n Please only order single quantity & we will deliver.";
     				dinnerCart = SingleOrderDAO.getSingleBikerDinnerCartValue(connection, area, deliveryDay, kitchenList);
     			}
 	    		/*if(isOrderBetweenSpecialTime){
@@ -155,7 +155,7 @@ public class FetchCuisineDAO {
     		/*alertMessage =  "Currently we dont have biker to process single order for lunch!"
 					+ "\nPlease order more than asingle quantity.";*/
     		alertMessage = "Currently all our delivery boys are busy for delivery of single order."
-					+ "\n Please order multiple quantity & we will deliver :)";
+					+ "\n Please order multiple quantity & we will deliver.";
     		cuisineList.put("lunchAlert", alertMessage);
     	}else{
     		cuisineList.put("lunchAlert", alertMessage);
@@ -167,7 +167,7 @@ public class FetchCuisineDAO {
     		/*alertMessage = "Currently we dont have biker to process single order for dinner!"
 					+ "\nPlease order more than asingle quantity.";*/
     		alertMessage = "Currently all our delivery boys are busy for delivery of single order."
-					+ "\n Please order multiple quantity & we will deliver :)";
+					+ "\n Please order multiple quantity & we will deliver.";
     		cuisineList.put("dinnerAlert", alertMessage);
     	}else{
     		cuisineList.put("dinnerAlert", alertMessage);

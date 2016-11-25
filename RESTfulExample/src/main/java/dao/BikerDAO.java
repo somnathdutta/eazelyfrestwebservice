@@ -335,7 +335,7 @@ public class BikerDAO {
 	}
 	
 	
-	public static int getAvailableLunchQuantity(Connection connection, String bikerUserId, String deliveryday ){
+	public static int getAvailableLunchQuantity(Connection connection, String bikerUserId, String deliveryday ,boolean isOrderSpecialTiming){
 		int noOfFreeSlots = 0 ,lunchSlot = 0;
 		lunchSlot = getNoOfLunchSlot(connection);
 		int[] bikerCapa = new int[2];
@@ -392,7 +392,11 @@ public class BikerDAO {
 		if(!found){
 			noOfFreeSlots = 0;
 		}else{
-			noOfFreeSlots = (bikerCapacity*lunchSlot) - noOfFreeSlots;	
+			if(isOrderSpecialTiming){
+				noOfFreeSlots = (bikerCapacity*1) - noOfFreeSlots;
+			}else{
+				noOfFreeSlots = (bikerCapacity*lunchSlot) - noOfFreeSlots;
+			}		
 		}
 		System.out.println("free lunch: "+noOfFreeSlots);
 		return noOfFreeSlots ;
@@ -462,7 +466,8 @@ public class BikerDAO {
 	}
 	
 	
-	public static int getSigleTypeAvailableLunchQuantity(Connection connection, String bikerUserId, String deliveryday ){
+	public static int getSigleTypeAvailableLunchQuantity(Connection connection, String bikerUserId, 
+			String deliveryday, boolean isOrderSpecialTimings ){
 		int noOfFreeSlots = 0 ,lunchSlot = 0;
 		lunchSlot = getNoOfLunchSlot(connection);
 		int[] bikerCapa = new int[2];
@@ -519,7 +524,12 @@ public class BikerDAO {
 		if(!found){
 			noOfFreeSlots = 0;
 		}else{
-			noOfFreeSlots = (bikerOrders*lunchSlot) - noOfFreeSlots;	
+			if(isOrderSpecialTimings){
+				noOfFreeSlots = (bikerOrders*1) - noOfFreeSlots;
+			}else{
+				noOfFreeSlots = (bikerOrders*lunchSlot) - noOfFreeSlots;
+			}
+				
 		}
 		System.out.println("free lunch: "+noOfFreeSlots);
 		return noOfFreeSlots ;
