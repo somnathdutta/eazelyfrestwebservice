@@ -86,6 +86,7 @@ import dao.SubmitFeedBackDAO;
 import dao.TermsAndConditionDAO;
 import dao.TimeSlotFinder;
 import dao.UserDetailsDao;
+import dao.VersionDAO;
 
 /*@Path("/json/category")*/
 @Path("/category")
@@ -109,7 +110,20 @@ public class Category {
 
 		return jobjChklogin;
 	}
-
+	
+	@POST
+	@Path("/fetchAppVersion")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchAppVersion() throws JSONException{
+		System.out.println("************** Version Json API Called*******************");
+		JSONObject jsonObject = VersionDAO.getCurrenVersion();
+		System.out.println("VERSION JSON >>> >> > " + jsonObject);
+		System.out.println("************** Version Json API Call END*******************");
+		return jsonObject;
+		
+	}
+	
+	
 	@POST
 	@Path("/checkkitchenLogin")
 	@Produces(MediaType.APPLICATION_JSON)
