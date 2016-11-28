@@ -23,7 +23,7 @@ public class KitchenOrderHistoryDAO {
 							Connection connection = DBConnection.createConnection();
 							PreparedStatement preparedStatement = null;
 							ResultSet resultSet = null;
-							String sql = "select * from vw_all_kitchen_order_history where kitchen_name = ? order by order_no DESC";
+							String sql = "select * from vw_all_kitchen_order_history where kitchen_name = ? order by order_id DESC";
 							try {
 								preparedStatement = connection.prepareStatement(sql);
 								preparedStatement.setString(1, kitchenName);
@@ -46,7 +46,7 @@ public class KitchenOrderHistoryDAO {
 										orders.put("payType", "");
 									}
 									if(resultSet.getString("external_order_id")!=null){
-										orders.put("pickjiOrderNo", resultSet.getString("external_order_id"));
+										orders.put("pickjiOrderNo", "");
 									}else{
 										orders.put("pickjiOrderNo", "");
 									}

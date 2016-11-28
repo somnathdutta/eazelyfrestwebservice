@@ -117,8 +117,7 @@ public class PromoCodeDAO {
 				else{
 					isValid = false;
 					
-					message = "Buy a minimum of two meals,and get one meal FREE from your order.\nFree meal of choice is subject"
-							+ " to availability. T&C apply.";
+					message = "Buy a minimum of two meals,and get one meal FREE from your order.";
 				}
 				
 				
