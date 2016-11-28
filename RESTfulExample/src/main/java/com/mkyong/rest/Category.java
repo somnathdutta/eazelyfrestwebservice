@@ -115,9 +115,9 @@ public class Category {
 	@Path("/fetchAppVersion")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchAppVersion() throws JSONException{
-		System.out.println("************** Version Json API Called*******************");
+		System.out.println("************** Version Json API Called*******************"+new Date());
 		JSONObject jsonObject = VersionDAO.getCurrenVersion();
-		System.out.println("VERSION JSON >>> >> > " + jsonObject);
+		System.out.println(jsonObject);
 		System.out.println("************** Version Json API Call END*******************");
 		return jsonObject;
 		
@@ -129,12 +129,12 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject checkKitchenLogin(@FormParam("username") String uname,@FormParam("password")String pwd) throws Exception{
 
-		System.out.println("checkKitchenLogin webservice is called...");
+		System.out.println("-------- checkKitchenLogin webservice is called -------"+new Date());
 		
 		JSONObject jobjChkKitchenlogin = new JSONObject();
 
 		jobjChkKitchenlogin = DBConnection.checkKitchenLogin(uname, pwd);
-		System.out.println("chkkitchen login webservice object::"+jobjChkKitchenlogin);
+		System.out.println("-------- chkkitchen login webservice object ---------"+jobjChkKitchenlogin);
 
 		return jobjChkKitchenlogin;
 	}
@@ -322,7 +322,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject userLogin(@FormParam("mobileNumber")String mobileNo,
 			@FormParam("password")String password ) throws JSONException{
-		System.out.println("-----------------------------------------");
+		System.out.println("-----------------------------------------"+new Date());
 		System.out.println(" userlogin api called ");
 		System.out.println(" MobileNo "+mobileNo+" Password "+password);
 		JSONObject object ; 
@@ -338,7 +338,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject sendOTP(@FormParam("mobileNo")String mobileNo,
 			@FormParam("userType")String userType) throws JSONException{
-		System.out.println("---------------------------------------");
+		System.out.println("---------------------------------------"+new Date());
 		System.out.println("- - - - - sendOtp API CALLED - - - - - ");
 		System.out.println("Mobile no: "+mobileNo+" User Type : "+userType);
 		JSONObject otpJsonObject = new JSONObject();
@@ -370,7 +370,9 @@ public class Category {
 			@FormParam("password")String password,
 			@FormParam("otp")String otp,
 			@FormParam("userType")String userType) throws JSONException{
-		System.out.println("Sign up webservice is called...");
+		System.out.println("-------------------------------------------");
+		System.out.println("------- Sign up webservice is called-------"+new Date());
+		System.out.println("-------------------------------------------");
 		System.out.println("name--"+name+" email-"+email+"  number-"+contactNumber+" password-"+password+
 				"Referel code: "+referalCode);
 		System.out.println("OTP:"+otp+" User type: "+userType);
@@ -394,7 +396,7 @@ public class Category {
 		//object = DBConnection.signUp(name,  contactNumber, password);
 		}
 		System.out.println("Sign up status::"+jsonObject);
-
+		
 		return jsonObject;
 	}
 	
@@ -408,7 +410,9 @@ public class Category {
 			@FormParam("password")String password,
 			@FormParam("otp")String otp,
 			@FormParam("userType")String userType) throws JSONException{
-		System.out.println("------ socialSignup webservice is called ------");
+		System.out.println("------------------------------------------------");
+		System.out.println("------ socialSignup webservice is called -------"+new Date());
+		System.out.println("------------------------------------------------");
 		System.out.println("name--"+name+" email-"+email+"  number-"+contactNumber+" password-"+password+
 				"Referel code: "+referalCode);
 		System.out.println("otp: "+otp);
@@ -442,8 +446,9 @@ public class Category {
 	@Path("/forgotPassword")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject forgotPassword(@FormParam("email")String email) throws Exception{
-		System.out.println("-----------------------------------------------------------");
+		System.out.println("-----------------------------------------------------------"+new Date());
 		System.out.println("forgotPassword webservice is called...with mail id-->"+email);
+		System.out.println("-----------------------------------------------------------");
 		JSONObject object = new JSONObject() ; 
 		if(ForgotPassword.emailExists(email)){
 			object = DBConnection.forgotPassword(email);
@@ -636,10 +641,12 @@ public class Category {
 			@FormParam("gpsaddress")String gpsAddress,
 			@FormParam("latitude")String latitude,
 			@FormParam("longitude")String longitude) throws Exception{
+		System.out.println("\n-------------------------------------------------------------------");
 		System.out.println("START MY TRIP CALLING * * * * * * * * *with address-"+gpsAddress+" "
 				+ "Lat->"+latitude+" Long->"+longitude);
+		System.out.println("-----------------------------------------------------------------"+new Date());
 		System.out.println("orderdetails->"+orderDetails);
-
+		
 		ArrayList<StartTripBean> tripItemList = new  ArrayList<StartTripBean>();
 
 		if(! orderDetails.equals("[]")){
@@ -665,16 +672,19 @@ public class Category {
 		if(orderDetails == null || latitude == null || longitude == null || gpsAddress==null || tripItemList.size()==0){
 			jorders.put("status", "400");
 			jorders.put("message", "Orderdetails = "+orderDetails+" Latitude = "+latitude+" Longitude = "+longitude+" Gpsaddress = "+gpsAddress);
-			System.out.println("START MY TRIP END ^ ^ ^ ^ ^ ^ "+jorders);
+			System.out.println("------------- START MY TRIP END ----------------------------- "+jorders);
+			System.out.println();
 			return jorders;
 		}else if(tripItemList.size()>0){
 			jorders = StartMyTripDAO.startMyTripForOrders(tripItemList, gpsAddress, latitude, longitude);
-			System.out.println("START MY TRIP END ^ ^ ^ ^ ^ ^ "+jorders);
+			System.out.println("------------- START MY TRIP END ----------------------------- "+jorders);
+			System.out.println();
 			return jorders;
 		}else{
 			jorders.put("status", "400");
 			jorders.put("message", "No order list");
-			System.out.println("START MY TRIP END ^ ^ ^ ^ ^ ^ "+jorders);
+			System.out.println("------------- START MY TRIP END ----------------------------- "+jorders);
+			System.out.println();
 			return jorders;
 		}
 
@@ -828,7 +838,9 @@ public class Category {
 	@Path("/kitchenorders")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject kitchenorders(@FormParam("kitchenid")String kitchenid) throws JSONException{
-		System.out.println(" kitchenorders web service is called...");
+		System.out.println("-----------------------------------------");
+		System.out.println(" kitchenorders web service is called by "+kitchenid+new Date());
+		System.out.println("-----------------------------------------");
 		JSONObject kitchenorders = KitchenOrdersDAO.getKitchenOrders(kitchenid);
 		System.out.println("kitchenorders web service is end here:");
 		return kitchenorders;
@@ -1933,12 +1945,12 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject checkfeedback(@FormParam("usermailid")String usermailId) throws JSONException{
 	
-		System.out.println("**********************************************");
-		System.out.println("****** CHECKFEEDBACK webservice is called...emailid->"+usermailId);
-	    
+		System.out.println("\n----------------------------------------------------");
+		System.out.println("--- CHECKFEEDBACK webservice is called...emailid->"+usermailId);
+	    System.out.println(new Date());
 		JSONObject feedbackobject;
 		feedbackobject =  DBConnection.checkfeedback(usermailId);
-		System.out.println("**********************************************");
+		System.out.println("---------------------------------------------------");
 		return feedbackobject;
 	}
 	
@@ -1989,8 +2001,9 @@ public class Category {
 			@FormParam("quantity")String quantity,@FormParam("packing")String packing,
 			@FormParam("timelydelivered")String timelyDelivered, @FormParam("usermailid") String userMailId,
 			@FormParam("foodcomment")String comment) throws JSONException{
-	
-		System.out.println("submitfeedback webservice is called * * * * *");
+		System.out.println("----------------------------------------------");
+		System.out.println("submitfeedback webservice is called * * * * * "+new Date());
+		System.out.println("----------------------------------------------");
 		System.out.println("taste-"+taste+" packing-"+packing+" timelydelivered-"+timelyDelivered+
 				" quantity-"+quantity+" menu-"+menu+" comment-"+comment+" mail-"+userMailId);
 		JSONObject submitfeedbackobject = new JSONObject();
@@ -2045,7 +2058,8 @@ public class Category {
 			@FormParam("mobileNo")String mobileNo,
 			@FormParam("area")String area) throws Exception{
 		System.out.println("-------------------------------------------------------");
-		System.out.println("***** fetchcuisine webservice called ***************");
+		System.out.println("::::: fetchcuisine webservice called :::::::"+new Date());
+		System.out.println("-------------------------------------------------------");
 		System.out.println(" Pincode: "+pincode+" Day: "+deliveryDay+" Area: "+area);
 		JSONObject jsonObject = new JSONObject();
 		if(area!=null ){

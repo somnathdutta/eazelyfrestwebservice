@@ -268,6 +268,7 @@ public class BikerDAO {
 		System.out.println(bikerList);
 		return bikerList;
 	}
+	
 	public static int[] getBikerCapacityAndOrders(){
 		int[] bikerCapa =  new int[2];
 		try {

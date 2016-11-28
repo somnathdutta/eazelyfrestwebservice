@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.codehaus.jettison.json.JSONException;
@@ -74,13 +75,13 @@ public class PromoCodeDAO {
 				
 				if(!isPromoCodeApplied){
 					discountedValue = promoValue;
-					message = "Valid promoCode";
+					message = "Valid PromoCode";
 					isValid = true;
 					applyPromoCode(promoCode, mobileNo,orderDetails);
 					System.out.println("FLAT DISCOUNT -- >> "+discountedValue);
 				}else{
 					discountedValue = 0;
-					message = "You had already applied promocode!";
+					message = "PromoCode is already applied!";
 					isValid = false;
 				}
 				
@@ -89,47 +90,69 @@ public class PromoCodeDAO {
 				if(!isPromoCodeApplied){
 					finalTotal = ( finalTotal * promoValue/100);
 					discountedValue = finalTotal;
-					message = "Valid promoCode";
+					message = "Valid PromoCode";
 					isValid = true;
 					applyPromoCode(promoCode, mobileNo,orderDetails);
 					System.out.println("PERCENTAGE DISCOUNT -- >> "+discountedValue);
 				}else{
 					discountedValue = 0;
-					message = "You had already applied promocode!";
+					message = "PromoCode is already applied!";
 					isValid = false;
 				}
+				
+			}else if(promoTypeId == 4){//EAZE FIRST FREE 1 meal into order item of same type 2
+				
+				if(isValidOrderForFreeMeal(orderItems)){//Block for free meal valid order(same item with quantity 2) starts here 
+					if(!isPromoCodeApplied){//check whether promocode already applied or not starts here.
+						message = "Valid PromoCode";
+						discountedValue =  getFreeMealPrice(orderItems);
+						isValid = true;	
+						applyPromoCode(promoCode, mobileNo, orderDetails);
+					}else{//check whether promocode already applied or not ends here.
+						discountedValue = 0;
+						message = "PromoCode is already applied!";
+						isValid = false;
+					}
+				}//Block for free meal valid order(same item with quantity 2) ends here 
+				else{
+					isValid = false;
+					
+					message = "Buy a minimum of two meals,and get one meal FREE from your order.\nFree meal of choice is subject"
+							+ " to availability. T&C apply.";
+				}
+				
 				
 			}else{
 				if(totalQuantity == volumeQuantity){
 					
 					if(!isPromoCodeApplied){
-						message = "Valid promoCode";
+						message = "Valid PromoCode";
 						discountedValue =  promoValue;
 						isValid = true;	
 						applyPromoCode(promoCode, mobileNo, orderDetails);
 					}else{
 						discountedValue = 0;
-						message = "You had already applied promocode!";
+						message = "PromoCode is already applied!";
 						isValid = false;
 					}
 					
 				
 				}else if(totalQuantity > volumeQuantity){
 					if(!isPromoCodeApplied){
-						message = "Valid promoCode";
+						message = "Valid PromoCode";
 						discountedValue = ((totalQuantity  - volumeQuantity) * promoValue)+promoValue;
 						isValid = true;
 						applyPromoCode(promoCode, mobileNo, orderDetails);
 					}else{
 						discountedValue = 0;
-						message = "You had already applied this promocode!";
+						message = "PromoCode is already applied!";
 						isValid = false;
 					}
 					
 					
 				}else{
 					isValid = false;
-					message = "Total quantity must be greater than "+(volumeQuantity-1)+" for this promocode";
+					message = "Total quantity must be greater than "+(volumeQuantity-1)+" for this PromoCode";
 				}
 				System.out.println("VOLUME DISCOUNT -- >> "+discountedValue);
 			}
@@ -143,7 +166,7 @@ public class PromoCodeDAO {
 		}else{
 			//System.out.println("---------------- >>>>>>>>>>> 22");
 			promoCodeValidJson.put("status","200");
-			promoCodeValidJson.put("message", "Invalid promoCode");
+			promoCodeValidJson.put("message", "Invalid PromoCode");
 			promoCodeValidJson.put("isValid", false);
 			promoCodeValidJson.put("promoValue", ( discountedValue) );
 			
@@ -347,5 +370,92 @@ public class PromoCodeDAO {
 		}
 		System.out.println("PROMO CODE APPLIED FOR -- >> "+mobileNo +" is ->"+ isPromoCodeApplied);
 		return isPromoCodeApplied;
+	}
+	
+	/**
+	 * This method returns the promo value for EAZEKARO
+	 * @param orderItems
+	 * @return
+	 */
+	public static double getFreeMealPrice(ArrayList<OrderItems> orderItems){
+		double promoValue = 0, lowestPrice = 0, totalPrice = 0;
+		ArrayList<Double> itemPriceList = new ArrayList<Double>();
+		
+		for(OrderItems items : orderItems){
+			itemPriceList.add(items.price);
+			totalPrice += (items.price * items.quantity);
+		}
+		
+		lowestPrice = Collections.min(itemPriceList);
+		System.out.println("Total price: "+totalPrice+" Lowest price: "+lowestPrice);
+		
+		promoValue =  lowestPrice ;
+		System.out.println("Promo value for EAZEKARO: "+promoValue);
+		/*if(orderItems.size()==1){
+			if(orderItems.get(0).quantity == 2){
+				promoValue = orderItems.get(0).price;
+			}
+		}*/
+		return (promoValue);
+	}
+	
+	/**
+	 * Check whether the order is valid for free meal promo code or not?
+	 * @param orderItems
+	 * @return
+	 */
+	public static boolean isValidOrderForFreeMeal(ArrayList<OrderItems> orderItems){
+		int totalNoOfQuantity = 0;
+		for(OrderItems items : orderItems){
+			totalNoOfQuantity += items.quantity;
+		}
+		if(totalNoOfQuantity > 1){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	/**
+	 * This methods returns whether a promo code is reusable or not
+	 * @param promoCode
+	 * @return
+	 */
+	public static boolean isReusablePromoCode(String promoCode){
+		boolean isReusable = false;
+		try {
+			SQL:{
+					Connection connection  = DBConnection.createConnection();
+					PreparedStatement  preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql = "select is_reusable from vw_promo_code_details where promo_code = ? ";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, promoCode);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							String reuse = resultSet.getString("is_reusable");
+							if(reuse.equalsIgnoreCase("Y")){
+								isReusable = true;
+							}else{
+								isReusable = false;
+							}
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return isReusable;
 	}
 }

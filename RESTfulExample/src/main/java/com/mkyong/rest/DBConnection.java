@@ -3119,7 +3119,7 @@ public class DBConnection {
     	
     	boolean isGuestUser = false,isUserSameOrder = false ,sameCuisineSplit = false,
     			userDetailsInserted = false, itemDetailsInserted = false,
-    			kitchenAssigned = false, onlyBengCuisine = false, onlyNiCuisine = false, bengNiCuisine = false;
+    			kitchenAssigned = false, onlyBengCuisine = false, onlyNiCuisine = false, bengNiCuisine = false,isPromoCodeReusable = false;
     	
     	java.util.Date delivery_Date = new java.util.Date();
     	int orderId = 0,totalBenQty =0, totalNiQty = 0;
@@ -3131,6 +3131,10 @@ public class DBConnection {
     	
 		JSONObject isOrderPlaced = new JSONObject();
     	String orderBy = null ;
+    	
+    	if(PromoCodeDAO.isReusablePromoCode(promoCode)){
+    		isPromoCodeReusable = true;
+    	}
     	
     	if(deliveryDay!=null){
     		 delivery_Date = getDeliveryDate(deliveryDay);
@@ -3459,7 +3463,12 @@ public class DBConnection {
     	        					preparedStatement.setString(10, "REGISTERED USER");
     	        				}
     	        				if(promoCode!=null && promoCode.trim().length()>0){
-    	        					preparedStatement.setString(11, promoCode.trim());
+    	        					if(isPromoCodeReusable){
+    	        						preparedStatement.setNull(11, Types.NULL);
+    	        					}else{
+    	        						preparedStatement.setString(11, promoCode.trim());
+    	        					}
+    	        					
     	        				}else{
     	        					preparedStatement.setNull(11, Types.NULL);
     	        				}
@@ -3606,7 +3615,9 @@ public class DBConnection {
     				if(credit){
     					BalanceDAO.reduceMyBalance(contactNumber);
     				}
+    				
     				PromoCodeDAO.applyRemovePromoCode(promoCode, contactNumber);
+    				
     			}
     			isOrderPlaced.put("status", true);
     			java.util.Date date = new java.util.Date();
