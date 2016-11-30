@@ -30,7 +30,7 @@ public class PromoCodeDAO {
 					ResultSet resultSet = null;
 					String sql = "select promo_code,promo_value,promo_type_id,promo_code_application_type_id,volume_quantity "
 							+ "from vw_promo_code_details where promo_code_is_active='Y'"
-							+ " and promo_code = ? and current_date>=from_date AND current_date<=to_date";
+							+ " and UPPER(promo_code) = UPPER(?) and current_date>=from_date AND current_date<=to_date";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, promoCode);
@@ -117,7 +117,7 @@ public class PromoCodeDAO {
 				else{
 					isValid = false;
 					
-					message = "Buy a minimum of two meals,and get one meal FREE from your order.";
+					message = "1 Meal free on purchase of 1 or more meals on 1st order. \nPlease select 1 more item.";
 				}
 				
 				
@@ -228,7 +228,7 @@ public class PromoCodeDAO {
 					PreparedStatement preparedStatement = null;
 					ResultSet resultSet = null;
 					String sql = "select count(promo_code)AS promo_code from fapp_orders where contact_number = ? and "
-							+ " promo_code = ?";
+							+ " UPPER(promo_code) = UPPER(?)";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, mobileNo);
@@ -280,7 +280,7 @@ public class PromoCodeDAO {
 						
 						while (resultSet.next() ) {
 							String isApplied = resultSet.getString("promo_code");
-							if(isApplied.equalsIgnoreCase(orderDetails.toString())){
+							if(isApplied.contentEquals(orderDetails.toString())){
 								isPromoCodeApplied = true;
 							}else{
 								isPromoCodeApplied = false;
@@ -305,7 +305,7 @@ public class PromoCodeDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		//System.out.println("IS USER PROMO CODE -- >> " + isUsedPromoCode);
+		System.out.println("IS USER PROMO CODE APPLIED -- >> " + isPromoCodeApplied);
 		return isPromoCodeApplied;
 	}
 	

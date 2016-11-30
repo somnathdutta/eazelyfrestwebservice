@@ -27,10 +27,12 @@ public class KitchenFinder {
 		
 	public static ArrayList<OrderItems> getKitchenOfOrderedItem( ArrayList<OrderItems> orderItems, String mealType,
 			String deliveryDay, String area){	
+		
 		for(OrderItems  items : orderItems){
 			 ArrayList<Kitchen> dealingKitchens = getItemServableKitchens(items.cuisineId, items.itemCode, items.quantity, mealType, deliveryDay, area);
 			 items.setKitchenList(dealingKitchens);			
 		 }
+		
 		return orderItems;
 	}
 	

@@ -3466,7 +3466,7 @@ public class DBConnection {
     	        					if(isPromoCodeReusable){
     	        						preparedStatement.setNull(11, Types.NULL);
     	        					}else{
-    	        						preparedStatement.setString(11, promoCode.trim());
+    	        						preparedStatement.setString(11, promoCode.trim().toUpperCase());
     	        					}
     	        					
     	        				}else{

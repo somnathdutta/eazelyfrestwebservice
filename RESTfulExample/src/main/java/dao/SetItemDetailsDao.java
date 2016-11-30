@@ -36,20 +36,29 @@ public class SetItemDetailsDao {
 					String today = "",tomorrow = "";
 					today = resultSet.getString("is_active");
 					tomorrow = resultSet.getString("is_active_tomorrow");
-					if(today.equalsIgnoreCase("Y")){
+					if(today.equalsIgnoreCase("Y") && tomorrow.equalsIgnoreCase("N")){
 						itemjson.put("setName", "");
 						itemjson.put("setId", "1");
 					}/*else{
 						itemjson.put("setName", "");
 						itemjson.put("setId", "2");
 					}*/
-					if(tomorrow.equalsIgnoreCase("Y")){
+					if(tomorrow.equalsIgnoreCase("Y") && today.equalsIgnoreCase("N")){
 						itemjson.put("setName", "");
 						itemjson.put("setId", "2");
 					}/*else{
 						itemjson.put("setName", "");
 						itemjson.put("setId", "1");
 					}*/
+					if(today.equalsIgnoreCase("Y") && tomorrow.equalsIgnoreCase("Y")){
+						itemjson.put("setName", "");
+						itemjson.put("setId", "3");
+					}
+					
+					if(today.equalsIgnoreCase("N") && tomorrow.equalsIgnoreCase("N")){
+						itemjson.put("setName", "");
+						itemjson.put("setId", "4");
+					}
 					/*itemjson.put("setName", resultSet.getString("set_name"));
 					itemjson.put("setId", String.valueOf(resultSet.getInt("set_id")));*/
 					

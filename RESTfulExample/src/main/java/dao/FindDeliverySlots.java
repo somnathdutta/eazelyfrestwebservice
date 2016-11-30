@@ -10,6 +10,7 @@ import org.codehaus.jettison.json.JSONObject;
 
 import pojo.MealTypePojo;
 
+import com.appsquad.finder.AllItemServingKitchenFinder;
 import com.appsquad.finder.KitchenFinder;
 import com.mkyong.rest.OrderItems;
 
@@ -31,7 +32,8 @@ public class FindDeliverySlots {
 		/**
 		 * Add items with kitchen servable stock
 		 */
-		ArrayList<OrderItems> ordersWithKitchen = KitchenFinder.getKitchenOfOrderedItem(orderItemList, mealType, deliveryDay, area);
+		//ArrayList<OrderItems> ordersWithKitchen = KitchenFinder.getKitchenOfOrderedItem(orderItemList, mealType, deliveryDay, area);
+		ArrayList<OrderItems> ordersWithKitchen = AllItemServingKitchenFinder.findKitchens(mealType, deliveryDay, area, orderItemList);
 		
 	//	isStaggeredOrder = isStaggeredOrder(ordersWithKitchen);
 		
@@ -39,6 +41,7 @@ public class FindDeliverySlots {
 		 * Find dealing kitchen id's with respect to ordered items
 		 */
 		ArrayList<Integer> dealingKitchens = KitchenFinder.getDealingKitchenIds(ordersWithKitchen);
+		
 		
 		if(dealingKitchens.size() > 1){
 			isSplitOrder = true;

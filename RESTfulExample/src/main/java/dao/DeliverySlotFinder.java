@@ -143,6 +143,7 @@ public class DeliverySlotFinder {
 			  * Iterate over map to create json object of each kitchen
 			  */
 			 for(Entry<Integer, ArrayList<OrderItems> > mapEntry : kitchenWithItemMap.entrySet()){
+				 
 				 JSONObject kitchenJsonObject = new JSONObject();//Create a new kitchen json
 				 Integer kitchenId  = mapEntry.getKey();
 				 kitchenJsonObject.put("kitchenId",kitchenId );

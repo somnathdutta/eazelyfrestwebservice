@@ -3,8 +3,9 @@ package pojo;
 
 public class Kitchen implements Comparable<Kitchen>{
 
-	private int kitchenId,singleOrder,singleOrderLunch,singleOrderDinner,itemStock,userItemQuantity,totalItemStock;
-
+	private int kitchenId,singleOrder,singleOrderLunch,singleOrderDinner,itemStock,userItemQuantity,
+				dbQty,freeQty,slotID,slotCapacity,totalItemStock;
+	private String itemCode;
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
@@ -73,4 +74,45 @@ public class Kitchen implements Comparable<Kitchen>{
 	public void setTotalItemStock(int totalItemStock) {
 		this.totalItemStock = totalItemStock;
 	}
+
+	public String getItemCode() {
+		return itemCode;
+	}
+
+	public void setItemCode(String itemCode) {
+		this.itemCode = itemCode;
+	}
+
+	public int getDbQty() {
+		return dbQty;
+	}
+
+	public void setDbQty(int dbQty) {
+		this.dbQty = dbQty;
+	}
+
+	public int getFreeQty() {
+		return freeQty;
+	}
+
+	public void setFreeQty(int freeQty) {
+		this.freeQty = freeQty;
+	}
+
+	public int getSlotID() {
+		return slotID;
+	}
+
+	public void setSlotID(int slotID) {
+		this.slotID = slotID;
+	}
+
+	public int getSlotCapacity() {
+		return slotCapacity;
+	}
+
+	public void setSlotCapacity(int slotCapacity) {
+		this.slotCapacity = slotCapacity;
+	}
+
 }

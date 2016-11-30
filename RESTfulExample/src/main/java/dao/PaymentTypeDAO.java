@@ -49,12 +49,12 @@ public class PaymentTypeDAO {
 		if(paymentJsonArray.length() > 0){
 			paymentJson.put("status", "200");
 			paymentJson.put("message", "Payment type found!");
-			paymentJson.put("promoMessage", "You are eligible for promocode \"EAZEVOL\".");
+			paymentJson.put("promoMessage", "1 Meal free on purchase of 1 or more meals on 1st order. \nWould you like to use promocode \"EAZEKARO\"");
 			paymentJson.put("paymentList", paymentJsonArray);
 		}else{
 			paymentJson.put("status", "204");
 			paymentJson.put("message", "Payment type not found!");
-			paymentJson.put("promoMessage", "You are eligible for promocode \"EAZEVOL\".");
+			paymentJson.put("promoMessage", "1 Meal free on purchase of 1 or more meals on 1st order. \nWould you like to use promocode \"EAZEKARO\"");
 			paymentJson.put("paymentList", paymentJsonArray);
 		}
 		System.out.println(paymentJson);
