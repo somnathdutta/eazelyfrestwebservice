@@ -49,9 +49,20 @@ public class KitchenOrdersDAO {
 								orders.put("contactNumber", " ");
 							}
 							if(resultSet.getString("payment_name")!=null){
-								orders.put("payType", resultSet.getString("payment_name"));
+								if(resultSet.getString("payment_name").equalsIgnoreCase("CARD")){
+									orders.put("payType", "PAID");
+								}else {
+									orders.put("payType", resultSet.getString("payment_name"));
+								}
+								
 							}else{
 								orders.put("payType", "");
+							}
+							String finalPrice = String.valueOf(resultSet.getDouble("final_price"));
+							if(finalPrice!=null){
+								orders.put("finalPrice", finalPrice);
+							}else{
+								orders.put("finalPrice", "");
 							}
 							if(resultSet.getString("external_order_id")!=null){
 								orders.put("pickjiOrderNo", resultSet.getString("external_order_id"));
