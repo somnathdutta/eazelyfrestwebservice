@@ -41,7 +41,11 @@ public class KitchenOrderHistoryDAO {
 										orders.put("contactNumber", " ");
 									}
 									if(resultSet.getString("payment_name")!=null){
-										orders.put("payType", resultSet.getString("payment_name"));
+										if(resultSet.getString("payment_name").equalsIgnoreCase("CARD")){
+											orders.put("payType", "PAID");
+										}else {
+											orders.put("payType", resultSet.getString("payment_name"));
+										}
 									}else{
 										orders.put("payType", "");
 									}
@@ -50,6 +54,14 @@ public class KitchenOrderHistoryDAO {
 									}else{
 										orders.put("pickjiOrderNo", "");
 									}
+									
+									String finalPrice = String.valueOf(resultSet.getDouble("final_price"));
+									if(finalPrice!=null){
+										orders.put("finalPrice", finalPrice);
+									}else{
+										orders.put("finalPrice", "");
+									}
+									
 									orders.put("pincode", resultSet.getString("pincode"));	
 									orders.put("orderid", resultSet.getInt("order_id"));
 									orders.put("orderno", resultSet.getString("order_no"));

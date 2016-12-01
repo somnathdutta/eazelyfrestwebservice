@@ -5569,9 +5569,18 @@ public class DBConnection {
 							}else{
 								jsonObject.put("driverReached", false);
 							}
+							/*if(resultSet.getString("payment_name").equalsIgnoreCase("CARD")){
+								orders.put("payType", "PAID");
+							}else {
+								orders.put("payType", resultSet.getString("payment_name"));
+							}*/
 							String paymentName = resultSet.getString("payment_name");
 							if(paymentName!= null){
-								jsonObject.put("paymenttype", paymentName);
+								if(resultSet.getString("payment_name").equalsIgnoreCase("CARD")){
+									jsonObject.put("paymenttype", "PAID");
+								}else {
+									jsonObject.put("paymenttype", paymentName);
+								}
 							}else{
 								jsonObject.put("paymenttype", " ");
 							}
