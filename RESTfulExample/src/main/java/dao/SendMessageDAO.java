@@ -56,8 +56,10 @@ public class SendMessageDAO {
 					//String recipient = "+917872979469";
 					//String message = orderNo+" is assigned for you!";
 					//String myAPI = "https://www.google.com/maps?q="+latitude+","+longitude+"&16z";
-					String myAPI = "http://appsquad.cloudapp.net:8080/RESTfulExample/rest/category/map?id="+subscriptionNO;
-					String message ="";
+					//String myAPI = "http://appsquad.cloudapp.net:8080/RESTfulExample/rest/category/map?id="+subscriptionNO;
+				 String myAPI = "http://eazelyf.southindia.cloudapp.azure.com/RESTfulExample/rest/category/map?id="+subscriptionNO;	
+				 
+				 String message ="";
 					message = "Delivery boy "+boyName+" having mobile no "+deliveryBoyMobile+" is assigned to deliver your order. Track your order here "+myAPI+" Thnx & Rgds Eazelyf.";
 					
 					/*

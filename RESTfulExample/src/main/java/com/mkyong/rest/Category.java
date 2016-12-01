@@ -52,7 +52,6 @@ import dao.BookDriver;
 import dao.CallPickJiBikerDAO;
 import dao.ChangePasswordDAO;
 import dao.ContactUsDAO;
-import dao.DeliverySlotFinder;
 import dao.FaqDAO;
 import dao.FetchAlaCarteItemDAO;
 import dao.FetchBannersDAO;
@@ -79,8 +78,6 @@ import dao.QueryTypeDAO;
 import dao.SetItemDetailsDao;
 import dao.ShareDAO;
 import dao.SignUpDAO;
-import dao.SingleOrderDAO;
-import dao.SlotDAO;
 import dao.StartMyTripDAO;
 import dao.SubmitFeedBackDAO;
 import dao.TermsAndConditionDAO;
@@ -485,6 +482,7 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject getDeliveryOrders(@FormParam("boyid") String uname) throws Exception{
 
+		System.out.println("\n--------------------------------------------------");
 		System.out.println("getdeliveryorders webservice is called..."+uname);
 
 		JSONObject jorders = new JSONObject();
@@ -541,8 +539,9 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject getDeliveryOrdersForBikers(@FormParam("boyid") String uname) throws Exception{
 
+		System.out.println("\n------------------------------------------------------");
 		System.out.println("getdeliveryordersforbiker webservice is called..."+uname);
-
+		System.out.println("--------------------------------------------------------");
 		JSONObject jorders = new JSONObject();
 
 		jorders = DBConnection.getdeliveryordersforbiker(uname);
@@ -728,8 +727,8 @@ public class Category {
 		try {
 			// BufferedReader in = new BufferedReader(new FileReader("http://192.168.1.116:8080/Myapp/ordertrackmap.html"));
 			//BufferedReader in = new BufferedReader(new FileReader("C:\\apache-tomcat-7.0.62\\webapps\\Myapp\\ordertrackmap.html")); 
-			//String fileName = "C:\\Bitnami\\tomcatstack-8.0.39-0\\apache-tomcat\\webapps\\Myapp\\ordertrackmap.html";
-			String fileName = "C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62\\webapps\\Myapp\\ordertrackmap.html";
+			String fileName = "C:\\Bitnami\\tomcatstack-8.0.39-0\\apache-tomcat\\webapps\\Myapp\\ordertrackmap.html";
+			//String fileName = "C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62\\webapps\\Myapp\\ordertrackmap.html";
 			//BufferedReader in = new BufferedReader(new FileReader("C:\\Joget-v4-Enterprise\\apache-tomcat-7.0.62\\webapps\\Myapp\\ordertrackmap.html")); 
 			BufferedReader in = new BufferedReader(new FileReader(fileName));
 			String str;
@@ -761,7 +760,7 @@ public class Category {
 		return data;
 	}
 
-	
+	/*
 	@GET
 	@Path("/map1")
 	@Produces(MediaType.TEXT_HTML)
@@ -832,7 +831,7 @@ public class Category {
 			}
 		}
 		return data;
-	}
+	}*/
 
 	@POST
 	@Path("/kitchenorders")
@@ -2185,7 +2184,7 @@ public class Category {
 		return jobjLocation;
 	}
 	
-	@POST
+	/*@POST
 	@Path("/fetchPaymentTypes")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject fetchPaymentTypes()throws JSONException{
@@ -2195,7 +2194,34 @@ public class Category {
 		System.out.println("-- fetchPaymentTypes api ends here ---------");
 		System.out.println("--------------------------------------------");
 		return paymentTypeJson;
-	}
+	}*/
+	
+	/*@POST
+	@Path("/fetchPaymentTypes")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchPaymentTypes(@FormParam("mobileNo")String mobileNo)throws JSONException{
+		System.out.println("--------------------------------------------");
+		System.out.println("--    fetchPaymentTypes api called  --------");
+		JSONObject paymentTypeJson = PaymentTypeDAO.fetchPaymentTypeList(mobileNo);
+		System.out.println("-- fetchPaymentTypes api ends here ---------");
+		System.out.println("--------------------------------------------");
+		return paymentTypeJson;
+	}*/
+	
+	@POST
+	 @Path("/fetchPaymentTypes")
+	 @Produces(MediaType.APPLICATION_JSON)
+	 public JSONObject fetchPaymentTypes(@FormParam("mobileNo")String mobileNo)throws JSONException{
+	  System.out.println("--------------------------------------------");
+	  System.out.println("--    fetchPaymentTypes api called  --------");
+	  System.out.println("-- PAYMENT TYPES MOBILE NO " + mobileNo);
+	  //JSONObject paymentTypeJson = PaymentTypeDAO.fetchPaymentTypeList();
+	  JSONObject paymentTypeJson = PaymentTypeDAO.fetchPaymentTypeListWithPromocode(mobileNo);
+	  System.out.println("-- fetchPaymentTypes api ends here ---------");
+	  System.out.println("--------------------------------------------");
+	  return paymentTypeJson;
+	 }
+	
 	
 	@POST
 	@Path("/getQueryTypelist")

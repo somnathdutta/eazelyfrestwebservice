@@ -10,7 +10,7 @@ import com.mkyong.rest.DBConnection;
 public class RoundRobin {
 	
 	public static void updateCurrentAndFutureStatus(int kitchenId, int cuisine){
-		//System.out.println("inside updateCurrentAndFutureStatus ordered block kitchen: "+kitchenId+" cuisine:: "+cuisine);
+		System.out.println("inside updateCurrentAndFutureStatus ordered block kitchen: "+kitchenId+" cuisine:: "+cuisine);
 		try {
 			SQL:{
 				Connection connection = DBConnection.createConnection();
@@ -27,7 +27,7 @@ public class RoundRobin {
 				//	System.out.println("Current :: "+preparedStatement);
 					int count = preparedStatement.executeUpdate();
 					if(count>0){
-						//System.out.println("Current and future updated for current kitchen!");
+						System.out.println("Current and future updated for current kitchen!"+kitchenId);
 					}
 				} catch (Exception e) {
 					// TODO: handle exception
@@ -48,7 +48,7 @@ public class RoundRobin {
 	public static boolean alreadyOrdered(int kitchenId, int cuisine){
 		boolean alreadyOrdered =false;
 		String cv=null,fv=null;
-		//System.out.println("inside already ordered block kitchen: "+kitchenId+" cuisine:: "+cuisine);
+		System.out.println("inside already ordered block kitchen: "+kitchenId+" cuisine:: "+cuisine);
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();

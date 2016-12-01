@@ -289,6 +289,16 @@ public class SlotDAO {
 						+" where driver_user_id =? and is_lunch='Y'"
 						+" and is_slot_locked ='N' and no_of_orders <= ? and quantity <= ?"
 						+" order by time_slot_id desc limit 1";
+			}else if(mealTypePojo.isDinnerToday() ){
+				sql= "select time_slot_id,time_slot,quantity,no_of_orders from vw_driver_tomorrow_status "
+						+" where driver_user_id =? and is_lunch='N'"
+						+" and is_slot_locked ='N' and no_of_orders <= ? and quantity <= ?";
+						
+			}else{
+				sql= "select time_slot_id,time_slot,quantity,no_of_orders from vw_driver_tomorrow_status "
+						+" where driver_user_id =? and is_lunch='Y'"
+						+" and is_slot_locked ='N' and no_of_orders <= ? and quantity <= ?";
+					
 			}
 			try {
 				preparedStatement = connection.prepareStatement(sql);

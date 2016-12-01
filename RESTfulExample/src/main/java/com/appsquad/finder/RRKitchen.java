@@ -9,7 +9,7 @@ public class RRKitchen {
 		for(Integer kitchen : selectedKitchenIds){
 			if( RoundRobin.alreadyOrdered(kitchen, kitchenType)){
 				tot++;
-				//System.out.println("Already ordered!");
+				System.out.println(kitchen+" Already ordered!");
 			}else{
 				RoundRobin.updateCurrentAndFutureStatus(kitchen, kitchenType);
 				//selectedKitchenIds.add(kitchen);
@@ -19,17 +19,17 @@ public class RRKitchen {
 		}
 		
 		if(tot == selectedKitchenIds.size()){
-				//System.out.println("All are ordered!");
+				System.out.println("All are ordered!");
 				RoundRobin.makeAllFree(selectedKitchenIds,kitchenType);
 				for(Integer kitchenid : selectedKitchenIds){
 					if( RoundRobin.alreadyOrdered(kitchenid,kitchenType)){
 						tot++;
-						//System.out.println("Tot Already ordered!");
+						System.out.println(kitchenId+" Tot Already ordered!");
 					}else{
 						RoundRobin.updateCurrentAndFutureStatus(kitchenid,kitchenType);
 						//selectedKitchenIds.add(kitchenid);
 						kitchenId = kitchenid;
-						//System.out.println("Tot else part: "+selectedKitchenIds);
+						System.out.println("tot == selectedKitchenIds.size() Tot else part: "+selectedKitchenIds);
 						break;
 					}
 				}
