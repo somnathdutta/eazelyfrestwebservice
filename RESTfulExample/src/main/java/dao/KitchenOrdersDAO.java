@@ -50,7 +50,7 @@ public class KitchenOrdersDAO {
 							}
 							if(resultSet.getString("payment_name")!=null){
 								if(resultSet.getString("payment_name").equalsIgnoreCase("CARD")){
-									orders.put("payType", "PAID");
+									orders.put("payType", "PAID BY CARD");
 								}else {
 									orders.put("payType", resultSet.getString("payment_name"));
 								}

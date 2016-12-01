@@ -5577,7 +5577,7 @@ public class DBConnection {
 							String paymentName = resultSet.getString("payment_name");
 							if(paymentName!= null){
 								if(resultSet.getString("payment_name").equalsIgnoreCase("CARD")){
-									jsonObject.put("paymenttype", "PAID");
+									jsonObject.put("paymenttype", "PAID BY CARD");
 								}else {
 									jsonObject.put("paymenttype", paymentName);
 								}
