@@ -20,6 +20,10 @@ public class SignUpDAO {
 	    	String myReferalCode = null;
 	    	boolean isRefCodeExists = false,isNewUserCreated=false;
 	    	
+	    	double[] creditValue = new double[2];
+	    	creditValue = CreditValueDAO.getCreditAndSignUpValue();
+	    	double signUpCreditAmount = creditValue[0];
+	    	
 	    //	if(!(getContactsFromDB().contains(contactNumber)) ){
 	    	if(referalCode.trim().length()>0 ){
 	    		System.out.println("Referral code given::"+referalCode);
@@ -28,13 +32,13 @@ public class SignUpDAO {
 	    		if(isRefCodeExists){
 	    			System.out.println("Referral code exists...");
 	    			//If given referral code exists for somebody
-	    			double myBalance = 50.0;
+	    			double myBalance = signUpCreditAmount;
 	    			if(OtpDAO.isValidOtp(contactNumber, otp)){
 	    				User referalUser = new User(name, contactNumber, email, contactNumber, referalCode, myBalance);
 		    			//just try to insert data in db for new user
 		    			isNewUserCreated = DBConnection.doSignUpFor(referalUser);
 		    			if(isNewUserCreated){
-		    				System.out.println("New user created...and now update balance. . .");
+		    				/*System.out.println("New user created...and now update balance. . .");
 		    				insertStatus = DBConnection.updateBalanceForReferredUserFrom(referalCode.trim());
 		    				if(insertStatus){
 		    					System.out.println("Referred user balance updated...");
@@ -48,7 +52,13 @@ public class SignUpDAO {
 		    					OtpDAO.deleteOtp(contactNumber);
 		    					jsonObject.put("status", true);
 		            			jsonObject.put("message", "User created but user balance updation failed!");
-		    				}
+		    				}*/System.out.println("New User created!");
+	        				myReferalCode = DBConnection.generateReferalCode(name);
+	        				System.out.println("New users code ::"+myReferalCode);
+	        				DBConnection.updateMyCode(myReferalCode, contactNumber, false);
+	    					OtpDAO.deleteOtp(contactNumber);
+	    					jsonObject.put("status", true);
+	            			jsonObject.put("message", "Thank you for registration!");
 		    			}else{
 		        			if(isMobileNoRegistered(contactNumber)){
 		        				OtpDAO.deleteOtp(contactNumber);
@@ -77,7 +87,7 @@ public class SignUpDAO {
 		    		if(isNewUserCreated){
 		    			insertStatus = true;
 		    			myReferalCode = DBConnection.generateReferalCode(name);
-		    			DBConnection.updateMyCode(myReferalCode, contactNumber);
+		    			DBConnection.updateMyCode(myReferalCode, contactNumber, false);
 		    			OtpDAO.deleteOtp(contactNumber);
 		    			jsonObject.put("status", true);
 		    			jsonObject.put("message", "Thank you for registration!");

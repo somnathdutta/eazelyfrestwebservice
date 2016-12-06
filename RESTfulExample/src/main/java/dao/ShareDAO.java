@@ -104,6 +104,7 @@ public class ShareDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+		System.out.println("Share and earn amount: "+credit);
 		return credit;
 	}
 }

@@ -48,6 +48,7 @@ import dao.AboutUsDAO;
 import dao.AddressDAO;
 import dao.AllItemsDAO;
 import dao.BikerDAO;
+import dao.BikerOrderHistoryDAO;
 import dao.BookDriver;
 import dao.CallPickJiBikerDAO;
 import dao.ChangePasswordDAO;
@@ -431,10 +432,12 @@ public class Category {
 	@Path("/getbalance")
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject getBalance(@FormParam("mobileno")String mobileNo)throws Exception{
+		System.out.println("--------------------------------------------------------------");
 		System.out.println("getbalance web service is called with mob no * * * *"+mobileNo);
+		System.out.println("--------------------------------------------------------------");
 		JSONObject jsonObject;
 		jsonObject = DBConnection.getBalance(mobileNo);
-		System.out.println("getbalance ended ***");
+		System.out.println("----- getbalance ended ----------------------------");
 		return jsonObject;
 
 	}
@@ -545,6 +548,21 @@ public class Category {
 		JSONObject jorders = new JSONObject();
 
 		jorders = DBConnection.getdeliveryordersforbiker(uname);
+
+		return jorders;
+	}
+	
+	@POST
+	@Path("/bikerOrdersHistory")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject getBikerOrdersHistory(@FormParam("boyid") String deliveryBoyUserId) throws Exception{
+
+		System.out.println("\n------------------------------------------------------");
+		System.out.println("	bikerOrdersHistory webservice is called..."+ deliveryBoyUserId);
+		System.out.println("--------------------------------------------------------");
+		JSONObject jorders = new JSONObject();
+
+		jorders = BikerOrderHistoryDAO.getdeliveryordersforbiker(deliveryBoyUserId);
 
 		return jorders;
 	}

@@ -430,6 +430,8 @@ public class AllItemServingKitchenFinder {
 		for(Integer kitchen : kitchenIdList){
 			for(Kitchen freeKitchen : kitchenFreeQtyList){
 				if(kitchen==freeKitchen.getKitchenId()){
+					System.out.println("totalNoOfQuantity: "+totalNoOfQuantity+" freeKitchenQty :"+freeKitchen.getFreeQty());
+					System.out.println("bikerCapacity: "+bikerCapacity);
 					if(totalNoOfQuantity <= freeKitchen.getFreeQty() && totalNoOfQuantity<=bikerCapacity){
 						System.out.println("Sevable by kitchen :::::"+kitchen);
 						servableKitchenIdList.add(kitchen);

@@ -68,9 +68,11 @@ public class PromoCodeDAO {
 				isPromoCodeApplied = true;
 			}
 			for(OrderItems items : orderItems){
-				finalTotal += items.price;
+				finalTotal += (items.quantity * items.price);
 				totalQuantity += items.quantity;
 			}
+			System.out.println("Final total :: "+finalTotal);
+			System.out.println("Total quantity:: "+totalQuantity);
 			if(promoTypeId==1){//FLAT
 				
 				if(!isPromoCodeApplied){
@@ -86,7 +88,6 @@ public class PromoCodeDAO {
 				}
 				
 			}else if(promoTypeId == 2){//Percentage
-				
 				if(!isPromoCodeApplied){
 					finalTotal = ( finalTotal * promoValue/100);
 					discountedValue = finalTotal;

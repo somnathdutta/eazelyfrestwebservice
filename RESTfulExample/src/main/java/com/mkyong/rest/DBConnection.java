@@ -89,6 +89,7 @@ import com.google.android.gcm.server.Sender;
 import dao.BalanceDAO;
 import dao.BikerDAO;
 import dao.BookDriver;
+import dao.CreditValueDAO;
 import dao.CuisineKitchenDAO;
 import dao.FetchCuisineDAO;
 import dao.FetchLocationDAO;
@@ -1012,6 +1013,11 @@ public class DBConnection {
     	String myReferalCode = null;
     	boolean isRefCodeExists = false,isNewUserCreated=false;
     	
+    	double[] creditValue = new double[2];
+    	creditValue = CreditValueDAO.getCreditAndSignUpValue();
+    	double signUpCreditAmount = creditValue[0];
+    	
+    	
     //	if(!(getContactsFromDB().contains(contactNumber)) ){
     	if(referalCode.trim().length()>0 ){
     		System.out.println("Referral code given::"+referalCode);
@@ -1020,13 +1026,13 @@ public class DBConnection {
     		if(isRefCodeExists){
     			System.out.println("Referral code exists...");
     			//If given referral code exists for somebody
-    			double myBalance = 50.0;
+    			double myBalance = signUpCreditAmount;
     			if(OtpDAO.isValidOtp(contactNumber, otp)){
     				User referalUser = new User(name, password, email, contactNumber, referalCode, myBalance);
         			//just try to insert data in db for new user
         			isNewUserCreated = doSignUpFor(referalUser);
         			if(isNewUserCreated){
-        				System.out.println("New user created...and now update balance. . .");
+        				/*System.out.println("New user created...and now update balance. . .");
         				insertStatus = updateBalanceForReferredUserFrom(referalCode.trim());
         				if(insertStatus){
         					System.out.println("Referred user balance updated...");
@@ -1040,7 +1046,14 @@ public class DBConnection {
         					OtpDAO.deleteOtp(contactNumber);
         					jsonObject.put("status", true);
                 			jsonObject.put("message", "User created but user balance updation failed!");
-        				}
+        				}*/
+        				System.out.println("New User created!");
+        				myReferalCode = generateReferalCode(name);
+        				System.out.println("New users code ::"+myReferalCode);
+    					updateMyCode(myReferalCode, contactNumber, false);
+    					OtpDAO.deleteOtp(contactNumber);
+    					jsonObject.put("status", true);
+            			jsonObject.put("message", "Thank you for registration!");
         			}else{
             			jsonObject.put("status", false);
             			jsonObject.put("message", "The mobile number is already registered");
@@ -1063,7 +1076,7 @@ public class DBConnection {
         		if(isNewUserCreated){
         			insertStatus = true;
         			myReferalCode = generateReferalCode(name);
-    				updateMyCode(myReferalCode, contactNumber);
+    				updateMyCode(myReferalCode, contactNumber, false);
     				OtpDAO.deleteOtp(contactNumber);
         			jsonObject.put("status", true);
         			jsonObject.put("message", "Thank you for registration!");
@@ -1260,6 +1273,7 @@ public class DBConnection {
 					} catch (Exception e) {
 						// TODO: handle exception
 						System.out.println("Getting balance failed due to: "+e);
+						e.printStackTrace();
 					}finally{
 						if(preparedStatement!=null){
 							preparedStatement.close();
@@ -1285,11 +1299,12 @@ public class DBConnection {
     		}else{
     			balanceObject.put("creditValue", credit);
     		}
+    		System.out.println("MY CODE: "+myCode+" BAL: "+myBalance+" Credit: "+credit);
     	}else{
     		balanceObject.put("status", "204");
     		balanceObject.put("mycode", "");
-    		balanceObject.put("mybalance", "");
-    		balanceObject.put("creditValue", 0.0);
+    		balanceObject.put("mybalance", myBalance);
+    		balanceObject.put("creditValue", credit);
     	}
     	/*if(myCode!=null){
 			balanceObject.put("mycode", myCode);
@@ -3611,9 +3626,13 @@ public class DBConnection {
     			
     			if(!isGuestUser){
     				//updateMyCreditBalance(contactNumber);//Old logic for share and earn
-    				updateFriendBalance(contactNumber);
+    				double[] creditValue = new double[2];
+    		    	creditValue = CreditValueDAO.getCreditAndSignUpValue();
+    		    	double OrderCreditAmount = creditValue[0];
+    				
+    		    	BalanceDAO.updateFriendBalance(contactNumber, OrderCreditAmount);
     				if(credit){
-    					BalanceDAO.reduceMyBalance(contactNumber);
+    					BalanceDAO.reduceMyBalance(contactNumber, OrderCreditAmount);
     				}
     				
     				PromoCodeDAO.applyRemovePromoCode(promoCode, contactNumber);
@@ -4179,16 +4198,20 @@ public class DBConnection {
     
     private static boolean updateBalanceForFriend(String referralCode){
     	boolean balanceUpdated = false;
+    	double[] creditValue = new double[2];
+    	creditValue = CreditValueDAO.getCreditAndSignUpValue();
+    	double orderCreditAmount = creditValue[1];
+    	
     	try {
     		Connection connection = DBConnection.createConnection();
 			SQL1:{
     			System.out.println("Balance updating called..");
     			 PreparedStatement preparedStatement = null;
-    			 String sql = "UPDATE fapp_accounts SET my_balance = my_balance + 50.0 where my_code = ?";
+    			 String sql = "UPDATE fapp_accounts SET my_balance = my_balance + ? where my_code = ?";
     			 try {
 					preparedStatement = connection.prepareStatement(sql);
-					//preparedStatement.setDouble(1, 50);
-					preparedStatement.setString(1, referralCode);
+					preparedStatement.setDouble(1, orderCreditAmount);
+					preparedStatement.setString(2, referralCode);
 					System.out.println(preparedStatement);
 					int count = preparedStatement.executeUpdate();
 					if(count>0){
@@ -8824,18 +8847,24 @@ public class DBConnection {
    		return referalCode.toUpperCase();
    	}
     
-    public static boolean updateMyCode(String myCode,String mobileNo){
+    public static boolean updateMyCode(String myCode, String mobileNo, boolean isReffered){
     	boolean updateStatus = false;
     	System.out.println("My code : "+myCode+" Mobile No: "+mobileNo);
     	try {
 			SQL:{
     				Connection connection = DBConnection.createConnection();
     				PreparedStatement preparedStatement = null;
-    				String sql ="UPDATE fapp_accounts set my_code = ? where mobile_no=?";
+    				String sql = "";
+    				if(isReffered){
+    					sql = "UPDATE fapp_accounts set my_code = ?,my_balance = my_balance + 50.0 where mobile_no=?";
+    				}else{
+    					sql = "UPDATE fapp_accounts set my_code = ? where mobile_no=?";
+    				}
     				try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, myCode.toUpperCase());
 						preparedStatement.setString(2, mobileNo);
+						System.out.println(preparedStatement);
 						int count=preparedStatement.executeUpdate();
 						if(count>0){
 							updateStatus = true;
