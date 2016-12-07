@@ -1119,7 +1119,8 @@ public class Category {
 		System.out.println("delivery address-->"+deliveryAddress);
 		System.out.println("instruction-->"+instruction);
 		System.out.println("Promo code--> "+promoCode);
-
+		System.out.println("___________________________________________");
+		System.out.println();
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
 		JSONObject orderPlaced = new JSONObject();
 		Boolean sub = false;int totalNoOfQuantity = 0,totalStQuantity=0;

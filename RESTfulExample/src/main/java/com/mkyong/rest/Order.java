@@ -11,6 +11,8 @@ public class Order {
 	public Date deliveryDate;
 	public String leadTime;
 	public String orderTimeStampValue;
+	public Double finalPrice;
+	
 	public String getOrderNo() {
 		return orderNo;
 	}
@@ -58,6 +60,12 @@ public class Order {
 	}
 	public void setOrderTimeStampValue(String orderTimeStampValue) {
 		this.orderTimeStampValue = orderTimeStampValue;
+	}
+	public Double getFinalPrice() {
+		return finalPrice;
+	}
+	public void setFinalPrice(Double finalPrice) {
+		this.finalPrice = finalPrice;
 	}
 	
 	

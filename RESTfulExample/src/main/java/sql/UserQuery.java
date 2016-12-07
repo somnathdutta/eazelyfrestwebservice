@@ -11,5 +11,5 @@ public class UserQuery {
 			+ " left join fapp_order_user_details foud "
 			+ " on fo.order_id = foud.order_id"
 			+ " where order_no =?";
-	public static String orderQuery = "select order_date ::date from fapp_orders where order_no=?";
+	public static String orderQuery = "select order_date ::date,final_price from fapp_orders where order_no=?";
 }

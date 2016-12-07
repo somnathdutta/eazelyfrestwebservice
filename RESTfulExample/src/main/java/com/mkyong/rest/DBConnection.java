@@ -3138,6 +3138,11 @@ public class DBConnection {
     	
     	java.util.Date delivery_Date = new java.util.Date();
     	int orderId = 0,totalBenQty =0, totalNiQty = 0;
+    	double finalTotal = 0.0;
+    	
+    	for(OrderItems items : orderItemList){
+			finalTotal += (items.quantity * items.price);
+		}
     	
     	ArrayList<Integer> dealingKitchenIds = new ArrayList<Integer>();
     	ArrayList<OrderItems> niCuisineIdList = new ArrayList<OrderItems>();
@@ -3174,7 +3179,7 @@ public class DBConnection {
     	}
     	
     	Double finalPrice = Double.valueOf(payAmount);
-		System.out.println("payAmount :: "+payAmount+" finalPrice :: "+finalPrice);
+		System.out.println("payAmount :: "+payAmount+" finalPrice :: "+finalPrice+" Final Total:: "+finalTotal);
     	
 		
 		System.out.println("Total item ordered: "+orderItemList.size());
@@ -3437,8 +3442,9 @@ public class DBConnection {
         				/*String sql = "INSERT INTO fapp_orders(user_mail_id, order_by, contact_number,order_no,meal_type,time_slot)"
         							+" VALUES (?, ?, ?, ?,?,?)";*/
         				String sql = "INSERT INTO fapp_orders(user_mail_id , contact_number, order_no, meal_type, time_slot,order_by,"
-        						+ "delivery_date,final_price,payment_name, user_type,promo_code)"
-    							+" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        						+ "delivery_date,final_price,payment_name, user_type,promo_code,applied_promo_code,delivery_charges,"
+        						+ "discount_amount)"
+    							+" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         				try {
     	    					preparedStatement = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
     	    					preparedStatement.setString(1, userMailId);
@@ -3482,11 +3488,18 @@ public class DBConnection {
     	        						preparedStatement.setNull(11, Types.NULL);
     	        					}else{
     	        						preparedStatement.setString(11, promoCode.trim().toUpperCase());
-    	        					}
-    	        					
+    	        					}		
     	        				}else{
     	        					preparedStatement.setNull(11, Types.NULL);
     	        				}
+    	        				
+    	        				if(promoCode!=null && promoCode.trim().length()>0){
+    	        					preparedStatement.setString(12, promoCode.trim().toUpperCase());
+    	        				}else{
+    	        					preparedStatement.setNull(12, Types.NULL);
+    	        				}
+    	        				preparedStatement.setDouble(13, 0.0);
+    	        				preparedStatement.setDouble(14, ( finalTotal- finalPrice));
     	        				//System.out.println(preparedStatement);
     	        				//preparedStatement.setDate(7, current_tim);
     	        				preparedStatement.execute();
@@ -5936,6 +5949,16 @@ public class DBConnection {
     	}
     	if(updated){
     		System.out.println("Order status changed to completed. . .");
+    		sendMessageToMobile(getCustomerMobile(orderNo, "REGULAR"), 
+					orderNo, "orderTime" , 7);
+			User user = UserDetailsDao.getUserDetails(null, orderNo);
+			Order order = OrderDetailsDAO.getOrderDetails(orderNo);
+			ArrayList<OrderItems> orderItemList = OrderItemDAO.getOrderItemDetails(orderNo);
+			/**
+			 * SEND INVOICE TO CUSTOMER 
+			 */
+			Invoice.generateAndSendEmail(user, order, orderItemList);
+			SendMessageDAO.updateSendMessageStatus(orderNo);
     	}
     	return updated;
     }

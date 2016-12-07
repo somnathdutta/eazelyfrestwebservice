@@ -28,6 +28,7 @@ public class OrderDetailsDAO {
 						if(resultSet.next()){
 							order.setOrderNo(orderNo);
 							order.setOrderDateValue(DateFormattor.toStringDate(resultSet.getString("order_date")));
+							order.setFinalPrice(resultSet.getDouble("final_price"));
 						}
 					} catch (Exception e) {
 						// TODO: handle exception

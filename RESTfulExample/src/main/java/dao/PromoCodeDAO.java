@@ -456,6 +456,7 @@ public class PromoCodeDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+		System.out.println(promoCode+" is reusable: "+isReusable);
 		return isReusable;
 	}
 }

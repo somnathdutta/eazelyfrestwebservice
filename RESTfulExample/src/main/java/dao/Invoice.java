@@ -53,7 +53,7 @@ public class Invoice {
 			generateMailMessage.setContent(emailBody, "text/html");
 			System.out.println("Mail Session has been created successfully..");
 			// Step3
-			System.out.println("\n 4th ===> Get Session and Send mail");
+			System.out.println("\n 4th ===> Get Session and Send mail to :"+user.getEmailId());
 			Transport transport = getMailSession.getTransport("smtp");
 	 
 			// Enter your correct gmail UserID and Password
@@ -75,6 +75,7 @@ public class Invoice {
 	 
 	 public static String bodyMessage(User user,Order order, ArrayList<OrderItems> orderItemList){
 		 StringBuilder body = new StringBuilder();
+		 String imgSrc = "http://eazelyf.southindia.cloudapp.azure.com//Myapp/image/logo.png";
 		 String userName = user.getUserName(),contactNo =user.getContactNumber();
 		// String name= "Appsquad" ,orderNo ="REG/23/33/00011",orderDate = "22-05-2016",deliveryDate ="23-05-2016";
 		// String deliveryAddress = "Street No 0315, DH Block(Newtown), Action Area I, Newtown, New Town, West Bengal 700156, India";
@@ -91,7 +92,7 @@ public class Invoice {
 				+"<td width=\"100%\" bgcolor=\"#ffffff\" style=\"padding:0 10px\"> "
 				+"<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align=\"center\" style=\"max-width:600px\"><tbody> "
 	+" <tr><td><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align=\"center\">"
-	+" <tbody><tr><td align=\"center\" style=\"padding:24px 0\"><img src=\"http://appsquad.cloudapp.net:8080/Myapp/image/logo.png\" " 
+	+" <tbody><tr><td align=\"center\" style=\"padding:24px 0\"><img src=\"http://eazelyf.southindia.cloudapp.azure.com//Myapp/image/logo.png\" " 
 	+" alt=\"\" style=\"border:0\" width=\"148\" height=\"37\" class=\"CToWUd\"></td></tr>"
 	+"</tbody></table>"
 	+"<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align=\"center\">"
@@ -153,6 +154,9 @@ public class Invoice {
 
          body.append("<tr>" + "<td></td><td></td><td></td><td></td><td>" + "Grand Total is:-  "
                  + "</td><td>" + gTotal + " "
+                 + "</td></tr>");
+         body.append("<tr>" + "<td></td><td></td><td></td><td></td><td>" + "You Pay:-  "
+                 + "</td><td>" + order.finalPrice + " "
                  + "</td></tr>");
          body.append("</table><br><p align=\"center\"><b>We look forward to serve you again soon.Team EazeLyf</b> </p>"
          		+ "<br><p align=\"center\"><font face=\"verdana\">For all other queries and to browse our top FAQs, please <a href=\"www.eazelyf.com\">click here</a></p> </table></body></html>");
