@@ -70,7 +70,9 @@ public class PaymentTypeDAO {
 				promoMessage.append("Your Promocodes are:\n");
 				for(String promo : unUsedPromoCodeList){
 					if(promo.equalsIgnoreCase("EAZEKARO")){
-						promoMessage.append("1 Meal free on purchase of 1 or more meals on 1st order. "
+						/*promoMessage.append("1 Meal free on purchase of 1 or more meals on 1st order. "
+								+ "\nWould you like to use promocode \"EAZEKARO\"");*/
+						promoMessage.append("Have you applied the promo code to avail of 50% discount."
 								+ "\nWould you like to use promocode \"EAZEKARO\"");
 					}
 					/*if(promo.equalsIgnoreCase("EAZEVOL")){
@@ -154,11 +156,13 @@ public class PaymentTypeDAO {
 
 			for(String str : promoCodeList){
 				JSONObject promJsonObject = new JSONObject();
-				System.out.println("str1 >>> >> > " + str);
+				//System.out.println("str1 >>> >> > " + str);
 				if(str.equals("EAZEKARO")){
 					System.out.println("str2 >>> >> > " + str);
 					promJsonObject.put("promoCode", str);
-					promJsonObject.put("codeMessage", "1 Meal free on purchase of 1 or more meals on 1st order. \nWould you like to use promocode \"EAZEKARO\"");
+					//promJsonObject.put("codeMessage", "1 Meal free on purchase of 1 or more meals on 1st order. \nWould you like to use promocode \"EAZEKARO\"");
+					promJsonObject.put("codeMessage", "Have you applied the promo code to avail of 50% discount."
+								+ "\nWould you like to use promocode \"EAZEKARO\"");
 					promoArray.put(promJsonObject);
 				}
 				/*if(str.equals("EAZELYF001")){

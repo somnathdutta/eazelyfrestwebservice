@@ -44,6 +44,7 @@ import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.PreencodedMimeBodyPart;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -3443,8 +3444,8 @@ public class DBConnection {
         							+" VALUES (?, ?, ?, ?,?,?)";*/
         				String sql = "INSERT INTO fapp_orders(user_mail_id , contact_number, order_no, meal_type, time_slot,order_by,"
         						+ "delivery_date,final_price,payment_name, user_type,promo_code,applied_promo_code,delivery_charges,"
-        						+ "discount_amount)"
-    							+" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        						+ "discount_amount,is_credit_applied )"
+    							+" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
         				try {
     	    					preparedStatement = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
     	    					preparedStatement.setString(1, userMailId);
@@ -3500,6 +3501,11 @@ public class DBConnection {
     	        				}
     	        				preparedStatement.setDouble(13, 0.0);
     	        				preparedStatement.setDouble(14, ( finalTotal- finalPrice));
+    	        				if(credit){
+    	        					preparedStatement.setString(15, "Y");
+    	        				}else{
+    	        					preparedStatement.setString(15, "N");
+    	        				}
     	        				//System.out.println(preparedStatement);
     	        				//preparedStatement.setDate(7, current_tim);
     	        				preparedStatement.execute();
@@ -3630,10 +3636,10 @@ public class DBConnection {
     				for(OrderItems items : orderItemList){
         				singleOrderKitchenId = items.kitchenId;
         				updateRows = StockUpdationDAO.updateSingleOrder(singleOrderKitchenId,mealType,deliveryDay);
-        				StockUpdationDAO.updateKitchenItemStock(singleOrderKitchenId, items.itemCode, items.quantity, mealType, deliveryDay);
+        				//StockUpdationDAO.updateKitchenItemStock(singleOrderKitchenId, items.itemCode, items.quantity, mealType, deliveryDay);
         			}
     				if(updateRows > 0){
-        				System.out.println("*** Single order updated ****"+updateRows);
+        				System.out.println("*** SINGLE ORDER UPDATED SUCCESSFULLY ****"+updateRows);
         			}
     			}
     			

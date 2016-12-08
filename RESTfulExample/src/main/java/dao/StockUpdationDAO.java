@@ -10,6 +10,9 @@ public class StockUpdationDAO {
 
 	public static int updateKitchenItemStock(int kitchenId, String itemCode,int itemQty, String mealType, String deliveryDay){
 		int updatedRows = 0;
+		System.out.println("---------------------------");
+		System.out.println("Now updating Kitchen Item Stock. . .");
+		System.out.println("---------------------------");
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
@@ -28,7 +31,6 @@ public class StockUpdationDAO {
 						sql = "UPDATE fapp_kitchen_items set dinner_stock_tomorrow = (dinner_stock_tomorrow - ?)"
 								+ " where kitchen_id = ? and item_code = ?  and dinner_stock_tomorrow > 0";
 					}
-					System.out.println("*** Stock updation start with ****"+updatedRows);
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setInt(1, itemQty);
@@ -51,12 +53,15 @@ public class StockUpdationDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		System.out.println("*** Stock updation ends with ****"+updatedRows);
+		System.out.println("*** Kitchen Item Stock updation ends with ****"+updatedRows);
 		return updatedRows;
 	}
 	
 	public static int updateSingleOrder(int kitchenId, String mealType, String deliveryDay){
 		int updatedRows = 0;
+		System.out.println("-------------------------------------");
+		System.out.println("Updating SingleOrder for kitchen. . .");
+		System.out.println("-------------------------------------");
 		try {
 			SQL:{
 					Connection connection = DBConnection.createConnection();
@@ -98,7 +103,7 @@ public class StockUpdationDAO {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		System.out.println("*** Single Order updation ends with ****"+updatedRows);
+		System.out.println("*** Kitchen Single Order updation ends with ****"+updatedRows);
 		return updatedRows;
 	}
 	
