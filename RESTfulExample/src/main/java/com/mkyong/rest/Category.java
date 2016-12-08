@@ -68,6 +68,7 @@ import dao.KitchenOrdersDAO;
 import dao.KitchenReceiveOrderDAO;
 import dao.LoginDAO;
 import dao.OrderSummaryDAO;
+import dao.OrderTimingValidationDAO;
 import dao.OrderTimingsDAO;
 import dao.OtpDAO;
 import dao.PaymentTypeDAO;
@@ -1099,7 +1100,7 @@ public class Category {
 			) throws Exception{
 
 		System.out.println("-------------------------------------------------");
-		System.out.println("------- PLACE ORDER STARTS HERE - - - - - - --- -");
+		System.out.println("------- PLACE ORDER STARTS HERE AT- - - - - - --- - "+new Date());
 		System.out.println("--------------------------------------------------");
 		System.out.println("Usertype - >"+userType);
 		System.out.println("Name ->"+guestName);
@@ -1124,377 +1125,407 @@ public class Category {
 		ArrayList<OrderItems> orderItemList = new  ArrayList<OrderItems>();
 		JSONObject orderPlaced = new JSONObject();
 		Boolean sub = false;int totalNoOfQuantity = 0,totalStQuantity=0;
-		for(String str : orderDetails){
-
-			OrderItems items = new OrderItems();
-			String[] order = str.split("\\$");
-			for(int i=0;i<order.length;i++){
-				if(order.length==5){
-					items.cuisineId = Integer.valueOf(order[0]);
-					items.categoryId = Integer.valueOf(order[1]);
-					items.itemCode = order[2];
-					items.price = Double.valueOf(order[3]);
-					items.quantity = Integer.valueOf(order[4]);
-					items.packing = "Meal Tray";
-					//System.out.println("PACKING 1 ------ >>> >> > " + items.packing);
-					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
-				}else if(order.length==6){
-					items.cuisineId = Integer.valueOf(order[0]);
-					items.categoryId = Integer.valueOf(order[1]);
-					items.itemCode = order[2];
-					items.price = Double.valueOf(order[3]);
-					items.quantity = Integer.valueOf(order[4]);
-					items.packing = order[5].toUpperCase();
-					//System.out.println("PACKING 2 ------ >>> >> > " + items.packing);
-					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
-				}
-				else if(order.length==7){
-					items.cuisineId = Integer.valueOf(order[0]);
-					items.categoryId = Integer.valueOf(order[1]);
-					items.itemCode = order[2];
-					items.price = Double.valueOf(order[3]);
-					items.quantity = Integer.valueOf(order[4]);
-					items.packing = order[5].toUpperCase();
-					items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
-					items.mealType = order[6].trim().toUpperCase();
-					//System.out.println("PACKING 3 ----------------------------------------- >>> >> > " + items.packing);
-					//System.out.println("MEAL TYPE 1 ------ >>> >> > " + items.mealType);
-					//sub = true;
-					/*items.cuisineId = Integer.valueOf(order[0]);
-					items.categoryId = Integer.valueOf(order[1]);
-					items.itemCode = order[2];
-					items.price = Double.valueOf(order[3]);
-					items.quantity = Integer.valueOf(order[4]);
-					items.day = order[5];
-					items.meal = order[6];*/
-					/*String stDateUserString = order[6].trim();
-	    	    	String enDateUserString = order[7].trim();
-	    	    	DateFormat format1 = new SimpleDateFormat("MM-dd-yyyy");
-	    	    	java.util.Date stdate = null;
-	    	    	java.util.Date endate = null;
-	    	    	try {
-						stdate = sdf1.parse(stDateUserString);
-						endate = sdf1.parse(enDateUserString);
-	    	    		stdate = format1.parse(stDateUserString);
-						endate = format1.parse(enDateUserString);
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					items.startDate = new java.sql.Date(stdate.getTime());
-	    	    	items.endDate = new java.sql.Date(endate.getTime());*/
-					/*SimpleDateFormat sdf1 = new SimpleDateFormat("dd-MM-yyyy");
-	    	    	java.util.Date stdate = null;
-	    	    	java.util.Date endate = null;
-					try {
-						stdate = sdf1.parse(stDateUserString);
-						endate = sdf1.parse(enDateUserString);
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					items.startDate = new java.sql.Date(stdate.getTime());
-	    	    	items.endDate = new java.sql.Date(endate.getTime());*/
-
-				}else{
-					//System.out.println("MMMMMMMMMMMM " + order[0] + "//" + order[1] + "//" + order[2]+ order[3] + "//" + order[4] + "//" + order[5] + order[6] + "//" + order[7] + "//" + order[8]);
-					sub = true;
-					items.cuisineId = Integer.valueOf(order[0]);
-					items.categoryId = Integer.valueOf(order[1]);
-					items.quantity = Integer.valueOf(order[2]);
-					items.price = Double.valueOf(order[3]);
-					items.day = order[4];
-					items.meal = order[5];
-					String stDateUserString = order[6].trim();
-					String enDateUserString = order[7].trim();
-					items.timsSlot = order[8];
-					SimpleDateFormat sdf1 = new SimpleDateFormat("dd-MM-yyyy");
-					//SimpleDateFormat sdf1 = new SimpleDateFormat("MM-dd-yyyy");
-					//DateFormat format1 = new SimpleDateFormat("MM-dd-yyyy");
-					java.util.Date stdate = null;
-					java.util.Date endate = null;
-					try {
-						stdate = sdf1.parse(stDateUserString);
-						endate = sdf1.parse(enDateUserString);
-						//	System.out.println("con stdate->"+stdate+" conv endate->"+endate);
-						/*stdate = format1.parse(stDateUserString);
-						endate = format1.parse(enDateUserString);*/
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					items.startDate = new java.sql.Date(stdate.getTime());
-					items.endDate = new java.sql.Date(endate.getTime());
-					//System.out.println("st date-"+items.startDate+" end date--"+items.endDate);
-				}
-
-			}
-			orderItemList.add(items);
-		}
-		boolean isSttagegredDelivery = false;String bikerUserId=null;
-		if(timeslot.contains("&")){
-			isSttagegredDelivery = true;
-		}
-		System.out.println("Is staggerd delivery:: "+isSttagegredDelivery);
-		/**
-		 * Find time slot id,boy id and kitchen id 
-		 */
-		ArrayList<TimeSlot> timeSlotList = new ArrayList<TimeSlot>();
-		//List<String> timeSlotDetails = new ArrayList<String>();
-		//timeSlotDetails.add("45$DLV0013$1");
-		for(OrderItems items : orderItemList){
-			totalNoOfQuantity += items.quantity;
-		}
-
-
-		ArrayList<Integer> slotIdList = new ArrayList<Integer>();
-		/*if(isSttagegredDelivery){
-			totalStQuantity = totalNoOfQuantity;
-			String[] timeslots = timeslot.split("\\&");
-			for(String str : timeslots){
-				int slotId = TimeSlotFinder.getTimeSlotId(str.trim());
-				slotIdList.add(slotId);
-			}
-		}
-		//System.out.println("Slot ids:: "+slotIdList);
-
-		if(isSttagegredDelivery){
-
-			for(String str : timeSlotDetails){
-		    	TimeSlot slotPojo = new TimeSlot();
-				String[] slot = str.split("\\$");
-		    	for(int i=0;i<slot.length;i++){
-		    		if(slot.length==2){
-		    			slotPojo.kitchenID = Integer.valueOf(slot[0]);
-		    			slotPojo.bikerUserId = slot[1];
-		    			kitchen = slotPojo.kitchenID;
-		    			bikerUserId = slotPojo.bikerUserId;
-		    		}
-		    	}
-		    	timeSlotList.add(slotPojo);
-		    }
-		}else{
-			for(String str : timeSlotDetails){
-		    	TimeSlot slotPojo = new TimeSlot();
-				String[] slot = str.split("\\$");
-		    	for(int i=0;i<slot.length;i++){
-		    		if(slot.length==3){
-		    			slotPojo.kitchenID = Integer.valueOf(slot[0]);
-		    			slotPojo.bikerUserId = slot[1];
-		    			slotPojo.slotId = Integer.valueOf(slot[2]);
-		    		}
-		    	}
-		    	timeSlotList.add(slotPojo);
-		    }
-		}*/
-
-
-		ArrayList<TimeSlot> dealingTimeSlots = new ArrayList<TimeSlot>();
-		ArrayList<Integer> kids= new ArrayList<Integer>();
-		MealTypePojo mealTypePojo = new MealTypePojo();
-
-		Set<Integer> servingKitchenIds = new HashSet<Integer>();
-
-		for(String str : timeSlotDetails){
-			TimeSlot slotPojo = new TimeSlot();
-			String[] slot = str.split("\\$");
-			for(int i=0;i<slot.length;i++){
-				if(slot.length>3){
-					slotPojo.kitchenID = Integer.valueOf(slot[0]);
-					servingKitchenIds.add(Integer.valueOf(slot[0]));
-					slotPojo.bikerUserId = slot[1];
-					slotPojo.cuisineId = Integer.valueOf(slot[2]);
-					slotPojo.itemCode = slot[3];
-					slotPojo.quantity = Integer.valueOf(slot[4]);
-					slotPojo.slotId = Integer.valueOf(slot[5]);
-				}else{
-					slotPojo.kitchenID = Integer.valueOf(slot[0]);
-					servingKitchenIds.add(Integer.valueOf(slot[0]));
-					slotPojo.bikerUserId = slot[1];
-					slotPojo.slotId = Integer.valueOf(slot[2]);
-				}
-			}
-			timeSlotList.add(slotPojo);
-		}		
-		System.out.println("Kitchens who will serve the order:: "+servingKitchenIds);
-
-
-		int totNoOfQtyOrig =  totalNoOfQuantity; 
-		int kitchen = 0;
-		String biker = "";
-		int cuisineId = 0;
-		String itemCode = "";
-		int qty = 0;
-		int slotQuantity = 0;
-		int otherslot = 0;
-		int[] bikerCapa = new int[2];
-		bikerCapa = BikerDAO.getBikerCapacityAndOrders();
-		int bikerCapacity = bikerCapa[0]; 
 		
-		for(int i = 0; i < timeSlotList.size(); i++){
-			TimeSlot slot = timeSlotList.get(i);
-			if(slot.quantity <1){
-				continue;
-			}
-			int currQnty = TimeSlotFinder.getBikerStock(slot.bikerUserId, slot.slotId, mealTypePojo);
-			System.out.println("Biker "+slot.bikerUserId+" dbqty:"+currQnty+" slot id: "+slot.slotId+" slot qty:"+slot.quantity);
-			System.out.println("Kitchen id: "+slot.kitchenID);
-			if(i != 0){
-				if(kitchen == slot.kitchenID && biker.equalsIgnoreCase(slot.bikerUserId) && cuisineId == slot.cuisineId
-						&& itemCode.equalsIgnoreCase(slot.itemCode) && qty == slot.quantity){
-					otherslot = slot.slotId;
-					continue;
-				}
-				if(kitchen == slot.kitchenID && cuisineId == slot.cuisineId
-						&& itemCode.equalsIgnoreCase(slot.itemCode) && qty == slot.quantity && slot.quantity < bikerCapacity){
-					otherslot = slot.slotId;
-					continue;
-				}
-			}
-			kitchen = slot.kitchenID;
-			biker = slot.bikerUserId;
-			cuisineId = slot.cuisineId;
-			itemCode = slot.itemCode;
-			qty = slot.quantity;
-			//slotId = slot.slotId;
+		if(OrderTimingValidationDAO.isOrderTimingValid(mealType, deliveryDay)){//ORDER TIME VALIDATION
+			System.out.println("-------------------------------------------------------");
+			System.out.println("---  IT IS A VALID ORDER TIME GO AHED!        		   ");
+			System.out.println("-------------------------------------------------------");
+			
+			for(String str : orderDetails){
 
-			if( (bikerCapacity - currQnty) >= slot.quantity){
-				if(slotQuantity + slot.quantity > bikerCapacity){
-					if(otherslot != 0){
+				OrderItems items = new OrderItems();
+				String[] order = str.split("\\$");
+				for(int i=0;i<order.length;i++){
+					if(order.length==5){
+						items.cuisineId = Integer.valueOf(order[0]);
+						items.categoryId = Integer.valueOf(order[1]);
+						items.itemCode = order[2];
+						items.price = Double.valueOf(order[3]);
+						items.quantity = Integer.valueOf(order[4]);
+						items.packing = "Meal Tray";
+						//System.out.println("PACKING 1 ------ >>> >> > " + items.packing);
+						items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
+					}else if(order.length==6){
+						items.cuisineId = Integer.valueOf(order[0]);
+						items.categoryId = Integer.valueOf(order[1]);
+						items.itemCode = order[2];
+						items.price = Double.valueOf(order[3]);
+						items.quantity = Integer.valueOf(order[4]);
+						items.packing = order[5].toUpperCase();
+						//System.out.println("PACKING 2 ------ >>> >> > " + items.packing);
+						items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
+					}
+					else if(order.length==7){
+						items.cuisineId = Integer.valueOf(order[0]);
+						items.categoryId = Integer.valueOf(order[1]);
+						items.itemCode = order[2];
+						items.price = Double.valueOf(order[3]);
+						items.quantity = Integer.valueOf(order[4]);
+						items.packing = order[5].toUpperCase();
+						items.itemTypeId = ItemDAO.getItemTypeId(items.itemCode);
+						items.mealType = order[6].trim().toUpperCase();
+						//System.out.println("PACKING 3 ----------------------------------------- >>> >> > " + items.packing);
+						//System.out.println("MEAL TYPE 1 ------ >>> >> > " + items.mealType);
+						//sub = true;
+						/*items.cuisineId = Integer.valueOf(order[0]);
+						items.categoryId = Integer.valueOf(order[1]);
+						items.itemCode = order[2];
+						items.price = Double.valueOf(order[3]);
+						items.quantity = Integer.valueOf(order[4]);
+						items.day = order[5];
+						items.meal = order[6];*/
+						/*String stDateUserString = order[6].trim();
+		    	    	String enDateUserString = order[7].trim();
+		    	    	DateFormat format1 = new SimpleDateFormat("MM-dd-yyyy");
+		    	    	java.util.Date stdate = null;
+		    	    	java.util.Date endate = null;
+		    	    	try {
+							stdate = sdf1.parse(stDateUserString);
+							endate = sdf1.parse(enDateUserString);
+		    	    		stdate = format1.parse(stDateUserString);
+							endate = format1.parse(enDateUserString);
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						items.startDate = new java.sql.Date(stdate.getTime());
+		    	    	items.endDate = new java.sql.Date(endate.getTime());*/
+						/*SimpleDateFormat sdf1 = new SimpleDateFormat("dd-MM-yyyy");
+		    	    	java.util.Date stdate = null;
+		    	    	java.util.Date endate = null;
+						try {
+							stdate = sdf1.parse(stDateUserString);
+							endate = sdf1.parse(enDateUserString);
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						items.startDate = new java.sql.Date(stdate.getTime());
+		    	    	items.endDate = new java.sql.Date(endate.getTime());*/
+
+					}else{
+						//System.out.println("MMMMMMMMMMMM " + order[0] + "//" + order[1] + "//" + order[2]+ order[3] + "//" + order[4] + "//" + order[5] + order[6] + "//" + order[7] + "//" + order[8]);
+						sub = true;
+						items.cuisineId = Integer.valueOf(order[0]);
+						items.categoryId = Integer.valueOf(order[1]);
+						items.quantity = Integer.valueOf(order[2]);
+						items.price = Double.valueOf(order[3]);
+						items.day = order[4];
+						items.meal = order[5];
+						String stDateUserString = order[6].trim();
+						String enDateUserString = order[7].trim();
+						items.timsSlot = order[8];
+						SimpleDateFormat sdf1 = new SimpleDateFormat("dd-MM-yyyy");
+						//SimpleDateFormat sdf1 = new SimpleDateFormat("MM-dd-yyyy");
+						//DateFormat format1 = new SimpleDateFormat("MM-dd-yyyy");
+						java.util.Date stdate = null;
+						java.util.Date endate = null;
+						try {
+							stdate = sdf1.parse(stDateUserString);
+							endate = sdf1.parse(enDateUserString);
+							//	System.out.println("con stdate->"+stdate+" conv endate->"+endate);
+							/*stdate = format1.parse(stDateUserString);
+							endate = format1.parse(enDateUserString);*/
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						items.startDate = new java.sql.Date(stdate.getTime());
+						items.endDate = new java.sql.Date(endate.getTime());
+						//System.out.println("st date-"+items.startDate+" end date--"+items.endDate);
+					}
+
+				}
+				orderItemList.add(items);
+			}
+			boolean isSttagegredDelivery = false;String bikerUserId=null;
+			if(timeslot.contains("&")){
+				isSttagegredDelivery = true;
+			}
+			System.out.println("Is staggerd delivery:: "+isSttagegredDelivery);
+			/**
+			 * Find time slot id,boy id and kitchen id 
+			 */
+			ArrayList<TimeSlot> timeSlotList = new ArrayList<TimeSlot>();
+			//List<String> timeSlotDetails = new ArrayList<String>();
+			//timeSlotDetails.add("45$DLV0013$1");
+			for(OrderItems items : orderItemList){
+				totalNoOfQuantity += items.quantity;
+			}
+
+
+			ArrayList<Integer> slotIdList = new ArrayList<Integer>();
+			/*if(isSttagegredDelivery){
+				totalStQuantity = totalNoOfQuantity;
+				String[] timeslots = timeslot.split("\\&");
+				for(String str : timeslots){
+					int slotId = TimeSlotFinder.getTimeSlotId(str.trim());
+					slotIdList.add(slotId);
+				}
+			}
+			//System.out.println("Slot ids:: "+slotIdList);
+
+			if(isSttagegredDelivery){
+
+				for(String str : timeSlotDetails){
+			    	TimeSlot slotPojo = new TimeSlot();
+					String[] slot = str.split("\\$");
+			    	for(int i=0;i<slot.length;i++){
+			    		if(slot.length==2){
+			    			slotPojo.kitchenID = Integer.valueOf(slot[0]);
+			    			slotPojo.bikerUserId = slot[1];
+			    			kitchen = slotPojo.kitchenID;
+			    			bikerUserId = slotPojo.bikerUserId;
+			    		}
+			    	}
+			    	timeSlotList.add(slotPojo);
+			    }
+			}else{
+				for(String str : timeSlotDetails){
+			    	TimeSlot slotPojo = new TimeSlot();
+					String[] slot = str.split("\\$");
+			    	for(int i=0;i<slot.length;i++){
+			    		if(slot.length==3){
+			    			slotPojo.kitchenID = Integer.valueOf(slot[0]);
+			    			slotPojo.bikerUserId = slot[1];
+			    			slotPojo.slotId = Integer.valueOf(slot[2]);
+			    		}
+			    	}
+			    	timeSlotList.add(slotPojo);
+			    }
+			}*/
+
+
+			ArrayList<TimeSlot> dealingTimeSlots = new ArrayList<TimeSlot>();
+			ArrayList<Integer> kids= new ArrayList<Integer>();
+			MealTypePojo mealTypePojo = new MealTypePojo();
+
+			Set<Integer> servingKitchenIds = new HashSet<Integer>();
+
+			for(String str : timeSlotDetails){
+				TimeSlot slotPojo = new TimeSlot();
+				String[] slot = str.split("\\$");
+				for(int i=0;i<slot.length;i++){
+					if(slot.length>3){
+						slotPojo.kitchenID = Integer.valueOf(slot[0]);
+						servingKitchenIds.add(Integer.valueOf(slot[0]));
+						slotPojo.bikerUserId = slot[1];
+						slotPojo.cuisineId = Integer.valueOf(slot[2]);
+						slotPojo.itemCode = slot[3];
+						slotPojo.quantity = Integer.valueOf(slot[4]);
+						slotPojo.slotId = Integer.valueOf(slot[5]);
+					}else{
+						slotPojo.kitchenID = Integer.valueOf(slot[0]);
+						servingKitchenIds.add(Integer.valueOf(slot[0]));
+						slotPojo.bikerUserId = slot[1];
+						slotPojo.slotId = Integer.valueOf(slot[2]);
+					}
+				}
+				timeSlotList.add(slotPojo);
+			}		
+			System.out.println("Kitchens who will serve the order:: "+servingKitchenIds);
+
+
+			int totNoOfQtyOrig =  totalNoOfQuantity; 
+			int kitchen = 0;
+			String biker = "";
+			int cuisineId = 0;
+			String itemCode = "";
+			int qty = 0;
+			int slotQuantity = 0;
+			int otherslot = 0;
+			int[] bikerCapa = new int[2];
+			bikerCapa = BikerDAO.getBikerCapacityAndOrders();
+			int bikerCapacity = bikerCapa[0]; 
+			
+			for(int i = 0; i < timeSlotList.size(); i++){
+				TimeSlot slot = timeSlotList.get(i);
+				if(slot.quantity <1){
+					continue;
+				}
+				int currQnty = TimeSlotFinder.getBikerStock(slot.bikerUserId, slot.slotId, mealTypePojo);
+				System.out.println("Biker "+slot.bikerUserId+" dbqty:"+currQnty+" slot id: "+slot.slotId+" slot qty:"+slot.quantity);
+				System.out.println("Kitchen id: "+slot.kitchenID);
+				if(i != 0){
+					if(kitchen == slot.kitchenID && biker.equalsIgnoreCase(slot.bikerUserId) && cuisineId == slot.cuisineId
+							&& itemCode.equalsIgnoreCase(slot.itemCode) && qty == slot.quantity){
+						otherslot = slot.slotId;
+						continue;
+					}
+					if(kitchen == slot.kitchenID && cuisineId == slot.cuisineId
+							&& itemCode.equalsIgnoreCase(slot.itemCode) && qty == slot.quantity && slot.quantity < bikerCapacity){
+						otherslot = slot.slotId;
+						continue;
+					}
+				}
+				kitchen = slot.kitchenID;
+				biker = slot.bikerUserId;
+				cuisineId = slot.cuisineId;
+				itemCode = slot.itemCode;
+				qty = slot.quantity;
+				//slotId = slot.slotId;
+
+				if( (bikerCapacity - currQnty) >= slot.quantity){
+					if(slotQuantity + slot.quantity > bikerCapacity){
+						if(otherslot != 0){
+							slot.setQuantity(slot.quantity);
+							slot.slotId = otherslot;
+							slot.itemCode = itemCode;
+							slot.kitchenID = kitchen;
+							dealingTimeSlots.add(slot);
+							slotQuantity = slotQuantity + slot.quantity;
+							System.out.println("First if: "+slot.quantity);
+							System.out.println("Kitchen id: "+slot.kitchenID);
+							
+						}
+					} else {
 						slot.setQuantity(slot.quantity);
-						slot.slotId = otherslot;
-						slot.itemCode = itemCode;
+						slot.setItemCode(slot.itemCode);
 						slot.kitchenID = kitchen;
 						dealingTimeSlots.add(slot);
 						slotQuantity = slotQuantity + slot.quantity;
-						System.out.println("First if: "+slot.quantity);
+						System.out.println("else part: "+slot.quantity);
 						System.out.println("Kitchen id: "+slot.kitchenID);
 						
 					}
-				} else {
-					slot.setQuantity(slot.quantity);
-					slot.setItemCode(slot.itemCode);
-					slot.kitchenID = kitchen;
-					dealingTimeSlots.add(slot);
-					slotQuantity = slotQuantity + slot.quantity;
-					System.out.println("else part: "+slot.quantity);
-					System.out.println("Kitchen id: "+slot.kitchenID);
-					
 				}
+				//slot.setQuantity(slot.quantity);
+				System.out.println("end part: "+slot.quantity);
 			}
-			//slot.setQuantity(slot.quantity);
-			System.out.println("end part: "+slot.quantity);
-		}
-		System.out.println("TIME SLOT::::::::::"+dealingTimeSlots);
-		Set<Integer> kitchens = new HashSet<Integer>();
+			System.out.println("TIME SLOT::::::::::"+dealingTimeSlots);
+			Set<Integer> kitchens = new HashSet<Integer>();
 
-		if(dealingTimeSlots.size() ==0 ){
-			for(TimeSlot slot : timeSlotList){
-				if(!kitchens.contains(slot.kitchenID)){
-					kitchens.add(slot.kitchenID);
-					dealingTimeSlots.add(slot);
-					mealTypePojo.setBoyUSerId(slot.getBikerUserId());
-					mealTypePojo.setSlotId(slot.slotId);
-				}
-			}
-
-			for(int i=0;i<orderItemList.size();i++){
-				TimeSlot slot = dealingTimeSlots.get(0);
-				TimeSlot newSlot = new TimeSlot();
-				newSlot.kitchenID = slot.kitchenID;
-				newSlot.itemCode = orderItemList.get(i).itemCode;
-				newSlot.bikerUserId = slot.bikerUserId;
-				newSlot.quantity = orderItemList.get(i).quantity;
-				newSlot.slotId = slot.slotId;
-				dealingTimeSlots.add(newSlot);
-			}
-
-			System.out.println("New dealing slots:"+dealingTimeSlots);
-		}
-
-
-		//slot.setQuantity(slot.quantity);
-
-
-		/*	
-			}else{
+			if(dealingTimeSlots.size() ==0 ){
 				for(TimeSlot slot : timeSlotList){
-					    if(slot.quantity <1){
-					    	continue;
-					    }
-						int currQnty = TimeSlotFinder.getBikerStock(slot.bikerUserId, slot.slotId, mealTypePojo);
-						if( (10 - currQnty) >= slot.quantity){
-							slot.setQuantity(slot.quantity);
-							slot.quantity -= slot.quantity;
-						}else{
-							slot.setQuantity(10-currQnty);
-							slot.quantity -= slot.quantity;
-						}
-						slot.setQuantity(slot.quantity);
-						kids.add(slot.kitchenID);
+					if(!kitchens.contains(slot.kitchenID)){
+						kitchens.add(slot.kitchenID);
 						dealingTimeSlots.add(slot);
 						mealTypePojo.setBoyUSerId(slot.getBikerUserId());
 						mealTypePojo.setSlotId(slot.slotId);
 					}
+				}
 
-			}*/
+				for(int i=0;i<orderItemList.size();i++){
+					TimeSlot slot = dealingTimeSlots.get(0);
+					TimeSlot newSlot = new TimeSlot();
+					newSlot.kitchenID = slot.kitchenID;
+					newSlot.itemCode = orderItemList.get(i).itemCode;
+					newSlot.bikerUserId = slot.bikerUserId;
+					newSlot.quantity = orderItemList.get(i).quantity;
+					newSlot.slotId = slot.slotId;
+					dealingTimeSlots.add(newSlot);
+				}
 
-		System.out.println("Total no of quantites:: "+	totalNoOfQuantity );
+				System.out.println("New dealing slots:"+dealingTimeSlots);
+			}
 
-		if(isSttagegredDelivery){
-			System.out.println("Staggred delivery Dealing time slotss: "+dealingTimeSlots);
+
+			//slot.setQuantity(slot.quantity);
+
+
+			/*	
+				}else{
+					for(TimeSlot slot : timeSlotList){
+						    if(slot.quantity <1){
+						    	continue;
+						    }
+							int currQnty = TimeSlotFinder.getBikerStock(slot.bikerUserId, slot.slotId, mealTypePojo);
+							if( (10 - currQnty) >= slot.quantity){
+								slot.setQuantity(slot.quantity);
+								slot.quantity -= slot.quantity;
+							}else{
+								slot.setQuantity(10-currQnty);
+								slot.quantity -= slot.quantity;
+							}
+							slot.setQuantity(slot.quantity);
+							kids.add(slot.kitchenID);
+							dealingTimeSlots.add(slot);
+							mealTypePojo.setBoyUSerId(slot.getBikerUserId());
+							mealTypePojo.setSlotId(slot.slotId);
+						}
+
+				}*/
+
+			System.out.println("Total no of quantites:: "+	totalNoOfQuantity );
+
+			if(isSttagegredDelivery){
+				System.out.println("Staggred delivery Dealing time slotss: "+dealingTimeSlots);
+				
+				
+			}else{
+				System.out.println("Dealing time slotss: "+dealingTimeSlots);
+			}
+
+
+			if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
+				mealTypePojo.setLunchToday(true);
+				mealTypePojo.setQuantity(totalNoOfQuantity);
+			}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY") ){
+				mealTypePojo.setDinnerToday(true);
+				mealTypePojo.setQuantity(totalNoOfQuantity);
+			}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW") ){
+				mealTypePojo.setLunchTomorrow(true);
+				mealTypePojo.setQuantity(totalNoOfQuantity);
+			}else{
+				mealTypePojo.setDinnerTomorrow(true);
+				mealTypePojo.setQuantity(totalNoOfQuantity);
+			}
+			System.out.println("It is subscription order: -"+sub);
+			/*if(orderType.equalsIgnoreCase("SUBSCRIPTION")){*/
+			if(sub){
+				//place subscription order
+				System.out.println("Subscription order. . .");
+				/*orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactName,
+						contactNumber, city, location, flatNumber,streetName,pincode,landmark , subscriptiontype,
+						getLocationId(location, city), day, orderItemList);*/
+				System.out.println("deliverypincode-"+pincode+" dZone--"+deliveryZone+" dAdd--"+deliveryAddress+" ins - -"+instruction);
+				//orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactNumber
+				//		, city, location,pincode, subscriptiontype , deliveryZone, deliveryAddress, instruction
+				//		, day, orderItemList);
+				/*orderPlaced.put("success", "subscription_success");*/
+				System.out.println("status send to app--"+orderPlaced);
+				return orderPlaced; 
+			}else{
+				//place regular order
+				System.out.println("Regular order. . .");
+
+				/*orderPlaced = DBConnection.placeOrder(mailid, contactName,
+				contactNumber, city, location, flatNumber,streetName,pincode,landmark , 
+				getLocationId(location, city),mealtype,timeslot, orderItemList,
+				deliveryZone,deliveryAddress,instruction);*/
+				orderPlaced = DBConnection.placeOrder(userType, mailid, contactNumber, guestName,
+						city, location,pincode, getLocationId(location, city),mealType,timeslot, orderItemList,
+						deliveryZone,deliveryAddress,instruction,deliveryDay,payAmount,credit, payType , totalNoOfQuantity, 
+						mealTypePojo , dealingTimeSlots, servingKitchenIds, promoCode );
+				System.out.println("----------------------------------------");
+				System.out.println("------- PLACE ORDER ENDS HERE ----------");
+				System.out.println("----------------------------------------");
+				return orderPlaced;
+			}
+		
+		
+		
+		}else{
 			
-			
-		}else{
-			System.out.println("Dealing time slotss: "+dealingTimeSlots);
-		}
-
-
-		if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TODAY")){
-			mealTypePojo.setLunchToday(true);
-			mealTypePojo.setQuantity(totalNoOfQuantity);
-		}else if(mealType.equalsIgnoreCase("DINNER") && deliveryDay.equalsIgnoreCase("TODAY") ){
-			mealTypePojo.setDinnerToday(true);
-			mealTypePojo.setQuantity(totalNoOfQuantity);
-		}else if(mealType.equalsIgnoreCase("LUNCH") && deliveryDay.equalsIgnoreCase("TOMORROW") ){
-			mealTypePojo.setLunchTomorrow(true);
-			mealTypePojo.setQuantity(totalNoOfQuantity);
-		}else{
-			mealTypePojo.setDinnerTomorrow(true);
-			mealTypePojo.setQuantity(totalNoOfQuantity);
-		}
-		System.out.println("It is subscription order: -"+sub);
-		/*if(orderType.equalsIgnoreCase("SUBSCRIPTION")){*/
-		if(sub){
-			//place subscription order
-			System.out.println("Subscription order. . .");
-			/*orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactName,
-					contactNumber, city, location, flatNumber,streetName,pincode,landmark , subscriptiontype,
-					getLocationId(location, city), day, orderItemList);*/
-			System.out.println("deliverypincode-"+pincode+" dZone--"+deliveryZone+" dAdd--"+deliveryAddress+" ins - -"+instruction);
-			//orderPlaced = DBConnection.placeSubscriptionOrder(mailid, contactNumber
-			//		, city, location,pincode, subscriptiontype , deliveryZone, deliveryAddress, instruction
-			//		, day, orderItemList);
-			/*orderPlaced.put("success", "subscription_success");*/
-			System.out.println("status send to app--"+orderPlaced);
-			return orderPlaced; 
-		}else{
-			//place regular order
-			System.out.println("Regular order. . .");
-
-			/*orderPlaced = DBConnection.placeOrder(mailid, contactName,
-			contactNumber, city, location, flatNumber,streetName,pincode,landmark , 
-			getLocationId(location, city),mealtype,timeslot, orderItemList,
-			deliveryZone,deliveryAddress,instruction);*/
-			orderPlaced = DBConnection.placeOrder(userType, mailid, contactNumber, guestName,
-					city, location,pincode, getLocationId(location, city),mealType,timeslot, orderItemList,
-					deliveryZone,deliveryAddress,instruction,deliveryDay,payAmount,credit, payType , totalNoOfQuantity, 
-					mealTypePojo , dealingTimeSlots, servingKitchenIds, promoCode );
-			System.out.println("----------------------------------------");
-			System.out.println("------- PLACE ORDER ENDS HERE ----------");
-			System.out.println("----------------------------------------");
+			System.out.println("-------------------------------------------------------");
+			System.out.println("---  OOPS! IT IS A INVALID ORDER TIME DONT PLACE ORDER! ");
+			System.out.println("-------------------------------------------------------");
+			String message = null;
+			if(mealType.equalsIgnoreCase("LUNCH")){
+				message = "CANT PLACE TODAY'S ORDER\n LUNCH ORDER TIMINGS BETWEEN FROM 06:00 AM - 12:00PM";
+			}else{
+				message = "CANT PLACE TODAY'S ORDER\n DINNER ORDER TIMINGS BETWEEN FROM 06:00 AM - 08:00PM";
+			}
+			orderPlaced.put("status", false);
+			orderPlaced.put("message", message);
+			orderPlaced.put("success", new JSONObject());
+			System.out.println("-------------------------------------------------");
+			System.out.println("------- PLACE ORDER ENDS HERE -------------------");
+			System.out.println("-------------------------------------------------");
 			return orderPlaced;
 		}
+		
+		
 
 	}
 

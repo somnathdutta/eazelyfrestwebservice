@@ -449,4 +449,40 @@ public class SlotDAO {
 		}
 		return slotTimings;
 	}
+	
+	public static String[] getOrderTimings(){
+		String[] slotTimings = new String[4];
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet =null;
+					String sql = "select lunch_from,lunch_to,dinner_from,dinner_to from fapp_timings ";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							slotTimings[0] = resultSet.getString("lunch_from");
+							slotTimings[1] = resultSet.getString("lunch_to");
+							slotTimings[2] = resultSet.getString("dinner_from");
+							slotTimings[3] = resultSet.getString("dinner_to");
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return slotTimings;
+	}
+	
 }
