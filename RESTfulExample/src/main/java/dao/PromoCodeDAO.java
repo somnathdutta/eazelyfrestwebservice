@@ -428,7 +428,7 @@ public class PromoCodeDAO {
 					Connection connection  = DBConnection.createConnection();
 					PreparedStatement  preparedStatement = null;
 					ResultSet resultSet = null;
-					String sql = "select is_reusable from vw_promo_code_details where promo_code = ? ";
+					String sql = "select is_reusable from vw_promo_code_details where UPPER(promo_code) = UPPER(?)";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setString(1, promoCode);
@@ -458,5 +458,65 @@ public class PromoCodeDAO {
 		}
 		System.out.println(promoCode+" is reusable: "+isReusable);
 		return isReusable;
+	}
+	
+	public static double getPromoCodeDiscountedValue(ArrayList<OrderItems> orderItems, String promoCode){
+		double promoDiscount = 0.0;
+		int count = 0,totalQuantity = 0,promoTypeId = 0,volumeQuantity=0 ;
+		double promoValue = 0, discountedValue =0, totalValue = 0,finalTotal = 0;
+		for(OrderItems items : orderItems){
+			finalTotal += (items.quantity * items.price);
+			totalQuantity += items.quantity;
+		}
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql = "select promo_value,promo_type_id,volume_quantity "
+							+ "from vw_promo_code_details where UPPER(promo_code) = UPPER(?) ";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						preparedStatement.setString(1, promoCode);
+						//System.out.println("PROMO CODE VALIDATION CHECKING QRY -- >> " + preparedStatement);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							count++;
+							promoValue = resultSet.getDouble("promo_value");
+							promoTypeId = resultSet.getInt("promo_type_id");
+							volumeQuantity = resultSet.getInt("volume_quantity");			
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}if(connection!=null){
+							connection.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}	
+		if(promoTypeId==1){//flat
+			promoDiscount = promoValue;
+		}else if(promoTypeId == 2){//percentage
+			promoDiscount = ( finalTotal * promoValue/100);
+		}else if(promoTypeId == 4){//eaze karo lowest price
+			promoDiscount =  getFreeMealPrice(orderItems);
+		}else{
+			if(totalQuantity == volumeQuantity){
+				promoDiscount = promoValue;
+			}
+			if(totalQuantity > volumeQuantity){
+				promoDiscount = ((totalQuantity  - volumeQuantity) * promoValue)+promoValue;
+			}
+		}
+		System.out.println("------------------------------------------------------------");
+		System.out.println("Promo discount for promocode: "+promoCode+" is :"+promoDiscount);
+		System.out.println("------------------------------------------------------------");
+		return promoDiscount ;		
 	}
 }

@@ -33,19 +33,19 @@ public class BookDriver {
 			      
 			      if(mealTypePojo.isLunchToday()){
 			    	  sql  = "UPDATE fapp_timeslot_driver_status "
-				    		  	+" SET assigned_date=current_date,quantity=quantity+?, no_of_orders=no_of_orders+1 "
+				    		  	+" SET assigned_date=current_date,quantity=quantity+?,no_of_orders=no_of_orders+1 "
 				    		  	+" WHERE driver_user_id=? and  time_slot_id=? ";
 			      }else if(mealTypePojo.isDinnerToday()){
 			    	  sql  = "UPDATE fapp_timeslot_driver_status "
-				    		  	+" SET assigned_date=current_date,quantity=quantity+?, no_of_orders=no_of_orders+1 "
+				    		  	+" SET assigned_date=current_date,quantity=quantity+?,no_of_orders=no_of_orders+1 "
 				    		  	+" WHERE driver_user_id=? and  time_slot_id=? ";
 			      }else if(mealTypePojo.isLunchTomorrow()){
 			    	  sql  = "UPDATE fapp_timeslot_driver_status_tommorrow "
-				    		  	+" SET assigned_date=current_date,quantity=quantity+?, no_of_orders=no_of_orders+1 "
+				    		  	+" SET assigned_date=current_date,quantity=quantity+?,no_of_orders=no_of_orders+1 "
 				    		  	+" WHERE driver_user_id=? and  time_slot_id=? ";
 			      }else{
 			    	  sql  = "UPDATE fapp_timeslot_driver_status_tommorrow "
-				    		  	+" SET assigned_date=current_date,quantity=quantity+?, no_of_orders=no_of_orders+1 "
+				    		  	+" SET assigned_date=current_date,quantity=quantity+?,no_of_orders=no_of_orders+1 "
 				    		  	+" WHERE driver_user_id=? and  time_slot_id=? ";
 			      }
 			      
@@ -89,6 +89,68 @@ public class BookDriver {
 				System.out.println("Slot "+slot.getSlotId()+" booked for boy id:: "+slot.bikerUserId);
 			}*/
 			System.out.println("Slot "+timeSlot.getSlotId()+" NOT BOOKED for boy id:: "+timeSlot.bikerUserId+" with qty: "+timeSlot.quantity);
+		}
+		return booked;
+	}
+	
+	/**
+	 * Update slot table with driver 
+	 * and quantity + ordered quantity and no of order+1
+	 * @param mealTypePojo
+	 * @return
+	 */
+	public static boolean addOneOrderForBiker(MealTypePojo mealTypePojo, String bikerUserId, int slotId ){
+		boolean booked = false;
+		System.out.println("--addOneOrderForBiker function called -- ");
+		try {
+			SQL:{
+			      Connection connection = DBConnection.createConnection();
+			      PreparedStatement preparedStatement = null;
+			      String sql = "";
+			      
+			      if(mealTypePojo.isLunchToday()){
+			    	  sql  = "UPDATE fapp_timeslot_driver_status "
+				    		  	+" SET no_of_orders=no_of_orders+1 "
+				    		  	+" WHERE driver_user_id=? and  time_slot_id=? ";
+			      }else if(mealTypePojo.isDinnerToday()){
+			    	  sql  = "UPDATE fapp_timeslot_driver_status "
+				    		  	+" SET no_of_orders=no_of_orders+1 "
+				    		  	+" WHERE driver_user_id=? and  time_slot_id=? ";
+			      }else if(mealTypePojo.isLunchTomorrow()){
+			    	  sql  = "UPDATE fapp_timeslot_driver_status_tommorrow "
+				    		  	+" SET no_of_orders=no_of_orders+1 "
+				    		  	+" WHERE driver_user_id=? and  time_slot_id=? ";
+			      }else{
+			    	  sql  = "UPDATE fapp_timeslot_driver_status_tommorrow "
+				    		  	+" SET no_of_orders=no_of_orders+1 "
+				    		  	+" WHERE driver_user_id=? and  time_slot_id=? ";
+			      }
+				  try {
+						preparedStatement = connection.prepareStatement(sql);
+						
+						preparedStatement.setString(1, bikerUserId);
+						preparedStatement.setInt(2, slotId);
+						int count = preparedStatement.executeUpdate();
+						if(count > 0){
+							booked = true;
+						}
+							
+				  } catch (Exception e) {
+						// TODO: handle exception
+					  System.out.println(e);
+				  }finally{
+					  if(preparedStatement!=null){
+						  preparedStatement.close();
+					  }if(connection!=null){
+						  connection.close();
+					  }
+				  }
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		if(booked){
+			System.out.println(" No of orders increased by 1 for "+bikerUserId+ " on slot id : "+slotId);
 		}
 		return booked;
 	}
@@ -679,7 +741,6 @@ public class BookDriver {
 						}
 						int count [] = preparedStatement.executeBatch();
 						for(Integer c : count){
-							
 							isAssigned = true;
 							System.out.println("Driver assigned "+isAssigned);
 						}

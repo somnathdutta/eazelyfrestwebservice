@@ -11,7 +11,7 @@ public class ForgotPasswordDAO {
 
 	public static String createLinkForUser(String userMailId){
 		String encrptedCode = Validation.encryption(userMailId);
-		String server = "Please click on the link to reset your password. http://appsquad.cloudapp.net:8080/FoodHomeDeliverySystem/view/reset.zul?rc=";
+		String server = "Please click on the link to reset your password. http://eazelyf.southindia.cloudapp.azure.com/FoodHomeDeliverySystem/view/reset.zul?rc=";
 		if(updateHashCodeWithMailID(encrptedCode, userMailId)>0){
 			System.out.println("encrptedCode updated!");
 		}

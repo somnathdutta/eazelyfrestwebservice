@@ -39,6 +39,8 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.w3c.dom.Document;
 
+import pojo.Address;
+import pojo.LatLongFinder;
 import pojo.MealTypePojo;
 import pojo.Prepack;
 import pojo.TimeSlot;
@@ -46,6 +48,7 @@ import pojo.User;
 import utility.NumberCheck;
 import dao.AboutUsDAO;
 import dao.AddressDAO;
+import dao.AddressFinder;
 import dao.AllItemsDAO;
 import dao.BikerDAO;
 import dao.BikerOrderHistoryDAO;
@@ -58,6 +61,7 @@ import dao.FetchAlaCarteItemDAO;
 import dao.FetchBannersDAO;
 import dao.FetchCuisineDAO;
 import dao.FetchLocationDAO;
+import dao.FetchSubscriptionPackage;
 import dao.FindDeliverySlots;
 import dao.ForgotPassword;
 import dao.ItemDAO;
@@ -713,14 +717,23 @@ public class Category {
 	@Path("/map")
 	@Produces(MediaType.TEXT_HTML)
 	public String map(@QueryParam("id")String subcriptionNo) throws Exception{
-		System.out.println("Map called . . . . ");
+		System.out.println("\n--------------------------------------------------");
+		System.out.println("Map calling for order number :"+subcriptionNo);
+		System.out.println("-------------------------------------------------");
 		String[] boylatlng = new String[3];
 		boylatlng = DBConnection.trackMyOrder(subcriptionNo);
 
-		String userAddress = DBConnection.getAddressOfUser(subcriptionNo);
+		//String userAddress = DBConnection.getAddressOfUser(subcriptionNo);
+		String[] userAddress = DBConnection.getGivenAddressOfUser(subcriptionNo);
+		//Address userAddress = AddressFinder.getAddressOfUser(subcriptionNo);
+		
 		String[] homeltlng = new String[2];
-		homeltlng = DBConnection.getLatLongPositions( userAddress );
-
+		homeltlng = DBConnection.getLatLongPositions( userAddress[0] );
+		if(homeltlng==null){
+			System.out.println("\nFROM USER GIVEN ADDRESS LAT LONG FINDING FAILED. . . ");
+			homeltlng = DBConnection.getLatLongPositions( userAddress[1] );
+		}
+		//homeltlng = LatLongFinder.getLatLongPositions(userAddress);
 
 		String DbDetails[] =  new String[2];;
 		DbDetails =	DBConnection.getDriverNameNum(subcriptionNo);
@@ -728,19 +741,44 @@ public class Category {
 		JSONArray markers =  new JSONArray();
 		JSONObject markersource = new JSONObject();
 		markersource.put("title", "Food Source");
-		markersource.put("lat", boylatlng[0]);
-		markersource.put("lng",boylatlng[1]);
+		if(boylatlng[0]!=null){
+			markersource.put("lat", boylatlng[0]);
+		}else{
+			markersource.put("lat", "");
+		}
+		if(boylatlng[1]!=null){
+			markersource.put("lng",boylatlng[1]);
+		}else{
+			markersource.put("lng","");
+		}
+				
+		System.out.println("Boy lat: "+boylatlng[0]+" Boy long: "+boylatlng[1]);
 		markersource.put("description", boylatlng[2]);
 
+		System.out.println("SOURCE JSON: "+markersource);
+		
 		JSONObject markerdestination =  new JSONObject();
 		markerdestination.put("title", "Delivery destination");
-		markerdestination.put("lat", homeltlng[0]);
-		markerdestination.put("lng", homeltlng[1]);
+		if(homeltlng[0]!=null){
+			markerdestination.put("lat", homeltlng[0]);
+		}else{
+			markerdestination.put("lat", "");
+		}
+		if(homeltlng[1]!=null){
+			markerdestination.put("lng", homeltlng[1]);
+		}else{
+			markerdestination.put("lng", "");
+		}
+		
+		System.out.println("HOME lat: "+boylatlng[0]+" HOME long: "+boylatlng[1]);
 		markerdestination.put("description", userAddress);
 
+		System.out.println("DESTINATION JSON: "+markerdestination);
+		
 		markers.put(markersource);
 		markers.put(markerdestination);
 
+		System.out.println("MARKERS JSON: "+markers);
 
 		StringBuilder contentBuilder = new StringBuilder();
 		try {
@@ -1720,6 +1758,17 @@ public class Category {
 		System.out.println("* * * * * * * subscriptionPacks web service called! * * * * * * * ");
 		JSONObject jsonObject = null;
 		jsonObject = DBConnection.loadsubscriptionPacks();
+		return jsonObject;
+	}
+	
+	@POST
+	@Path("/fetchSubscriptionPackages")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchSubscriptionPackages() throws JSONException{
+		System.out.println("------------------------------------------------------------------");
+		System.out.println("* * * * * * fetchSubscriptionPackages web service called! * * * * *");
+		System.out.println("------------------------------------------------------------------");
+		JSONObject jsonObject =  FetchSubscriptionPackage.fetchPackages();
 		return jsonObject;
 	}
 	
