@@ -115,7 +115,7 @@ public class FetchSubscriptionPackage {
 					ResultSet resultSet = null;
 					String sql = "SELECT meal_descriptions_id, package_meal_description "
 							+ "FROM fapp_subs_package_meal_descriptions where package_master_id =? "
-							+ " AND package_meal_type_id= ? AND is_active ='Y'";
+							+ " AND package_meal_type_id= ? AND is_active ='Y' order by meal_descriptions_id asc ";
 					try {
 						preparedStatement = connection.prepareStatement(sql);
 						preparedStatement.setInt(1, packageId);
