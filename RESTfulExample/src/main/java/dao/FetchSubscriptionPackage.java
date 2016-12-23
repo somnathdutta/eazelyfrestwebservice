@@ -204,4 +204,57 @@ public class FetchSubscriptionPackage {
 		}
 		return packageMealItemsJsonArray;
 	}
+	
+	
+	public static JSONObject fetchNoOfMembers(){
+		JSONObject memberJson =  new JSONObject();
+		JSONArray memberJsonArray = new JSONArray();
+		try {
+			SQL:{
+					Connection connection = DBConnection.createConnection();
+					PreparedStatement preparedStatement = null;
+					ResultSet resultSet = null;
+					String sql = "SELECT package_members_id,member,no_of_member"
+							+ " from fapp_subs_package_members where is_active='Y' order by package_members_id";
+					try {
+						preparedStatement = connection.prepareStatement(sql);
+						resultSet = preparedStatement.executeQuery();
+						while (resultSet.next()) {
+							JSONObject member =  new JSONObject();
+							member.put("memberId", resultSet.getInt("package_members_id"));
+							member.put("memberText", resultSet.getString("member"));
+							member.put("noOfMember", resultSet.getInt("no_of_member"));
+							memberJsonArray.put(member);
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}finally{
+						if(preparedStatement!=null){
+							preparedStatement.close();
+						}
+						if(connection!=null){
+							connection.close();
+						}
+					}
+				}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		try {
+			if(memberJsonArray.length() > 0){
+				memberJson.put("status", "200");
+				memberJson.put("message", "Members Found!");
+				memberJson.put("memberList", memberJsonArray);
+			}else{
+				memberJson.put("status", "204");
+				memberJson.put("message", "Members not Found!");
+				memberJson.put("memberList", memberJsonArray);
+			}
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return memberJson;
+	}
 }

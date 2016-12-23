@@ -24,10 +24,20 @@ public class FindDeliverySlots {
 		
 		boolean isStaggeredOrder = false, isSplitOrder = false,slotFound = false;
 		int totalNoOfQuantity = 0;
+		ArrayList<Integer> lastKitchenIdList = new ArrayList<Integer>();  
 		
 		for(OrderItems items : orderItemList){
 			totalNoOfQuantity += items.quantity;
 		}
+		
+		/**
+		 * Find last kitchen
+		 */
+		//lastKitchenIdList = SameKitchenFinder.getLastKitchenId(orderItemList, contactNumber, mealTypePojo, area);
+		
+		//if(lastKitchenIdList.size() == 1){
+		//	ArrayList<OrderItems> ordersWithKitchen = SameKitchenFinder.orderWithLastKitchen(orderItemList, lastKitchenIdList.get(0));
+		//}
 		
 		/**
 		 * Add items with kitchen servable stock

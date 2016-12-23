@@ -10713,8 +10713,10 @@ public class DBConnection {
 		
 		if(latlong[0]==null && latlong[1]==null){
 			System.out.println("\nFROM BIKER LAT LONG FINDING FAILED. . . ");
-			
-			latlong = LatLongFinder.getKitchenAddress(subscriptionNo);
+			String[] kitchenLatlong = new String[2];
+			kitchenLatlong = LatLongFinder.getKitchenAddress(subscriptionNo);
+			latlong[0] = kitchenLatlong[0];
+			latlong[1] = kitchenLatlong[1];
 			latlong[2] = "Order From EazeLyf!";
 		}
 		return latlong;

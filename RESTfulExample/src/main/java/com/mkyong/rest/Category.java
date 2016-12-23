@@ -771,7 +771,7 @@ public class Category {
 		}
 		
 		System.out.println("HOME lat: "+boylatlng[0]+" HOME long: "+boylatlng[1]);
-		markerdestination.put("description", userAddress);
+		markerdestination.put("description", userAddress[0]);
 
 		System.out.println("DESTINATION JSON: "+markerdestination);
 		
@@ -1769,6 +1769,17 @@ public class Category {
 		System.out.println("* * * * * * fetchSubscriptionPackages web service called! * * * * *");
 		System.out.println("------------------------------------------------------------------");
 		JSONObject jsonObject =  FetchSubscriptionPackage.fetchPackages();
+		return jsonObject;
+	}
+	
+	@POST
+	@Path("/fetchNoOfMembers")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject fetchNoOfMembers() throws JSONException{
+		System.out.println("------------------------------------------------------------------");
+		System.out.println("* * * * * * fetchNoOfMembers web service called! * * * * *");
+		System.out.println("------------------------------------------------------------------");
+		JSONObject jsonObject =  FetchSubscriptionPackage.fetchNoOfMembers();
 		return jsonObject;
 	}
 	
