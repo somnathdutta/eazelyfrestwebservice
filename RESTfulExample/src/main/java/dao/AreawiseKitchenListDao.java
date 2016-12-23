@@ -48,9 +48,9 @@ public class AreawiseKitchenListDao {
 					}
 					
 					if(resultSet.getString("mobile_no") !=null){
-						kitchenObj.put("kitchenContNo", resultSet.getString("mobile_no"));
+						kitchenObj.put("kitchenContactNo", resultSet.getString("mobile_no"));
 					}else {
-						kitchenObj.put("kitchenContNo", "");
+						kitchenObj.put("kitchenContactNo", "");
 					}
 					kitchenList.put(kitchenObj);
 					
