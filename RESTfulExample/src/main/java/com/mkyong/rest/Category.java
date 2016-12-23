@@ -50,6 +50,7 @@ import dao.AboutUsDAO;
 import dao.AddressDAO;
 import dao.AddressFinder;
 import dao.AllItemsDAO;
+import dao.AreawiseKitchenListDao;
 import dao.BikerDAO;
 import dao.BikerOrderHistoryDAO;
 import dao.BookDriver;
@@ -3055,6 +3056,19 @@ public class Category {
 		return object;
 	}
 	
-	
+	@POST
+	@Path("/locationwisekitchenList")
+	@Produces(MediaType.APPLICATION_JSON)
+	public JSONObject locationwisekitcheneList(@FormParam("area") String area) throws Exception{
+		JSONObject kitchenList = new JSONObject();
+		System.out.println(":::::::::: locationwisekitchenList service called::::::::");
+		System.out.println(":::::::::: AREA > " + area + ":::::");
+		
+		kitchenList = AreawiseKitchenListDao.fetchKitchens(area);
+		
+		System.out.println("Status : " + kitchenList.getString("status"));
+		System.out.println(":::::::: locationwisekitchenList ends here :::::::::::::::");
+		return kitchenList;
+	}
 	
 	}

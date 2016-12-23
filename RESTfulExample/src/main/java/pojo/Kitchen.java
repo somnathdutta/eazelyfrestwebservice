@@ -5,7 +5,7 @@ public class Kitchen implements Comparable<Kitchen>{
 
 	private int kitchenId,singleOrder,singleOrderLunch,singleOrderDinner,itemStock,userItemQuantity,
 				dbQty,freeQty,slotID,slotCapacity,totalItemStock;
-	private String itemCode;
+	private String itemCode, kitchenName, address,contactno;
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
@@ -113,6 +113,30 @@ public class Kitchen implements Comparable<Kitchen>{
 
 	public void setSlotCapacity(int slotCapacity) {
 		this.slotCapacity = slotCapacity;
+	}
+
+	public String getKitchenName() {
+		return kitchenName;
+	}
+
+	public void setKitchenName(String kitchenName) {
+		this.kitchenName = kitchenName;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public String getContactno() {
+		return contactno;
+	}
+
+	public void setContactno(String contactno) {
+		this.contactno = contactno;
 	}
 
 }
