@@ -52,6 +52,17 @@ public class AreawiseKitchenListDao {
 					}else {
 						kitchenObj.put("kitchenContactNo", "");
 					}
+					
+					if(resultSet.getString("image") != null){
+						String img =  resultSet.getString("image");
+						if(img.startsWith("http://")){
+							img.replace("http://", "");
+						}		
+						kitchenObj.put("image", img);
+					}else {
+						kitchenObj.put("image", "");
+					}
+					
 					kitchenList.put(kitchenObj);
 					
 				}
