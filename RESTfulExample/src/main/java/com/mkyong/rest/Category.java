@@ -3061,13 +3061,20 @@ public class Category {
 	@Produces(MediaType.APPLICATION_JSON)
 	public JSONObject locationwisekitcheneList(@FormParam("area") String area) throws Exception{
 		JSONObject kitchenList = new JSONObject();
-		System.out.println(":::::::::: locationwisekitchenList service called::::::::");
+		System.out.println("************** locationwisekitchenList service called **************");
 		System.out.println(":::::::::: AREA > " + area + ":::::");
-		
-		kitchenList = AreawiseKitchenListDao.fetchKitchens(area);
-		
+		int len = area.trim().length();
+		System.out.println("AREA SIZE >" + len);
+		if(len>0){
+			kitchenList = AreawiseKitchenListDao.fetchKitchens(area);
+		}else {
+			System.out.println("Inside  lenth zero >>> >> > " + len);
+			kitchenList.put("status", "204");
+			kitchenList.put("message", "not found");
+			kitchenList.put("kitchenList", new JSONArray());
+		}
 		System.out.println("Status : " + kitchenList.getString("status"));
-		System.out.println(":::::::: locationwisekitchenList ends here :::::::::::::::");
+		System.out.println("************** locationwisekitchenList ends here **************");
 		return kitchenList;
 	}
 	
