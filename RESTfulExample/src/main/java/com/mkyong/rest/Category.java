@@ -26,7 +26,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.SecurityContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -34,6 +36,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.http.HttpRequest;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -61,6 +64,7 @@ import dao.FaqDAO;
 import dao.FetchAlaCarteItemDAO;
 import dao.FetchBannersDAO;
 import dao.FetchCuisineDAO;
+import dao.FetchKitchenItemsDao;
 import dao.FetchLocationDAO;
 import dao.FetchSubscriptionPackage;
 import dao.FindDeliverySlots;
@@ -96,6 +100,12 @@ import dao.VersionDAO;
 @Path("/category")
 public class Category {
 
+	/*@GET
+	@Produces("application/xlm")
+	public String getData(@Context HttpServletRequest request){
+	   String ip = request.getRemoteAddr();
+	}
+	*/
 	/**
 	 * This method is useful for the login check
 	 * @param username
@@ -1749,6 +1759,16 @@ public class Category {
 		System.out.println("orderHistory webservice ened here *******");
 		return jsonObject;
 	
+	}
+	
+	
+	@POST
+	@Path("/fetch-kitchen-items")
+	@Produces(MediaType.APPLICATION_JSON)
+	public static JSONObject fetchKitchenItems(@FormParam("kitchenId")int kitchenId){
+		System.out.println("----------------------------------------------------------");
+		System.out.println("------------ fetch-kitchen-items api called --------------");
+		return FetchKitchenItemsDao.getKitchenItems(kitchenId);
 	}
 	
 	
